@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* The app's colour palette. Defining them here as theme tokens means
+   you can write bg-surface, text-muted, border-line etc. anywhere. */
+@theme {
+  --color-bg: #0b0d12;
+  --color-surface: #141822;
+  --color-surface-2: #1c2130;
+  --color-line: #2a3040;
+  --color-ink: #e8eaf0;
+  --color-muted: #8b93a7;
+  --color-accent: #6d5efc;
+  --color-accent-hi: #8478ff;
+  --color-danger: #ff6b6b;
+  --color-ok: #3ddc97;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Stops the desktop window feeling like a web page you can select-drag. */
+body {
+  user-select: none;
+}
+input,
+textarea {
+  user-select: text;
+}
