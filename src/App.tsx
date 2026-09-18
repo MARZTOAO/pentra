@@ -6,6 +6,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
+import Discover from "./pages/Discover";
+import Friends from "./pages/Friends";
+import Settings from "./pages/Settings";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -46,10 +49,7 @@ export default function App() {
             path="/discover"
             element={
               <Shell>
-                <ComingSoon
-                  title="Find players"
-                  note="Arrives in Phase 3, once everyone has a Top 5 to match on."
-                />
+                <Discover />
               </Shell>
             }
           />
@@ -58,10 +58,7 @@ export default function App() {
             path="/friends"
             element={
               <Shell>
-                <ComingSoon
-                  title="Friends"
-                  note="Friend requests and your friends list arrive in Phase 4."
-                />
+                <Friends />
               </Shell>
             }
           />
@@ -82,10 +79,7 @@ export default function App() {
             path="/settings"
             element={
               <Shell>
-                <ComingSoon
-                  title="Settings"
-                  note="Privacy controls and blocking arrive in Phase 6."
-                />
+                <Settings />
               </Shell>
             }
           />

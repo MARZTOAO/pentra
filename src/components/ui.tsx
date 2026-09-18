@@ -72,7 +72,7 @@ export function Button({
     "disabled:cursor-not-allowed disabled:opacity-50";
   const styles =
     variant === "primary"
-      ? "bg-accent text-white hover:bg-accent-hi active:scale-[0.99]"
+      ? "bg-accent text-onaccent hover:bg-accent-hi active:scale-[0.99]"
       : "border border-line bg-transparent text-muted hover:text-ink hover:border-muted";
 
   return (

@@ -1,6 +1,9 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
+import { heartbeat } from "../lib/friends";
+import { getProfile } from "../lib/profile";
+import { applyTheme } from "../lib/themes";
 
 type Item = { to: string; label: string; icon: ReactNode };
 
@@ -61,9 +64,29 @@ const ITEMS: Item[] = [
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
 
+  // Check in every minute while the app is open. This is what drives
+  // the online dots and the recency part of match scoring - without it
+  // everyone looks permanently offline.
+  useEffect(() => {
+    if (!user) return;
+
+    heartbeat();
+    const timer = setInterval(heartbeat, 60_000);
+    return () => clearInterval(timer);
+  }, [user]);
+
+  // The saved theme may differ from what this machine last used - for
+  // instance after signing in somewhere new. Profile wins.
+  useEffect(() => {
+    if (!user) return;
+    getProfile(user.id).then(({ data }) => {
+      if (data?.app_theme) applyTheme(data.app_theme);
+    });
+  }, [user]);
+
   return (
     <div className="flex h-full">
-      <nav className="flex w-56 shrink-0 flex-col border-r border-line bg-surface">
+      <nav className="relative z-10 flex w-56 shrink-0 flex-col border-r border-line bg-surface/85 backdrop-blur-sm">
         <div className="px-5 py-5 text-lg font-bold tracking-tight">
           <span className="text-accent">▲</span> Gamer Social
         </div>
@@ -99,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </nav>
 
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="relative z-10 flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

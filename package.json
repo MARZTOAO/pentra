@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "import-games": "node --env-file=.env scripts/import-games.mjs",
-    "add-game": "node --env-file=.env scripts/import-games.mjs"
+    "add-game": "node --env-file=.env scripts/import-games.mjs",
+    "seed-players": "node --env-file=.env scripts/seed-players.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

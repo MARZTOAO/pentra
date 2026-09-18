@@ -5,6 +5,8 @@ export type Profile = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
+  /** A premade avatar, as "shape.colour". Beaten by an upload. */
+  avatar_preset: string | null;
   bio: string | null;
   /** Fixed list. This is what matching uses. */
   region: string | null;
@@ -14,13 +16,24 @@ export type Profile = {
   location_country: string | null;
   timezone: string | null;
   platforms: string[];
+  /** The one they actually play on most. Stronger signal than `platforms`. */
+  primary_platform: string | null;
+  /** Key of a built-in gradient - see lib/backgrounds.ts. */
+  background: string | null;
+  /** An uploaded banner image. Wins over `background` when both are set. */
+  banner_url: string | null;
+  /** Which colour palette this person uses. Personal, not public. */
+  app_theme: string | null;
   availability: string[];
   last_seen_at: string | null;
   created_at: string | null;
+  /** 'free' or 'plus'. Read-only from the app - only billing can change it. */
+  tier: "free" | "plus";
+  tier_expires_at: string | null;
 };
 
 const COLUMNS =
-  "id, username, display_name, avatar_url, bio, region, location_city, location_state, location_country, timezone, platforms, availability, last_seen_at, created_at";
+  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, availability, last_seen_at, created_at, tier, tier_expires_at";
 
 export async function getProfile(userId: string) {
   return supabase.from("profiles").select(COLUMNS).eq("id", userId).single();
@@ -45,8 +58,13 @@ export type ProfileUpdate = Partial<
     | "location_country"
     | "timezone"
     | "platforms"
+    | "primary_platform"
+    | "background"
+    | "banner_url"
+    | "app_theme"
     | "availability"
     | "avatar_url"
+    | "avatar_preset"
   >
 >;
 
@@ -59,27 +77,53 @@ export async function updateProfile(userId: string, patch: ProfileUpdate) {
     .single();
 }
 
-/**
- * Uploads an avatar and returns its public URL.
- *
- * Files are stored under a folder named after the user's id, which is what
- * the storage security rules key off - you can only write inside your own
- * folder. `upsert` means re-uploading replaces the old file rather than
- * piling up copies.
- */
+export async function uploadBanner(userId: string, file: File) {
+  return uploadTo("banners", userId, "banner", file);
+}
+
 export async function uploadAvatar(userId: string, file: File) {
+  return uploadTo("avatars", userId, "avatar", file);
+}
+
+/**
+ * Shared upload path for avatars and banners.
+ *
+ * Files go in a folder named after the user's id, which is what the
+ * storage rules key off - you can only write inside your own folder.
+ * `upsert` replaces the old file rather than piling up copies.
+ */
+async function uploadTo(
+  bucket: string,
+  userId: string,
+  name: string,
+  file: File,
+) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "png";
-  const path = `${userId}/avatar.${extension}`;
+  const path = `${userId}/${name}.${extension}`;
 
   const { error } = await supabase.storage
-    .from("avatars")
+    .from(bucket)
     .upload(path, file, { upsert: true, contentType: file.type });
 
   if (error) return { url: null, error };
 
-  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
 
   // Cache-busting suffix: the URL never changes when you replace the file,
   // so without this the browser keeps showing the old picture.
   return { url: `${data.publicUrl}?v=${Date.now()}`, error: null };
+}
+
+/**
+ * Whether this profile currently has paid features.
+ *
+ * Checks expiry as well as the tier itself - a row can say 'plus' while
+ * the paid period has already lapsed. Mirrors the has_plus() function in
+ * supabase/10_tiers.sql; the database one is what actually enforces
+ * anything, this is just for showing and hiding interface.
+ */
+export function hasPlus(p: Pick<Profile, "tier" | "tier_expires_at">) {
+  if (p.tier !== "plus") return false;
+  if (!p.tier_expires_at) return true;
+  return new Date(p.tier_expires_at) > new Date();
 }

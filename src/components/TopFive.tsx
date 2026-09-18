@@ -119,7 +119,7 @@ export function TopFive() {
                   />
                 )}
               </div>
-              <span className="absolute -left-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white shadow">
+              <span className="absolute -left-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-onaccent shadow">
                 {index + 1}
               </span>
             </div>

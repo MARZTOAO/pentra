@@ -3,16 +3,22 @@
 /* The app's colour palette. Defining them here as theme tokens means
    you can write bg-surface, text-muted, border-line etc. anywhere. */
 @theme {
-  --color-bg: #0b0d12;
-  --color-surface: #141822;
-  --color-surface-2: #1c2130;
-  --color-line: #2a3040;
-  --color-ink: #e8eaf0;
-  --color-muted: #8b93a7;
-  --color-accent: #6d5efc;
-  --color-accent-hi: #8478ff;
+  /* These are the Carbon palette, the default. Every theme overwrites
+     them at runtime - see lib/themes.ts. They live here so the very
+     first frame is already the right colours. */
+  --color-bg: #0e0f11;
+  --color-surface: #17191d;
+  --color-surface-2: #1f2227;
+  --color-line: #2e3239;
+  --color-ink: #e9ebee;
+  --color-muted: #8d939c;
+  --color-accent: #ff7a2f;
+  --color-accent-hi: #ff9354;
+  /* Text that sits ON a filled accent button. Never hardcode white:
+     a pale accent would make the label invisible. */
+  --color-onaccent: #1a0d04;
   --color-danger: #ff6b6b;
-  --color-ok: #3ddc97;
+  --color-ok: #4ed07a;
 }
 
 html,

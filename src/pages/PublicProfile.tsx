@@ -4,7 +4,11 @@ import { useAuth } from "../lib/AuthContext";
 import { getProfileByUsername, type Profile } from "../lib/profile";
 import { getTopFive, type TopFiveEntry } from "../lib/topFive";
 import { formatLocation } from "../lib/constants";
+import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
+import { bannerStyle } from "../lib/backgrounds";
+import { FriendButton } from "../components/FriendButton";
 import { FullScreenLoader } from "../components/ui";
+import { Avatar } from "../components/Avatar";
 
 export default function PublicProfile() {
   const { username } = useParams<{ username: string }>();
@@ -12,6 +16,7 @@ export default function PublicProfile() {
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [topFive, setTopFive] = useState<TopFiveEntry[]>([]);
+  const [tags, setTags] = useState<GamerTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -34,6 +39,7 @@ export default function PublicProfile() {
       const row = data as Profile;
       setProfile(row);
       setTopFive(await getTopFive(row.id));
+      setTags(await getGamerTags(row.id));
       setLoading(false);
     });
 
@@ -78,23 +84,22 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Header */}
-      <header className="mb-8 flex items-start gap-5">
-        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border border-line bg-surface-2">
-          {profile.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-muted">
-              {profile.username.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </div>
+      {/* Their background fills the whole window, not a strip at the top.
+          Fixed rather than absolute so it stays put while the page
+          scrolls, and behind everything via a negative z-index. */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-20"
+        style={bannerStyle(profile)}
+      />
+      {/* A scrim over it. Without this, text sits on whatever someone
+          uploaded and readability becomes a coin flip. */}
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/75" />
 
-        <div className="min-w-0 flex-1">
+      {/* Header */}
+      <header className="relative mb-8 flex items-end gap-5 pt-24">
+        <Avatar of={profile} size={96} className="shrink-0 border-4 border-bg" />
+
+        <div className="min-w-0 flex-1 pb-1">
           <h1 className="text-2xl font-semibold">
             {profile.display_name || profile.username}
           </h1>
@@ -114,14 +119,12 @@ export default function PublicProfile() {
         </div>
 
         {!isSelf && (
-          <div className="flex shrink-0 gap-2">
-            <button
-              disabled
-              title="Arrives in Phase 4"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white opacity-40"
-            >
-              Add friend
-            </button>
+          <div className="flex shrink-0 items-start gap-2 pb-1">
+            <FriendButton
+              targetId={profile.id}
+              // Becoming friends unlocks their gamer tags, so refetch.
+              onChange={() => getGamerTags(profile.id).then(setTags)}
+            />
             <button
               disabled
               title="Arrives in Phase 5"
@@ -157,7 +160,7 @@ export default function PublicProfile() {
                       className="h-full w-full object-cover"
                     />
                   )}
-                  <span className="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white shadow">
+                  <span className="absolute left-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-onaccent shadow">
                     {index + 1}
                   </span>
                 </div>
@@ -185,10 +188,56 @@ export default function PublicProfile() {
       </section>
 
       {/* Details */}
-      <div className="grid grid-cols-2 gap-4">
-        <Panel title="Plays on" items={profile.platforms} empty="Not set" />
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <PlatformPanel
+          primary={profile.primary_platform}
+          all={profile.platforms}
+        />
         <Panel title="Usually online" items={profile.availability} empty="Not set" />
       </div>
+
+      {/* Gamer tags. The database only returns these to the person
+          themselves and their accepted friends - if the list comes back
+          empty, either they haven't added any or you aren't friends. */}
+      <section className="rounded-xl border border-line bg-surface/85 p-5 backdrop-blur-sm">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+          Gamer tags
+        </h2>
+
+        {tags.length > 0 ? (
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
+            {tags.map((tag) => (
+              <div key={tag.network} className="flex justify-between gap-3">
+                <dt className="text-sm text-muted">
+                  {networkLabel(tag.network)}
+                </dt>
+                <dd className="truncate text-sm font-medium" title={tag.handle}>
+                  {tag.handle}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : isSelf ? (
+          <p className="text-sm text-muted">
+            You haven't added any yet. They're only ever shown to friends.
+          </p>
+        ) : (
+          <p className="flex items-center gap-2 text-sm text-muted">
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              aria-hidden="true"
+            >
+              <rect x="4" y="11" width="16" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            Visible once you're friends.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
@@ -203,7 +252,7 @@ function Panel({
   empty: string;
 }) {
   return (
-    <section className="rounded-xl border border-line bg-surface p-5">
+    <section className="rounded-xl border border-line bg-surface/85 p-5 backdrop-blur-sm">
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
         {title}
       </h2>
@@ -220,6 +269,51 @@ function Panel({
             </span>
           ))}
         </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Leads with the one platform they actually play on, and lists anything
+ * else underneath. Owning five systems says much less than knowing which
+ * one they're on at 9pm.
+ */
+function PlatformPanel({
+  primary,
+  all,
+}: {
+  primary: string | null;
+  all: string[] | null;
+}) {
+  const others = (all ?? []).filter((p) => p !== primary);
+
+  return (
+    <section className="rounded-xl border border-line bg-surface/85 p-5 backdrop-blur-sm">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+        Primarily plays on
+      </h2>
+
+      {primary ? (
+        <p className="mb-3 text-lg font-semibold text-accent">{primary}</p>
+      ) : (
+        <p className="mb-3 text-sm text-muted">Not set</p>
+      )}
+
+      {others.length > 0 && (
+        <>
+          <p className="mb-2 text-xs text-muted">Also plays on</p>
+          <div className="flex flex-wrap gap-2">
+            {others.map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-line px-3 py-1 text-xs"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );

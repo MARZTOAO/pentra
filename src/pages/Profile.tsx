@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import {
   getProfile,
   updateProfile,
-  uploadAvatar,
   type Profile as ProfileRow,
 } from "../lib/profile";
 import {
@@ -16,6 +15,9 @@ import {
 } from "../lib/constants";
 import { Button, Alert, FullScreenLoader } from "../components/ui";
 import { TopFive } from "../components/TopFive";
+import { GamerTags } from "../components/GamerTags";
+import { BackgroundPicker } from "../components/BackgroundPicker";
+import { AvatarPicker } from "../components/AvatarPicker";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -34,10 +36,8 @@ export default function Profile() {
   const [stateCode, setStateCode] = useState("");
   const [country, setCountry] = useState("USA");
   const [platforms, setPlatforms] = useState<string[]>([]);
+  const [primaryPlatform, setPrimaryPlatform] = useState("");
   const [availability, setAvailability] = useState<string[]>([]);
-
-  const fileInput = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -55,6 +55,7 @@ export default function Profile() {
         setStateCode(row.location_state ?? "");
         setCountry(row.location_country ?? "USA");
         setPlatforms(row.platforms ?? []);
+        setPrimaryPlatform(row.primary_platform ?? "");
         setAvailability(row.availability ?? []);
       }
       setLoading(false);
@@ -81,6 +82,8 @@ export default function Profile() {
       location_country: country.trim() || null,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       platforms,
+      // Only meaningful if they actually own it.
+      primary_platform: platforms.includes(primaryPlatform) ? primaryPlatform : null,
       availability,
     });
 
@@ -92,35 +95,6 @@ export default function Profile() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     }
-  }
-
-  async function handleAvatar(file: File) {
-    if (!user) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      setError("That image is over 2 MB. Try a smaller one.");
-      return;
-    }
-
-    setUploading(true);
-    setError(null);
-
-    const { url, error: uploadError } = await uploadAvatar(user.id, file);
-
-    if (uploadError || !url) {
-      setUploading(false);
-      setError(uploadError?.message ?? "Upload failed.");
-      return;
-    }
-
-    const { data, error: saveError } = await updateProfile(user.id, {
-      avatar_url: url,
-    });
-
-    setUploading(false);
-
-    if (saveError) setError(saveError.message);
-    else setProfile(data as ProfileRow);
   }
 
   if (loading) return <FullScreenLoader />;
@@ -151,50 +125,13 @@ export default function Profile() {
       {error && <Alert>{error}</Alert>}
       {saved && <Alert kind="ok">Saved.</Alert>}
 
-      {/* Avatar + username */}
-      <section className="mb-8 flex items-center gap-5 rounded-xl border border-line bg-surface p-5">
-        <div className="relative">
-          <div className="h-20 w-20 overflow-hidden rounded-full border border-line bg-surface-2">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted">
-                {(profile?.username ?? "?").charAt(0).toUpperCase()}
-              </div>
-            )}
-          </div>
-        </div>
+      {profile && (
+        <AvatarPicker profile={profile} onChange={setProfile} />
+      )}
 
-        <div className="flex-1">
-          <p className="text-lg font-semibold">@{profile?.username}</p>
-          <p className="mb-3 text-xs text-muted">
-            Your username can't be changed for now.
-          </p>
-
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleAvatar(file);
-              e.target.value = "";
-            }}
-          />
-          <button
-            onClick={() => fileInput.current?.click()}
-            disabled={uploading}
-            className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
-          >
-            {uploading ? "Uploading…" : "Change picture"}
-          </button>
-        </div>
-      </section>
+      {profile && (
+        <BackgroundPicker profile={profile} onChange={setProfile} />
+      )}
 
       <TopFive />
 
@@ -310,7 +247,33 @@ export default function Profile() {
           selected={platforms}
           onToggle={(v) => toggle(platforms, v, setPlatforms)}
         />
+
+        <label className="mt-5 block border-t border-line pt-5">
+          <span className="mb-1.5 block text-sm font-medium">
+            Primarily plays on
+          </span>
+          <select
+            value={platforms.includes(primaryPlatform) ? primaryPlatform : ""}
+            onChange={(e) => setPrimaryPlatform(e.target.value)}
+            disabled={platforms.length === 0}
+            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
+          >
+            <option value="">Not set</option>
+            {platforms.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <span className="mt-1 block text-xs text-muted">
+            {platforms.length === 0
+              ? "Pick your platforms above first."
+              : "Where you actually spend your time. Counts for more in matching than simply owning a system."}
+          </span>
+        </label>
       </section>
+
+      <GamerTags />
 
       {/* Availability */}
       <section className="mb-8 rounded-xl border border-line bg-surface p-5">
