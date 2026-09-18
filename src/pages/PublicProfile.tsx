@@ -8,6 +8,7 @@ import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
 import { bannerStyle } from "../lib/backgrounds";
 import { FriendButton } from "../components/FriendButton";
 import { MessageButton } from "../components/MessageButton";
+import { SafetyMenu } from "../components/SafetyMenu";
 import { FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 
@@ -127,6 +128,7 @@ export default function PublicProfile() {
               onChange={() => getGamerTags(profile.id).then(setTags)}
             />
             <MessageButton targetId={profile.id} />
+            <SafetyMenu targetId={profile.id} username={profile.username} />
           </div>
         )}
       </header>

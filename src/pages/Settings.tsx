@@ -8,6 +8,8 @@ import {
   DEFAULT_THEME,
 } from "../lib/themes";
 import { Alert, FullScreenLoader } from "../components/ui";
+import { Avatar } from "../components/Avatar";
+import { getBlocked, unblockUser, type BlockedUser } from "../lib/safety";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -15,6 +17,7 @@ export default function Settings() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<BlockedUser[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -22,7 +25,14 @@ export default function Settings() {
       if (data) setProfile(data as Profile);
       setLoading(false);
     });
+    getBlocked().then(setBlocked);
   }, [user]);
+
+  async function unblock(id: string) {
+    const { error } = await unblockUser(id);
+    if (error) setError(error.message);
+    else setBlocked(await getBlocked());
+  }
 
   async function choose(key: string) {
     if (!user) return;
@@ -81,11 +91,41 @@ export default function Settings() {
 
       <section className="rounded-xl border border-line bg-surface p-5">
         <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
-          Privacy and blocking
+          Blocked players
         </h2>
-        <p className="text-sm text-muted">
-          Who can message you, and your blocked list. Arrives in Phase 6.
+        <p className="mb-4 text-xs text-muted">
+          You and a blocked player can't see each other anywhere in the app.
+          Unblocking doesn't restore a friendship — you'd have to ask again.
         </p>
+
+        {blocked.length === 0 ? (
+          <p className="text-sm text-muted">You haven't blocked anyone.</p>
+        ) : (
+          <div className="space-y-2">
+            {blocked.map((person) => (
+              <div
+                key={person.user_id}
+                className="flex items-center gap-3 rounded-lg border border-line bg-surface-2 p-2.5"
+              >
+                <Avatar of={person} size={36} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {person.display_name || person.username}
+                  </p>
+                  <p className="truncate text-xs text-muted">
+                    @{person.username}
+                  </p>
+                </div>
+                <button
+                  onClick={() => unblock(person.user_id)}
+                  className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-accent hover:text-accent"
+                >
+                  Unblock
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

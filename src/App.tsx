@@ -11,6 +11,7 @@ import Discover from "./pages/Discover";
 import Friends from "./pages/Friends";
 import Settings from "./pages/Settings";
 import Messages from "./pages/Messages";
+import Home from "./pages/Home";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,15 @@ export default function App() {
           <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+
+          <Route
+            path="/home"
+            element={
+              <Shell>
+                <Home />
+              </Shell>
+            }
+          />
 
           <Route
             path="/me"
@@ -95,7 +105,7 @@ export default function App() {
 
           {/* Anything else goes to the profile, which bounces you to
               login if you aren't signed in. */}
-          <Route path="*" element={<Navigate to="/me" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </Notifications>
       </HashRouter>

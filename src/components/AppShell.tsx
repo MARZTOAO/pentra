@@ -27,6 +27,13 @@ function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
 
 const ITEMS: Item[] = [
   {
+    to: "/home",
+    label: "Home",
+    icon: (
+      <Icon d="m3 10.5 9-7 9 7V20a1.5 1.5 0 0 1-1.5 1.5h-4V14h-7v7.5h-4A1.5 1.5 0 0 1 3 20z" />
+    ),
+  },
+  {
     to: "/me",
     label: "Profile",
     icon: <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0" />,
@@ -94,7 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     (window.history.state as { idx?: number } | null)?.idx ?? 0;
   const canGoBack = historyIndex > 0;
 
-  const atHome = location.pathname === "/me";
+  const atHome = location.pathname === "/home";
 
   return (
     <div className="flex h-full">
@@ -169,7 +176,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           <button
             type="button"
-            onClick={() => navigate("/me")}
+            onClick={() => navigate("/home")}
             disabled={atHome}
             title="Home"
             aria-label="Home"
