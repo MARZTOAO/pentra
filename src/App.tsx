@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppShell, ComingSoon } from "./components/AppShell";
+import { Notifications } from "./components/Notifications";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
@@ -9,6 +10,7 @@ import PublicProfile from "./pages/PublicProfile";
 import Discover from "./pages/Discover";
 import Friends from "./pages/Friends";
 import Settings from "./pages/Settings";
+import Messages from "./pages/Messages";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -23,7 +25,8 @@ export default function App() {
   return (
     <AuthProvider>
       <HashRouter>
-        <Routes>
+        <Notifications>
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
@@ -67,10 +70,16 @@ export default function App() {
             path="/messages"
             element={
               <Shell>
-                <ComingSoon
-                  title="Messages"
-                  note="Real-time chat arrives in Phase 5."
-                />
+                <Messages />
+              </Shell>
+            }
+          />
+
+          <Route
+            path="/messages/:id"
+            element={
+              <Shell>
+                <Messages />
               </Shell>
             }
           />
@@ -87,7 +96,8 @@ export default function App() {
           {/* Anything else goes to the profile, which bounces you to
               login if you aren't signed in. */}
           <Route path="*" element={<Navigate to="/me" replace />} />
-        </Routes>
+          </Routes>
+        </Notifications>
       </HashRouter>
     </AuthProvider>
   );

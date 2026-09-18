@@ -7,6 +7,7 @@ import { formatLocation } from "../lib/constants";
 import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
 import { bannerStyle } from "../lib/backgrounds";
 import { FriendButton } from "../components/FriendButton";
+import { MessageButton } from "../components/MessageButton";
 import { FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 
@@ -96,7 +97,7 @@ export default function PublicProfile() {
       <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/75" />
 
       {/* Header */}
-      <header className="relative mb-8 flex items-end gap-5 pt-24">
+      <header className="relative mb-8 flex items-end gap-5 pt-20">
         <Avatar of={profile} size={96} className="shrink-0 border-4 border-bg" />
 
         <div className="min-w-0 flex-1 pb-1">
@@ -125,13 +126,7 @@ export default function PublicProfile() {
               // Becoming friends unlocks their gamer tags, so refetch.
               onChange={() => getGamerTags(profile.id).then(setTags)}
             />
-            <button
-              disabled
-              title="Arrives in Phase 5"
-              className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted opacity-40"
-            >
-              Message
-            </button>
+            <MessageButton targetId={profile.id} />
           </div>
         )}
       </header>

@@ -1,16 +1,17 @@
 import { useEffect, type ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { heartbeat } from "../lib/friends";
 import { getProfile } from "../lib/profile";
 import { applyTheme } from "../lib/themes";
+import { useNotifications } from "./Notifications";
 
 type Item = { to: string; label: string; icon: ReactNode };
 
-function Icon({ d }: { d: string }) {
+function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
   return (
     <svg
-      className="h-5 w-5"
+      className={className}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -58,11 +59,13 @@ const ITEMS: Item[] = [
 
 /**
  * The frame every signed-in screen sits inside: a fixed sidebar on the left,
- * scrolling content on the right. Roughly the shape Discord uses, because
- * it's the shape this audience already knows.
+ * a slim bar with Back and Home across the top, scrolling content below.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { unread } = useNotifications();
 
   // Check in every minute while the app is open. This is what drives
   // the online dots and the recency part of match scoring - without it
@@ -84,6 +87,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     });
   }, [user]);
 
+  // React Router tracks position in history as `idx`. At 0 there's
+  // nothing behind us, so Back would do nothing - better to grey it out
+  // than to have a button that silently ignores you.
+  const historyIndex =
+    (window.history.state as { idx?: number } | null)?.idx ?? 0;
+  const canGoBack = historyIndex > 0;
+
+  const atHome = location.pathname === "/me";
+
   return (
     <div className="flex h-full">
       <nav className="relative z-10 flex w-56 shrink-0 flex-col border-r border-line bg-surface/85 backdrop-blur-sm">
@@ -104,7 +116,15 @@ export function AppShell({ children }: { children: ReactNode }) {
               }
             >
               {item.icon}
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+
+              {/* Unread count, so a message isn't missed while you're
+                  on another screen. */}
+              {item.to === "/messages" && unread > 0 && (
+                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-onaccent">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
             </NavLink>
           ))}
         </div>
@@ -122,7 +142,46 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </nav>
 
-      <main className="relative z-10 flex-1 overflow-y-auto">{children}</main>
+      <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
+        {/* Top bar. Translucent so a profile background reads through it. */}
+        <header className="flex h-12 shrink-0 items-center gap-1 border-b border-line bg-surface/70 px-3 backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            disabled={!canGoBack}
+            title="Back"
+            aria-label="Back"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
+          >
+            <Icon d="m15 18-6-6 6-6" className="h-4 w-4" />
+            Back
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(1)}
+            title="Forward"
+            aria-label="Forward"
+            className="rounded-lg px-2 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink"
+          >
+            <Icon d="m9 18 6-6-6-6" className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/me")}
+            disabled={atHome}
+            title="Home"
+            aria-label="Home"
+            className="ml-1 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
+          >
+            <Icon d="m3 10.5 9-7 9 7V20a1.5 1.5 0 0 1-1.5 1.5h-4V14h-7v7.5h-4A1.5 1.5 0 0 1 3 20z" className="h-4 w-4" />
+            Home
+          </button>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
     </div>
   );
 }
