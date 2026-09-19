@@ -94,9 +94,16 @@ export default function PublicProfile() {
         className="pointer-events-none fixed inset-0 -z-20"
         style={bannerStyle(profile)}
       />
-      {/* A scrim over it. Without this, text sits on whatever someone
-          uploaded and readability becomes a coin flip. */}
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/75" />
+      {/* A scrim over it. Without one, text sits on whatever someone
+          picked and readability becomes a coin flip.
+
+          45% rather than 75% — the background is the one piece of the
+          page that is theirs, and three-quarters of it was being thrown
+          away. The cost is that the brightest presets now sit close to
+          the muted text on top of them, so anything drawn directly on
+          the artwork carries `on-art` (see index.css) and the panels
+          keep their own surface. */}
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/45" />
 
       {/* Header.
 
@@ -115,19 +122,19 @@ export default function PublicProfile() {
         <Avatar of={profile} size={96} className="shrink-0 border-4 border-bg" />
 
         <div className="min-w-0 flex-1 sm:pb-1">
-          <h1 className="display break-words text-2xl">
+          <h1 className="display on-art break-words text-2xl">
             {profile.display_name || profile.username}
           </h1>
-          <p className="mb-3 truncate text-sm text-muted">@{profile.username}</p>
+          <p className="on-art mb-3 truncate text-sm text-muted">@{profile.username}</p>
 
           {profile.bio && (
-            <p className="mb-3 whitespace-pre-line break-words text-sm leading-relaxed">
+            <p className="on-art mb-3 whitespace-pre-line break-words text-sm leading-relaxed">
               {profile.bio}
             </p>
           )}
 
           {(formatLocation(profile) || profile.region) && (
-            <p className="text-xs text-muted">
+            <p className="on-art text-xs text-muted">
               {[formatLocation(profile), profile.region]
                 .filter(Boolean)
                 .join(" · ")}
@@ -150,7 +157,7 @@ export default function PublicProfile() {
 
       {/* Top 5 */}
       <section className="mb-8">
-        <h2 className="mb-4 label-wide text-muted">
+        <h2 className="on-art mb-4 label-wide text-muted">
           Top 5
         </h2>
 
@@ -184,13 +191,13 @@ export default function PublicProfile() {
                     long title like "Deep Rock Galactic" still doesn't fit
                     on one line, and half a name is no name. */}
                 <p
-                  className="line-clamp-2 text-xs font-medium leading-snug"
+                  className="on-art line-clamp-2 text-xs font-medium leading-snug"
                   title={entry.game.name}
                 >
                   {entry.game.name}
                 </p>
                 {entry.platform && (
-                  <p className="truncate text-[11px] text-muted">
+                  <p className="on-art truncate text-[11px] text-muted">
                     {entry.platform}
                   </p>
                 )}

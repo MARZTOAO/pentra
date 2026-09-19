@@ -185,6 +185,23 @@ textarea {
   filter: drop-shadow(0 12px 18px rgb(0 0 0 / 0.55));
 }
 
+/* Text sitting directly on someone's chosen profile background.
+
+   The scrim over a background is 45%, which keeps the artwork visible
+   but leaves the brightest presets — Cyber, Vapor, Frost, Sand — nearly
+   as light as the muted text on top of them. Measured: muted text on
+   Cyber lands at 1.1:1, and 1.0 is invisible.
+
+   A shadow rather than a heavier scrim, because it spends contrast only
+   where text actually is, instead of dimming the whole picture. Two
+   layers: a tight one for edge definition, a wide soft one to darken
+   whatever sits behind the glyph. */
+@utility on-art {
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.9),
+    0 0 12px rgb(0 0 0 / 0.65);
+}
+
 /* ------------------------------------------------------------
    Motion.
 
