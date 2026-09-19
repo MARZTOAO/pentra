@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
+import { supabase } from "../lib/supabase";
 import { Anchored } from "./Anchored";
 import { Avatar } from "./Avatar";
 import {
@@ -20,16 +21,18 @@ const POLL_MS = 60_000;
 /**
  * The bell in the top bar.
  *
- * Polls rather than subscribing. Notifications arrive from five
- * different places — three triggers and two derived from the clock —
- * and a realtime subscription would only ever see the trigger-written
- * ones, so the session reminders would still need a poll. One poll
- * that covers everything beats a subscription plus a poll that has to
- * agree with it.
+ * Subscribes AND polls, because the two halves arrive differently.
  *
- * Every poll also asks the database to materialise any session
- * reminders that have come due, which is what makes "an hour before"
- * work without a scheduled job anywhere.
+ * Four of the six kinds are written by database triggers the moment
+ * something happens, and those come through realtime instantly. The
+ * two session reminders are derived from the clock — nothing happens
+ * in the database when a session becomes an hour away — so they still
+ * need the poll, which is also what calls sync_session_reminders().
+ *
+ * Polling alone was the first version, and it was wrong: a friend
+ * request could sit for up to a minute before appearing, which reads
+ * as "it only works if I refresh". One minute is far past the point
+ * where someone decides a feature is broken.
  */
 export function NotificationBell() {
   const { user } = useAuth();
@@ -83,6 +86,37 @@ export function NotificationBell() {
     const timer = setInterval(load, POLL_MS);
     return () => clearInterval(timer);
   }, [load]);
+
+  // Trigger-written notifications arrive the instant they are created.
+  // Row-level security applies to realtime too, so this only ever
+  // receives rows addressed to this account — the filter is belt and
+  // braces, not the thing keeping other people's bells private.
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("my-notifications")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Refetch rather than append the payload: get_notifications()
+          // joins the actor and the post, and a raw row carries neither,
+          // so appending it would render "Someone tagged you".
+          load();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, load]);
 
   // Opening the list marks everything read — the same bargain every
   // notification bell makes. The local update is optimistic so the
