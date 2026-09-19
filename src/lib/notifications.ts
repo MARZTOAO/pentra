@@ -3,10 +3,11 @@ import { supabase } from "./supabase";
 /**
  * The bell, and what feeds it.
  *
- * Five kinds, three of them written by database triggers the moment
- * the thing happens, two materialised by sync_session_reminders()
- * when the app asks. See supabase/33_notifications.sql for why the
- * session ones work that way.
+ * Six kinds. Four are written by database triggers the moment the
+ * thing happens; two are materialised by sync_session_reminders()
+ * when the app asks, because nothing happens in the database an hour
+ * before a session — the hour simply arrives. See
+ * supabase/33_notifications.sql and 34_mentions.sql.
  */
 
 export type NotificationKind =
@@ -14,7 +15,8 @@ export type NotificationKind =
   | "friend_accepted"
   | "session_day"
   | "session_hour"
-  | "friend_lfg";
+  | "friend_lfg"
+  | "post_mention";
 
 export type AppNotification = {
   id: number;
@@ -38,6 +40,7 @@ export type NotificationSettings = {
   friend_accepted: boolean;
   session_reminders: boolean;
   friend_lfg: boolean;
+  post_mentions: boolean;
 };
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
@@ -45,6 +48,7 @@ export const DEFAULT_SETTINGS: NotificationSettings = {
   friend_accepted: true,
   session_reminders: true,
   friend_lfg: true,
+  post_mentions: true,
 };
 
 /** What each toggle says on the settings screen. */
@@ -73,6 +77,11 @@ export const SETTING_LABELS: {
     label: "Friends looking for players",
     hint: "When a friend posts a session for a game one of you has in a Top 5.",
   },
+  {
+    key: "post_mentions",
+    label: "Tagged in a post",
+    hint: "When a friend puts your name in something they posted.",
+  },
 ];
 
 /** Where clicking a notification should take you. */
@@ -86,6 +95,7 @@ export function notificationLink(n: AppNotification): string {
     case "session_hour":
       return "/sessions";
     case "friend_lfg":
+    case "post_mention":
       return "/home";
   }
 }
@@ -111,6 +121,8 @@ export function notificationText(n: AppNotification): string {
       return `Your ${game} session is coming up ${whenPhrase(n.starts_at)}.`;
     case "friend_lfg":
       return `${who} is looking for players for ${game}.`;
+    case "post_mention":
+      return `${who} tagged you in a post.`;
   }
 }
 
@@ -166,7 +178,9 @@ export async function syncSessionReminders() {
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   const { data, error } = await supabase
     .from("notification_settings")
-    .select("friend_requests, friend_accepted, session_reminders, friend_lfg")
+    .select(
+      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions",
+    )
     .maybeSingle();
 
   // No row means nobody has changed anything yet, which is every

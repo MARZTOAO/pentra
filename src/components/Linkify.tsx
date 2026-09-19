@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Link } from "react-router-dom";
 
 /**
  * Renders post text with any URLs in it turned into links.
@@ -17,6 +18,17 @@ import { Fragment } from "react";
  */
 const URL_PATTERN = /(https?:\/\/[^\s<>"']+)/g;
 
+/**
+ * A tagged player. Same shape the database looks for in
+ * supabase/34_mentions.sql, so what renders as a link is exactly what
+ * got recorded as a tag — a name that lights up here always notified
+ * somebody, and one that didn't never does.
+ *
+ * The link is internal, so it needs no rel or target; react-router
+ * handles it in-app.
+ */
+const MENTION_PATTERN = /(@[A-Za-z0-9_]{3,20})/g;
+
 /** Trailing punctuation usually belongs to the sentence, not the URL. */
 function trimTrailing(url: string): [string, string] {
   const match = url.match(/[.,;:!?)\]]+$/);
@@ -31,7 +43,8 @@ export function Linkify({ text }: { text: string }) {
     <>
       {parts.map((part, i) => {
         // split() with one capture group puts the matches at odd indexes.
-        if (i % 2 === 0) return <Fragment key={i}>{part}</Fragment>;
+        // Even ones are ordinary text, which may still hold mentions.
+        if (i % 2 === 0) return <Mentions key={i} text={part} />;
 
         const [href, tail] = trimTrailing(part);
 
@@ -52,6 +65,35 @@ export function Linkify({ text }: { text: string }) {
           </Fragment>
         );
       })}
+    </>
+  );
+}
+
+/**
+ * Turns @names inside a run of plain text into profile links.
+ *
+ * Run after the URL split rather than before, so a username-looking
+ * fragment inside a URL is left alone.
+ */
+function Mentions({ text }: { text: string }) {
+  const parts = text.split(MENTION_PATTERN);
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 0 ? (
+          <Fragment key={i}>{part}</Fragment>
+        ) : (
+          <Link
+            key={i}
+            to={`/u/${part.slice(1)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="font-medium text-accent hover:underline"
+          >
+            {part}
+          </Link>
+        ),
+      )}
     </>
   );
 }

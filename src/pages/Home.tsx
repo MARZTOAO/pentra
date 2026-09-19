@@ -20,6 +20,7 @@ import { SessionCard } from "../components/SessionCard";
 import { SessionGuests } from "../components/SessionGuests";
 import { ReportDialog } from "../components/SafetyMenu";
 import { PostMediaGrid } from "../components/PostMediaGrid";
+import { MentionBox } from "../components/MentionBox";
 import { Linkify } from "../components/Linkify";
 import {
   useAttachments,
@@ -298,9 +299,9 @@ function Composer({
         <Avatar of={profile} size={40} />
 
         <div className="min-w-0 flex-1">
-          <textarea
+          <MentionBox
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={setBody}
             maxLength={500}
             rows={2}
             placeholder={
