@@ -4,22 +4,44 @@ import {
   getFriendList,
   respondToRequest,
   removeFriend,
-  isOnline,
   type FriendRow,
 } from "../lib/friends";
+import {
+  getPresenceMap,
+  presenceOf,
+  PRESENCE_LABEL,
+  type PresenceState,
+} from "../lib/presence";
+import { StatusDot } from "../components/StatusDot";
 import { lastSeenLabel } from "../lib/matching";
 import { Alert, FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 
+/** Folds the batched presence lookup into a row that only has last_seen_at. */
+function stateOf(
+  row: { other_id: string; last_seen_at: string | null },
+  map: Record<string, string>,
+): PresenceState {
+  return presenceOf({
+    presence: map[row.other_id],
+    last_seen_at: row.last_seen_at,
+  });
+}
+
 export default function Friends() {
   const [rows, setRows] = useState<FriendRow[]>([]);
+  // The friend-list RPC predates presence and doesn't return it, so it
+  // comes alongside in one batched lookup. See lib/presence.ts.
+  const [presence, setPresence] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setRows(await getFriendList());
+    const list = await getFriendList();
+    setRows(list);
     setLoading(false);
+    setPresence(await getPresenceMap(list.map((r) => r.other_id)));
   }, []);
 
   useEffect(() => {
@@ -63,7 +85,7 @@ export default function Friends() {
             {friends.length === 0
               ? "Nobody yet."
               : `${friends.length} ${friends.length === 1 ? "friend" : "friends"}` +
-                `, ${friends.filter((f) => isOnline(f.last_seen_at)).length} online`}
+                `, ${friends.filter((f) => stateOf(f, presence) !== "offline").length} online`}
           </p>
         </div>
 
@@ -82,7 +104,7 @@ export default function Friends() {
       {incoming.length > 0 && (
         <Section title={`Waiting on you (${incoming.length})`}>
           {incoming.map((row) => (
-            <Row key={row.friendship_id} row={row}>
+            <Row key={row.friendship_id} row={row} state={stateOf(row, presence)}>
               <button
                 disabled={busy === row.other_id}
                 onClick={() => respond(row, true)}
@@ -117,7 +139,7 @@ export default function Friends() {
           </Empty>
         ) : (
           friends.map((row) => (
-            <Row key={row.friendship_id} row={row}>
+            <Row key={row.friendship_id} row={row} state={stateOf(row, presence)}>
               <button
                 disabled={busy === row.other_id}
                 onClick={() => remove(row)}
@@ -133,7 +155,7 @@ export default function Friends() {
       {outgoing.length > 0 && (
         <Section title={`Sent (${outgoing.length})`}>
           {outgoing.map((row) => (
-            <Row key={row.friendship_id} row={row}>
+            <Row key={row.friendship_id} row={row} state={stateOf(row, presence)}>
               <span className="text-xs text-muted">Waiting</span>
               <button
                 disabled={busy === row.other_id}
@@ -169,19 +191,23 @@ function Section({
 
 function Row({
   row,
+  state,
   children,
 }: {
   row: FriendRow;
+  state: PresenceState;
   children: React.ReactNode;
 }) {
-  const online = isOnline(row.last_seen_at);
+  const online = state !== "offline";
 
   return (
     <div className="flex items-center gap-3 notch border border-line bg-surface p-3">
       <Link to={`/u/${row.username}`} className="relative shrink-0">
         <Avatar of={row} size={44} />
         {online && (
-          <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-ok" />
+          <span className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-surface">
+            <StatusDot state={state} size={11} />
+          </span>
         )}
       </Link>
 
@@ -192,7 +218,12 @@ function Row({
         <p className="truncate text-xs text-muted">
           @{row.username}
           {row.direction === "friend" && (
-            <> · {online ? "online" : (lastSeenLabel(row.last_seen_at) ?? "offline")}</>
+            <>
+              {" · "}
+              {online
+                ? PRESENCE_LABEL[state]
+                : (lastSeenLabel(row.last_seen_at) ?? "offline")}
+            </>
           )}
         </p>
       </Link>

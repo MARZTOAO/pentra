@@ -36,6 +36,9 @@ export type Profile = {
    */
   friend_code: string | null;
   availability: string[];
+  /** Public presence — only ever online, away or offline. The real
+   *  four-way choice lives in a private table; see lib/presence.ts. */
+  presence: "online" | "away" | "offline";
   last_seen_at: string | null;
   created_at: string | null;
   /** 'free' or 'plus'. Read-only from the app - only billing can change it. */
@@ -45,7 +48,7 @@ export type Profile = {
 
 /** What anyone may see when they open a profile. */
 const PUBLIC_COLUMNS =
-  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, last_seen_at, created_at, tier, tier_expires_at";
+  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, presence, last_seen_at, created_at, tier, tier_expires_at";
 
 /** Your own row, which also carries your friend code. */
 const COLUMNS = `${PUBLIC_COLUMNS}, friend_code`;

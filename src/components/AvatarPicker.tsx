@@ -11,6 +11,7 @@ import {
 import { Avatar } from "./Avatar";
 import { Anchored } from "./Anchored";
 import { Alert } from "./ui";
+import { PresencePicker } from "./PresencePicker";
 
 export function AvatarPicker({
   profile,
@@ -112,8 +113,14 @@ export function AvatarPicker({
         <Avatar of={profile} size={80} />
 
         <div className="flex-1">
-          <p className="display text-lg">@{profile.username}</p>
-          <p className="mb-3 text-xs text-muted">
+          {/* Name and status on one line — the status is about you, so
+              it belongs beside your name rather than buried in settings.
+              Wraps on a narrow screen instead of squeezing the name. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <p className="display text-lg">@{profile.username}</p>
+            <PresencePicker />
+          </div>
+          <p className="mb-3 mt-1 text-xs text-muted">
             Your username can't be changed for now.
           </p>
 

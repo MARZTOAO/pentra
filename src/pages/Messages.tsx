@@ -16,11 +16,28 @@ import {
   type ConversationMember,
   type Message,
 } from "../lib/chat";
-import { isOnline } from "../lib/friends";
+import {
+  getPresenceMap,
+  presenceOf,
+  PRESENCE_LABEL,
+  type PresenceState,
+} from "../lib/presence";
+import { StatusDot } from "../components/StatusDot";
 import { Confirm } from "../components/SafetyMenu";
 import { Avatar } from "../components/Avatar";
 import { useNotifications } from "../components/Notifications";
 import { FullScreenLoader } from "../components/ui";
+
+/** Folds the batched presence lookup into a conversation row. */
+function stateOf(
+  c: { other_id: string | null; last_seen_at: string | null },
+  map: Record<string, string>,
+): PresenceState {
+  return presenceOf({
+    presence: c.other_id ? map[c.other_id] : undefined,
+    last_seen_at: c.last_seen_at,
+  });
+}
 
 export default function Messages() {
   const { id } = useParams<{ id: string }>();
@@ -28,13 +45,21 @@ export default function Messages() {
   const { user } = useAuth();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  // get_conversations predates presence; one batched lookup fills it in.
+  const [presence, setPresence] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const activeId = id ? Number(id) : null;
   const active = conversations.find((c) => c.conversation_id === activeId);
 
   const load = useCallback(async () => {
-    setConversations(await getConversations());
+    const list = await getConversations();
+    setConversations(list);
+    setPresence(
+      await getPresenceMap(
+        list.map((c) => c.other_id).filter((id): id is string => Boolean(id)),
+      ),
+    );
     setLoading(false);
   }, []);
 
@@ -93,8 +118,10 @@ export default function Messages() {
               ) : (
                 <div className="relative shrink-0">
                   <Avatar of={c} size={40} />
-                  {isOnline(c.last_seen_at) && (
-                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-ok" />
+                  {stateOf(c, presence) !== "offline" && (
+                    <span className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-bg">
+                      <StatusDot state={stateOf(c, presence)} size={9} />
+                    </span>
                   )}
                 </div>
               )}
@@ -127,6 +154,7 @@ export default function Messages() {
         <Thread
           key={active.conversation_id}
           conversation={active}
+          state={stateOf(active, presence)}
           myId={user.id}
           onSent={load}
           onLeft={() => {
@@ -149,11 +177,14 @@ export default function Messages() {
 
 function Thread({
   conversation,
+  state,
   myId,
   onSent,
   onLeft,
 }: {
   conversation: Conversation;
+  /** Passed in rather than looked up again — the list already fetched it. */
+  state: PresenceState;
   myId: string;
   onSent: () => void;
   /** Called after deleting the chat, to refresh the list and step back. */
@@ -281,7 +312,7 @@ function Thread({
                 {conversation.display_name || conversation.username}
               </Link>
               <p className="text-xs text-muted">
-                {isOnline(conversation.last_seen_at) ? "online" : "offline"}
+                {PRESENCE_LABEL[state]}
               </p>
             </div>
 

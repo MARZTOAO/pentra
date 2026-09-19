@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { getFriendList, isOnline, type FriendRow } from "../lib/friends";
+import { getFriendList, type FriendRow } from "../lib/friends";
+import { getPresenceMap, presenceOf } from "../lib/presence";
+import { StatusDot } from "./StatusDot";
 import { Avatar } from "./Avatar";
 
 /**
@@ -23,13 +25,20 @@ export function SessionGuests({
   max: number;
 }) {
   const [friends, setFriends] = useState<FriendRow[]>([]);
+  const [presence, setPresence] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
 
+  const stateOf = (row: FriendRow) =>
+    presenceOf({ presence: presence[row.other_id], last_seen_at: row.last_seen_at });
+  const here = (row: FriendRow) => stateOf(row) !== "offline";
+
   useEffect(() => {
-    getFriendList().then((rows) => {
-      setFriends(rows.filter((r) => r.direction === "friend"));
+    getFriendList().then(async (rows) => {
+      const mine = rows.filter((r) => r.direction === "friend");
+      setFriends(mine);
       setLoading(false);
+      setPresence(await getPresenceMap(mine.map((r) => r.other_id)));
     });
   }, []);
 
@@ -51,13 +60,15 @@ export function SessionGuests({
       : friends;
 
     return [...matching].sort((a, b) => {
-      const online = Number(isOnline(b.last_seen_at)) - Number(isOnline(a.last_seen_at));
+      // Whoever is actually around floats to the top — that is who you
+      // can realistically get into a session tonight.
+      const online = Number(here(b)) - Number(here(a));
       if (online !== 0) return online;
       return (a.display_name || a.username).localeCompare(
         b.display_name || b.username,
       );
     });
-  }, [friends, filter]);
+  }, [friends, filter, presence]);
 
   function toggle(id: string) {
     if (selected.includes(id)) {
@@ -129,8 +140,10 @@ export function SessionGuests({
             >
               <span className="relative">
                 <Avatar of={friend} size={22} />
-                {isOnline(friend.last_seen_at) && (
-                  <span className="absolute -bottom-px -right-px h-2 w-2 rounded-full border border-surface bg-ok" />
+                {here(friend) && (
+                  <span className="absolute -bottom-px -right-px rounded-full border border-surface">
+                    <StatusDot state={stateOf(friend)} size={7} />
+                  </span>
                 )}
               </span>
               <span className="max-w-24 truncate">

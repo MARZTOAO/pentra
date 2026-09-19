@@ -55,8 +55,7 @@ export async function heartbeat() {
   return supabase.rpc("touch_last_seen");
 }
 
-/** Someone counts as online if they've checked in within two minutes. */
-export function isOnline(lastSeen: string | null): boolean {
-  if (!lastSeen) return false;
-  return Date.now() - new Date(lastSeen).getTime() < 2 * 60 * 1000;
-}
+// isOnline() used to live here. It answered a yes/no question that the
+// app no longer asks: since 32_presence.sql a player can also be away,
+// and telling that apart needs the presence column as well as the
+// timestamp. presenceOf() in lib/presence.ts replaced it everywhere.

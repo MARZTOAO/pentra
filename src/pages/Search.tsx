@@ -11,9 +11,14 @@ import {
 import {
   sendFriendRequest,
   removeFriend,
-  isOnline,
   type FriendStatus,
 } from "../lib/friends";
+import {
+  getPresenceMap,
+  presenceOf,
+  type PresenceState,
+} from "../lib/presence";
+import { StatusDot } from "../components/StatusDot";
 import { formatLocation } from "../lib/constants";
 import { Avatar } from "../components/Avatar";
 import { FriendCode } from "../components/FriendCode";
@@ -33,6 +38,8 @@ export default function Search() {
 
   const [q, setQ] = useState(params.get("q") ?? "");
   const [results, setResults] = useState<SearchResult[]>([]);
+  // search_players predates presence; one batched lookup fills it in.
+  const [presence, setPresence] = useState<Record<string, string>>({});
   const [searching, setSearching] = useState(false);
   const [ran, setRan] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
@@ -74,6 +81,7 @@ export default function Search() {
     setResults(rows);
     setSearching(false);
     setRan(true);
+    setPresence(await getPresenceMap(rows.map((r) => r.user_id)));
   }, []);
 
   // Keep the URL in step, so a search survives a reload and can be
@@ -171,7 +179,14 @@ export default function Search() {
       {results.length > 0 && (
         <div className="mb-10 space-y-2">
           {results.map((row) => (
-            <ResultRow key={row.user_id} row={row} />
+            <ResultRow
+              key={row.user_id}
+              row={row}
+              state={presenceOf({
+                presence: presence[row.user_id],
+                last_seen_at: row.last_seen_at,
+              })}
+            />
           ))}
         </div>
       )}
@@ -189,12 +204,12 @@ export default function Search() {
   );
 }
 
-function ResultRow({ row }: { row: SearchResult }) {
+function ResultRow({ row, state }: { row: SearchResult; state: PresenceState }) {
   const [status, setStatus] = useState<FriendStatus>(row.friend_status);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const online = isOnline(row.last_seen_at);
+  const online = state !== "offline";
   const where = formatLocation(row);
 
   async function act(fn: () => Promise<{ error: unknown }>, next: FriendStatus) {
@@ -220,7 +235,9 @@ function ResultRow({ row }: { row: SearchResult }) {
         <Link to={`/u/${row.username}`} className="relative shrink-0">
           <Avatar of={row} size={44} />
           {online && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-surface bg-ok" />
+            <span className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-surface">
+              <StatusDot state={state} size={11} />
+            </span>
           )}
         </Link>
 
