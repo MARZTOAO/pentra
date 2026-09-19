@@ -74,7 +74,7 @@ export default function PublicProfile() {
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-8 py-6 sm:py-10">
       {isSelf && (
-        <div className="mb-6 flex items-center justify-between notch-md border border-accent/40 bg-accent/10 px-4 py-3">
+        <div className="mb-6 flex flex-col gap-2 notch-md border border-accent/40 bg-accent/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-accent">
             This is how your profile looks to everyone else.
           </p>
@@ -98,19 +98,20 @@ export default function PublicProfile() {
           uploaded and readability becomes a coin flip. */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/75" />
 
-      {/* Header */}
-      <header className="relative mb-8 flex items-end gap-5 pt-20">
+      {/* Header.
+
+          Stacks on a phone. Side by side, a 96px avatar plus three action
+          buttons leaves the name column literally zero pixels wide at
+          375px — the bio wraps to one word per line and the buttons run
+          off the edge. Measured, not guessed. */}
+      <header className="relative mb-8 flex flex-col gap-4 pt-6 sm:flex-row sm:items-end sm:gap-5 sm:pt-20">
         <Avatar of={profile} size={96} className="shrink-0 border-4 border-bg" />
 
-        <div className="min-w-0 flex-1 pb-1">
-          <h1 className="display text-2xl">
+        <div className="min-w-0 flex-1 sm:pb-1">
+          <h1 className="display break-words text-2xl">
             {profile.display_name || profile.username}
           </h1>
-          <p className="mb-3 text-sm text-muted">@{profile.username}</p>
-
-          {profile.bio && (
-            <p className="mb-3 text-sm leading-relaxed">{profile.bio}</p>
-          )}
+          <p className="mb-2 truncate text-sm text-muted">@{profile.username}</p>
 
           {(formatLocation(profile) || profile.region) && (
             <p className="text-xs text-muted">
@@ -122,7 +123,7 @@ export default function PublicProfile() {
         </div>
 
         {!isSelf && (
-          <div className="flex shrink-0 items-start gap-2 pb-1">
+          <div className="flex gap-2 sm:shrink-0 sm:items-start sm:pb-1">
             <FriendButton
               targetId={profile.id}
               // Becoming friends unlocks their gamer tags, so refetch.
@@ -133,6 +134,23 @@ export default function PublicProfile() {
           </div>
         )}
       </header>
+
+      {/* The bio sits below the header, not inside it.
+
+          Inside, it shared a row with the avatar and the action buttons —
+          and those buttons only exist on OTHER people's profiles, which
+          is why your own bio looked fine and everyone else's came out as
+          a 322px ribbon. Prose belongs on its own line.
+
+          `max-w-prose` caps it near 65 characters. Without it the line
+          runs the full 704px of the container, which is past the width
+          the eye tracks comfortably — too wide is as hard to read as too
+          narrow, just less obviously. */}
+      {profile.bio && (
+        <p className="mb-8 max-w-prose whitespace-pre-line break-words text-sm leading-relaxed">
+          {profile.bio}
+        </p>
+      )}
 
       {/* Top 5 */}
       <section className="mb-8">
@@ -147,7 +165,10 @@ export default function PublicProfile() {
               : "This player hasn't picked a Top 5 yet."}
           </p>
         ) : (
-          <div className="grid grid-cols-5 gap-3">
+          // Three across on a phone rather than five. At 375px, five
+          // covers are 59px wide and every title truncates to about six
+          // characters — a Top 5 nobody can read isn't a Top 5.
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
             {topFive.map((entry, index) => (
               <div key={entry.game.id}>
                 <div className="relative mb-2 aspect-[3/4] overflow-hidden notch-md border border-line bg-surface-2">
@@ -163,8 +184,11 @@ export default function PublicProfile() {
                   </span>
                 </div>
 
+                {/* Two lines rather than one hard cut: at three across a
+                    long title like "Deep Rock Galactic" still doesn't fit
+                    on one line, and half a name is no name. */}
                 <p
-                  className="truncate text-xs font-medium"
+                  className="line-clamp-2 text-xs font-medium leading-snug"
                   title={entry.game.name}
                 >
                   {entry.game.name}
@@ -187,8 +211,10 @@ export default function PublicProfile() {
 
       <GameLibrary userId={profile.id} editable={false} />
 
-      {/* Details */}
-      <div className="mb-4 grid grid-cols-2 gap-4">
+      {/* Details. One column on a phone — side by side these panels are
+          164px wide, and a chip reading "PlayStation 5" does not fit in
+          the 124px left after padding. */}
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <PlatformPanel
           primary={profile.primary_platform}
           all={profile.platforms}
@@ -199,13 +225,13 @@ export default function PublicProfile() {
       {/* Gamer tags. The database only returns these to the person
           themselves and their accepted friends - if the list comes back
           empty, either they haven't added any or you aren't friends. */}
-      <section className="notch border border-line bg-surface/85 p-5 backdrop-blur-sm">
+      <section className="notch border border-line bg-surface/85 p-4 backdrop-blur-sm sm:p-5">
         <h2 className="mb-3 label-wide text-muted">
           Gamer tags
         </h2>
 
         {tags.length > 0 ? (
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
             {tags.map((tag) => (
               <div key={tag.network} className="flex justify-between gap-3">
                 <dt className="text-sm text-muted">
@@ -252,7 +278,7 @@ function Panel({
   empty: string;
 }) {
   return (
-    <section className="notch border border-line bg-surface/85 p-5 backdrop-blur-sm">
+    <section className="notch border border-line bg-surface/85 p-4 backdrop-blur-sm sm:p-5">
       <h2 className="mb-3 label-wide text-muted">
         {title}
       </h2>
@@ -289,7 +315,7 @@ function PlatformPanel({
   const others = (all ?? []).filter((p) => p !== primary);
 
   return (
-    <section className="notch border border-line bg-surface/85 p-5 backdrop-blur-sm">
+    <section className="notch border border-line bg-surface/85 p-4 backdrop-blur-sm sm:p-5">
       <h2 className="mb-3 label-wide text-muted">
         Primarily plays on
       </h2>

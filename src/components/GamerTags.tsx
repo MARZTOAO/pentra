@@ -86,7 +86,7 @@ export function GamerTags() {
         <p className="text-sm text-muted">Loading…</p>
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-2 gap-3">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {NETWORKS.map((network) => (
               <label key={network.key} className="block">
                 <span className="mb-1.5 block text-xs font-medium">

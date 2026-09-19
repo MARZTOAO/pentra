@@ -105,7 +105,9 @@ export default function Profile() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
-      <header className="mb-8 flex items-start justify-between gap-4">
+      {/* Stacks on a phone — the heading and a "View as others see it"
+          button side by side leaves neither enough room. */}
+      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="display text-2xl">Your profile</h1>
           <p className="mt-1 text-sm text-muted">
@@ -117,7 +119,7 @@ export default function Profile() {
         {profile?.username && (
           <Link
             to={`/u/${profile.username}`}
-            className="shrink-0 notch-md border border-line px-4 py-2 text-sm font-medium text-muted transition hover:border-accent hover:text-accent"
+            className="notch-md border border-line px-4 py-2 text-center text-sm font-medium text-muted transition hover:border-accent hover:text-accent sm:shrink-0 sm:text-left"
           >
             View as others see it
           </Link>
@@ -195,37 +197,42 @@ export default function Profile() {
         <div className="block">
           <span className="mb-1.5 block text-sm font-medium">Location</span>
 
-          <div className="flex gap-2">
+          {/* City gets its own row on a phone. In one row the state and
+              country boxes are fixed at 96px and 144px, which left the
+              city field about 55px wide — barely enough for "Min…". */}
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               value={city}
               onChange={(e) => setCity(e.target.value)}
               maxLength={60}
               placeholder="City"
-              className="flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+              className="w-full notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 sm:flex-1"
             />
 
-            {isUS ? (
-              <select
-                value={stateCode}
-                onChange={(e) => setStateCode(e.target.value)}
-                className="w-24 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
-              >
-                <option value="">State</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            ) : null}
+            <div className="flex gap-2">
+              {isUS ? (
+                <select
+                  value={stateCode}
+                  onChange={(e) => setStateCode(e.target.value)}
+                  className="w-24 shrink-0 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="">State</option>
+                  {US_STATES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
 
-            <input
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              maxLength={60}
-              placeholder="Country"
-              className="w-36 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
-            />
+              <input
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                maxLength={60}
+                placeholder="Country"
+                className="min-w-0 flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 sm:w-36 sm:flex-none"
+              />
+            </div>
           </div>
 
           <span className="mt-1 block text-xs text-muted">
@@ -297,8 +304,8 @@ export default function Profile() {
         />
       </section>
 
-      <div className="flex items-center gap-3">
-        <div className="w-40">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="w-full sm:w-40">
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save changes"}
           </Button>
