@@ -2,11 +2,7 @@ name: Sync games catalogue
 
 on:
   schedule:
-    # 04:00 UTC daily - the small hours in the US, so a slow run never
-    # overlaps with people actually using the app.
     - cron: "0 4 * * *"
-
-  # Lets you run it by hand from the Actions tab.
   workflow_dispatch:
 
 concurrency:
@@ -19,22 +15,23 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Get the code
+        timeout-minutes: 3
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+      # No actions/setup-node here on purpose. The runner image already
+      # ships with Node, and every version that ships has the two things
+      # the sync script needs: ES modules and a built-in fetch. Setting
+      # up a specific version means downloading one, and that download
+      # is what hung this workflow twice.
+      - name: What we are working with
+        run: |
+          node --version
+          npm --version
 
-      # The sync script imports exactly one package and uses Node's
-      # built-in fetch for the rest. Installing the whole project to run
-      # it was needless work - and npm ci on the full lock file is what
-      # hung the first time this ran.
-      #
-      # The step timeout matters: without it, a stuck install eats the
-      # job's whole budget before anyone finds out.
       - name: Install the one dependency
         timeout-minutes: 3
-        run: npm install --no-save --no-audit --no-fund --loglevel=http @supabase/supabase-js
+        run: npm install --no-save --no-audit --no-fund @supabase/supabase-js
 
       - name: Sync
         timeout-minutes: 10
