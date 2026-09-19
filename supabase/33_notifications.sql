@@ -196,7 +196,13 @@ begin
   -- Only on the transition. send_friend_request() can touch this row
   -- for other reasons, and re-notifying on every write would mean the
   -- requester hears "accepted" more than once.
-  if new.status = 'accepted' and coalesce(old.status, '') <> 'accepted' then
+  --
+  -- `is distinct from` rather than a coalesce against a placeholder
+  -- string: status is an ENUM, so comparing it to '' makes Postgres
+  -- try to coerce '' into friendship_status, which throws. That bug
+  -- shipped and is fixed in 37 — this file now matches, so a rebuild
+  -- from scratch never reintroduces it.
+  if new.status = 'accepted' and old.status is distinct from 'accepted' then
     perform public.push_notification(
       new.requester_id, 'friend_accepted', new.addressee_id);
   end if;
