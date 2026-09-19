@@ -100,10 +100,17 @@ export default function PublicProfile() {
 
       {/* Header.
 
-          Stacks on a phone. Side by side, a 96px avatar plus three action
-          buttons leaves the name column literally zero pixels wide at
-          375px — the bio wraps to one word per line and the buttons run
-          off the edge. Measured, not guessed. */}
+          Desktop is a single row: avatar, then name and bio, then the
+          action buttons on the right. That is unchanged.
+
+          A phone cannot hold that row. A 96px avatar plus Friends,
+          Message and the safety menu leaves the middle column zero
+          pixels wide at 375px — the bio drops to one word per line and
+          the buttons run off the edge. Measured, not guessed.
+
+          So below `sm` it becomes a column, which puts the name, bio and
+          location across the full width and drops the buttons onto their
+          own row underneath. */}
       <header className="relative mb-8 flex flex-col gap-4 pt-6 sm:flex-row sm:items-end sm:gap-5 sm:pt-20">
         <Avatar of={profile} size={96} className="shrink-0 border-4 border-bg" />
 
@@ -111,7 +118,13 @@ export default function PublicProfile() {
           <h1 className="display break-words text-2xl">
             {profile.display_name || profile.username}
           </h1>
-          <p className="mb-2 truncate text-sm text-muted">@{profile.username}</p>
+          <p className="mb-3 truncate text-sm text-muted">@{profile.username}</p>
+
+          {profile.bio && (
+            <p className="mb-3 whitespace-pre-line break-words text-sm leading-relaxed">
+              {profile.bio}
+            </p>
+          )}
 
           {(formatLocation(profile) || profile.region) && (
             <p className="text-xs text-muted">
@@ -134,23 +147,6 @@ export default function PublicProfile() {
           </div>
         )}
       </header>
-
-      {/* The bio sits below the header, not inside it.
-
-          Inside, it shared a row with the avatar and the action buttons —
-          and those buttons only exist on OTHER people's profiles, which
-          is why your own bio looked fine and everyone else's came out as
-          a 322px ribbon. Prose belongs on its own line.
-
-          `max-w-prose` caps it near 65 characters. Without it the line
-          runs the full 704px of the container, which is past the width
-          the eye tracks comfortably — too wide is as hard to read as too
-          narrow, just less obviously. */}
-      {profile.bio && (
-        <p className="mb-8 max-w-prose whitespace-pre-line break-words text-sm leading-relaxed">
-          {profile.bio}
-        </p>
-      )}
 
       {/* Top 5 */}
       <section className="mb-8">
