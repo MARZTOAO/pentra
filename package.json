@@ -14,7 +14,8 @@
     "backfill-games": "node --env-file=.env scripts/import-games.mjs --backfill",
     "sync-games": "node --env-file=.env scripts/import-games.mjs --sync",
     "sync-games:ci": "node scripts/import-games.mjs --sync",
-    "seed-players": "node --env-file=.env scripts/seed-players.mjs"
+    "seed-players": "node --env-file=.env scripts/seed-players.mjs",
+    "seed-posts": "node --env-file=.env scripts/seed-posts.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

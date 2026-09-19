@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import Messages from "./pages/Messages";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
+import MySessions from "./pages/MySessions";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,15 @@ export default function App() {
             element={
               <Shell>
                 <PublicProfile />
+              </Shell>
+            }
+          />
+
+          <Route
+            path="/sessions"
+            element={
+              <Shell>
+                <MySessions />
               </Shell>
             }
           />

@@ -32,6 +32,15 @@ export default function Discover() {
     touchLastSeen();
   }, [user]);
 
+  // If the game filter points at something no longer in your Top 5 —
+  // because you just removed it — clear it. Otherwise the list silently
+  // filters on a game you don't have and looks empty for no visible
+  // reason, since the dropdown can't show the missing option either.
+  useEffect(() => {
+    if (gameId === null || myTopFive.length === 0) return;
+    if (!myTopFive.some((e) => e.game.id === gameId)) setGameId(null);
+  }, [myTopFive, gameId]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -47,6 +56,26 @@ export default function Discover() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Matching is computed from your Top 5 and your library, so results go
+  // stale the moment you edit either — and editing them happens on a
+  // different screen, or in a different tab. Refetch whenever this tab
+  // becomes visible again, and reload the Top 5 the game filter is built
+  // from at the same time, so a game you dropped stops being offered.
+  useEffect(() => {
+    function refresh() {
+      if (document.visibilityState !== "visible") return;
+      load();
+      if (user) getTopFive(user.id).then(setMyTopFive);
+    }
+
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [load, user]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-8 py-6 sm:py-10">

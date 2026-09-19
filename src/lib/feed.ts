@@ -229,3 +229,22 @@ export function postTime(iso: string): string {
     month: "short",
   });
 }
+
+/**
+ * The sessions you're in, soonest first.
+ *
+ * Hosting counts as being in one — creating a session puts you in
+ * session_players the same as joining does.
+ *
+ * Returns the same shape as the feed, so SessionCard renders these
+ * without knowing where they came from.
+ */
+export async function getMySessions(includePast = false): Promise<Post[]> {
+  const { data, error } = await supabase.rpc("my_sessions", {
+    include_past: includePast,
+    max_results: 50,
+  });
+
+  if (error || !data) return [];
+  return data as Post[];
+}

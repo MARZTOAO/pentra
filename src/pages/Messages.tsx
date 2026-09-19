@@ -3,15 +3,21 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import {
   getConversations,
+  getConversationMembers,
+  conversationName,
   getMessages,
   sendMessage,
   markRead,
   subscribeToMessages,
   messageTime,
+  deleteMessage,
+  leaveConversation,
   type Conversation,
+  type ConversationMember,
   type Message,
 } from "../lib/chat";
 import { isOnline } from "../lib/friends";
+import { Confirm } from "../components/SafetyMenu";
 import { Avatar } from "../components/Avatar";
 import { useNotifications } from "../components/Notifications";
 import { FullScreenLoader } from "../components/ui";
@@ -74,21 +80,35 @@ export default function Messages() {
                   : "hover:bg-surface-2/60")
               }
             >
-              <div className="relative shrink-0">
-                <Avatar of={c} size={40} />
-                {isOnline(c.last_seen_at) && (
-                  <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-ok" />
-                )}
-              </div>
+              {/* A session chat has no single other person, so it gets a
+                  notched square with the player count instead of a round
+                  avatar. The shape difference is the point: you can tell
+                  the two kinds apart without reading anything. */}
+              {c.kind === "session" ? (
+                <div className="notch-sm flex h-10 w-10 shrink-0 items-center justify-center bg-accent-dim text-accent">
+                  <span className="numeric text-sm font-bold">
+                    {c.member_count}
+                  </span>
+                </div>
+              ) : (
+                <div className="relative shrink-0">
+                  <Avatar of={c} size={40} />
+                  {isOnline(c.last_seen_at) && (
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-bg bg-ok" />
+                  )}
+                </div>
+              )}
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">
-                  {c.display_name || c.username}
+                  {conversationName(c)}
                 </p>
                 <p className="truncate text-xs text-muted">
                   {c.last_message
                     ? (c.last_from_me ? "You: " : "") + c.last_message
-                    : "No messages yet"}
+                    : c.kind === "session"
+                      ? "Session chat — say hello"
+                      : "No messages yet"}
                 </p>
               </div>
 
@@ -109,6 +129,10 @@ export default function Messages() {
           conversation={active}
           myId={user.id}
           onSent={load}
+          onLeft={() => {
+            load();
+            navigate("/messages");
+          }}
         />
       ) : (
         <div className="hidden flex-1 items-center justify-center p-6 text-center sm:p-10 md:flex">
@@ -127,18 +151,36 @@ function Thread({
   conversation,
   myId,
   onSent,
+  onLeft,
 }: {
   conversation: Conversation;
   myId: string;
   onSent: () => void;
+  /** Called after deleting the chat, to refresh the list and step back. */
+  onLeft: () => void;
 }) {
   // Marking a thread read has to update the sidebar badge too, not just
   // this screen's own list.
   const { refresh: refreshBadge } = useNotifications();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [members, setMembers] = useState<ConversationMember[]>([]);
+  // Deleting is one click and can't be undone, so both ask first.
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
+
+  // Only group chats need a roster; a DM's "members" are already on the
+  // conversation. Refetched per conversation so leaving a session is
+  // reflected the next time anyone opens it.
+  useEffect(() => {
+    if (conversation.kind !== "session") {
+      setMembers([]);
+      return;
+    }
+    getConversationMembers(conversation.conversation_id).then(setMembers);
+  }, [conversation.conversation_id, conversation.kind]);
 
   // Load history, mark it read, then listen for anything new.
   useEffect(() => {
@@ -206,18 +248,58 @@ function Thread({
   return (
     <section className="flex flex-1 flex-col overflow-hidden">
       <header className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-3">
-        <Avatar of={conversation} size={36} />
-        <div className="min-w-0">
-          <Link
-            to={`/u/${conversation.username}`}
-            className="truncate text-sm font-semibold hover:text-accent"
-          >
-            {conversation.display_name || conversation.username}
-          </Link>
-          <p className="text-xs text-muted">
-            {isOnline(conversation.last_seen_at) ? "online" : "offline"}
-          </p>
-        </div>
+        {conversation.kind === "session" ? (
+          <>
+            <div className="notch-sm flex h-9 w-9 shrink-0 items-center justify-center bg-accent-dim text-accent">
+              <span className="numeric text-sm font-bold">
+                {conversation.member_count}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">
+                {conversationName(conversation)}
+              </p>
+              {/* Names rather than a count: in a group you want to know
+                  who is actually here before you say anything. */}
+              <p className="truncate text-xs text-muted">
+                {members.length
+                  ? members
+                      .map((m) => m.display_name || m.username)
+                      .join(", ")
+                  : "Session chat"}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <Avatar of={conversation} size={36} />
+            <div className="min-w-0">
+              <Link
+                to={`/u/${conversation.username}`}
+                className="truncate text-sm font-semibold hover:text-accent"
+              >
+                {conversation.display_name || conversation.username}
+              </Link>
+              <p className="text-xs text-muted">
+                {isOnline(conversation.last_seen_at) ? "online" : "offline"}
+              </p>
+            </div>
+
+            {/* Only on DMs. A session chat's members are the session
+                roster, so the database refuses to let you leave one —
+                offering a button that always errors would be worse
+                than not offering it. */}
+            <button
+              type="button"
+              onClick={() => setConfirmLeave(true)}
+              aria-label="Delete this chat"
+              title="Delete this chat"
+              className="label-wide ml-auto shrink-0 px-2.5 py-1.5 text-muted transition hover:text-danger"
+            >
+              Delete
+            </button>
+          </>
+        )}
       </header>
 
       <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4">
@@ -229,23 +311,66 @@ function Thread({
 
         {messages.map((message) => {
           const mine = message.sender_id === myId;
+          const gone = Boolean(message.deleted_at);
+
           return (
             <div
               key={message.id}
-              className={"flex " + (mine ? "justify-end" : "justify-start")}
+              className={
+                "group flex items-center gap-2 " +
+                (mine ? "justify-end" : "justify-start")
+              }
             >
+              {/* Delete sits outside the bubble, on the side away from the
+                  edge, and only on your own messages.
+
+                  Visible at rest rather than on hover. A phone has no
+                  hover, so a group-hover control never appears there at
+                  all — and on desktop it leaves people hunting for a
+                  button they've been told exists. It brightens on hover
+                  instead. */}
+              {mine && !gone && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(message.id)}
+                  aria-label="Delete message"
+                  title="Delete message"
+                  className="shrink-0 p-1.5 text-muted opacity-60 transition hover:text-danger hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
+                >
+                  <svg
+                    className="h-3.5 w-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+
               <div
                 className={
                   "max-w-[70%] notch px-3.5 py-2 text-sm " +
-                  (mine
-                    ? "bg-accent text-onaccent"
-                    : "border border-line bg-surface")
+                  (gone
+                    ? "border border-dashed border-line text-muted"
+                    : mine
+                      ? "bg-accent text-onaccent"
+                      : "border border-line bg-surface")
                 }
               >
-                <p className="whitespace-pre-wrap break-words">{message.body}</p>
                 <p
                   className={
-                    "mt-1 text-[10px] " + (mine ? "opacity-70" : "text-muted")
+                    "whitespace-pre-wrap break-words " + (gone ? "italic" : "")
+                  }
+                >
+                  {gone ? "Message deleted" : message.body}
+                </p>
+                <p
+                  className={
+                    "mt-1 text-[10px] " +
+                    (gone ? "text-muted" : mine ? "opacity-70" : "text-muted")
                   }
                 >
                   {messageTime(message.created_at)}
@@ -258,6 +383,51 @@ function Thread({
         <div ref={bottom} />
       </div>
 
+      {confirmLeave && (
+        <Confirm
+          title="Delete this chat?"
+          body="It disappears from your Messages. They keep their copy, and if they write again you'll only see what they send from now on."
+          confirmLabel="Delete"
+          onCancel={() => setConfirmLeave(false)}
+          onConfirm={async () => {
+            setConfirmLeave(false);
+            const { error } = await leaveConversation(
+              conversation.conversation_id,
+            );
+            if (error) return;
+            // The thread we're looking at no longer exists for us, so
+            // go back to the list rather than sitting on a dead view.
+            onLeft();
+          }}
+        />
+      )}
+
+      {confirmDelete !== null && (
+        <Confirm
+          title="Delete this message?"
+          body="It will show as deleted for everyone in this conversation. You can't undo it."
+          confirmLabel="Delete"
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={async () => {
+            const id = confirmDelete;
+            setConfirmDelete(null);
+            const { error } = await deleteMessage(id);
+            if (error) return;
+
+            // Patch in place rather than refetching: the thread stays
+            // put instead of jumping to the bottom mid-conversation.
+            setMessages((current) =>
+              current.map((m) =>
+                m.id === id
+                  ? { ...m, body: "Message deleted", deleted_at: new Date().toISOString() }
+                  : m,
+              ),
+            );
+            onSent();
+          }}
+        />
+      )}
+
       <form
         onSubmit={submit}
         className="flex shrink-0 gap-2 border-t border-line px-5 py-3"
@@ -266,7 +436,11 @@ function Thread({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           maxLength={2000}
-          placeholder={`Message ${conversation.display_name || conversation.username}`}
+          placeholder={
+            conversation.kind === "session"
+              ? `Message the ${conversationName(conversation)} session`
+              : `Message ${conversationName(conversation)}`
+          }
           className="flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
         <button

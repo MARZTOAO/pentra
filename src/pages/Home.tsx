@@ -20,6 +20,7 @@ import { SessionCard } from "../components/SessionCard";
 import { SessionGuests } from "../components/SessionGuests";
 import { ReportDialog } from "../components/SafetyMenu";
 import { PostMediaGrid } from "../components/PostMediaGrid";
+import { Linkify } from "../components/Linkify";
 import {
   useAttachments,
   AttachmentThumbs,
@@ -526,7 +527,7 @@ function PostCard({
 
           {post.body && (
             <p className="mt-1.5 whitespace-pre-wrap break-words text-sm">
-              {post.body}
+              <Linkify text={post.body} />
             </p>
           )}
 

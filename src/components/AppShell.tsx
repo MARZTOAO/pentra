@@ -4,9 +4,11 @@ import { useAuth } from "../lib/AuthContext";
 import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
+import { Welcome } from "./Welcome";
 
-/** `short` is the bottom-tab label: six of them share a phone's width,
-    so "Find players" has to become "Find". */
+/** `short` is the bottom-tab label. Seven of them share a phone's
+    width — about 53px each at 375px — so these have to stay tiny:
+    "Find players" becomes "Find", "Sessions" becomes "Play". */
 type Item = { to: string; label: string; short: string; icon: ReactNode };
 
 function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
@@ -46,6 +48,14 @@ const ITEMS: Item[] = [
     label: "Find players",
     short: "Find",
     icon: <Icon d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.3-4.3" />,
+  },
+  {
+    to: "/sessions",
+    label: "Sessions",
+    short: "Play",
+    icon: (
+      <Icon d="M8 2v4M16 2v4M3.5 9.5h17M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v12A1.5 1.5 0 0 1 19 20.5H5A1.5 1.5 0 0 1 3.5 19V7A1.5 1.5 0 0 1 5 5.5ZM8 13h3v3H8z" />
+    ),
   },
   {
     to: "/friends",
@@ -111,6 +121,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-full">
+      {/* Lives in the frame rather than on Home, so it finds a new
+          player wherever they happen to land first. It decides for
+          itself whether to appear. */}
+      <Welcome />
+
       {/* Sidebar — desktop only. On a phone 224px of permanent chrome is
           most of the screen, so below md this is replaced by the bottom
           tab bar at the end of this component. */}

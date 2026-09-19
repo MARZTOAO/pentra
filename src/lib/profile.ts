@@ -93,6 +93,27 @@ export async function updateProfile(userId: string, patch: ProfileUpdate) {
     .single();
 }
 
+/**
+ * Whether this account has yet to see the welcome.
+ *
+ * Kept on the profile row rather than in the browser, so signing in on
+ * a second device — or reinstalling — doesn't show the tour again.
+ * See supabase/31_welcome.sql.
+ */
+export async function needsWelcome(): Promise<boolean> {
+  const { data, error } = await supabase.rpc("needs_welcome");
+  // On error, say no. A welcome that fails to appear is a small loss; one
+  // that appears to an established player every time the network hiccups
+  // is an irritation they can't get rid of.
+  if (error) return false;
+  return Boolean(data);
+}
+
+/** Records that they've seen it. Keeps the first timestamp on a repeat call. */
+export async function markWelcomed() {
+  return supabase.rpc("mark_welcomed");
+}
+
 export async function uploadBanner(userId: string, file: File) {
   return uploadTo("banners", userId, "banner", file);
 }
