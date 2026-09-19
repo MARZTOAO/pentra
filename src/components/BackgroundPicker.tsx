@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { updateProfile, type Profile } from "../lib/profile";
 import {
@@ -7,6 +7,7 @@ import {
   bannerStyle,
   findBackground,
 } from "../lib/backgrounds";
+import { Anchored } from "./Anchored";
 import { Alert } from "./ui";
 
 export function BackgroundPicker({
@@ -25,23 +26,8 @@ export function BackgroundPicker({
 
   const current = profile.banner_url ? null : findBackground(profile.background);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function onClick(e: MouseEvent) {
-      if (!dropdown.current?.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  // Dismissal lives in <Anchored>: the panel is portalled to <body>, so a
+  // contains() check against this trigger would close it on its own clicks.
 
   async function save(patch: Parameters<typeof updateProfile>[1]) {
     if (!user) return;
@@ -112,8 +98,12 @@ export function BackgroundPicker({
             </button>
 
             {open && (
-              <div className="float-shadow absolute left-0 top-full z-40 mt-2 w-[26rem]">
-              <div className="max-h-80 overflow-y-auto notch border border-line bg-surface p-3">
+              <Anchored
+                anchorRef={dropdown}
+                onClose={() => setOpen(false)}
+                width={416}
+              >
+              <div className="max-h-80 overflow-y-auto overflow-x-hidden notch border border-line bg-surface p-3">
                 {GROUPS.map((group) => (
                   <div key={group} className="mb-3 last:mb-0">
                     <p className="label-wide mb-1.5 text-muted">
@@ -145,7 +135,7 @@ export function BackgroundPicker({
                   </div>
                 ))}
               </div>
-              </div>
+              </Anchored>
             )}
           </div>
 

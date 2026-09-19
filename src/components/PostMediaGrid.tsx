@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { PostMedia } from "../lib/feed";
 
 /**
@@ -140,7 +141,10 @@ function Lightbox({
     return () => document.removeEventListener("keydown", onKey);
   }, [index, media.length, onClose, onIndex]);
 
-  return (
+  // Portalled to <body>. A full-screen overlay must not be a descendant of
+  // anything notched: clip-path clips EVERY descendant, fixed ones included,
+  // so rendered in place this gets cut to the post card's box.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-8"
       onClick={onClose}
@@ -186,7 +190,8 @@ function Lightbox({
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

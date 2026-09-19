@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { updateProfile, uploadAvatar, type Profile } from "../lib/profile";
 import {
@@ -8,6 +8,7 @@ import {
   makePreset,
 } from "../lib/avatars";
 import { Avatar } from "./Avatar";
+import { Anchored } from "./Anchored";
 import { Alert } from "./ui";
 
 export function AvatarPicker({
@@ -33,25 +34,10 @@ export function AvatarPicker({
     current?.color.key ?? AVATAR_COLORS[0].key,
   );
 
-  // Close on a click outside or on Escape. Both are expected of a
-  // dropdown, and leaving either out makes it feel broken.
-  useEffect(() => {
-    if (!open) return;
-
-    function onClick(e: MouseEvent) {
-      if (!dropdown.current?.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  // Closing on an outside click or Escape now lives in <Anchored>, which
+  // has to own it: the panel is portalled to <body>, so it isn't a DOM
+  // descendant of this trigger any more and a check here would read every
+  // click inside the panel as an outside click.
 
   async function save(patch: Parameters<typeof updateProfile>[1]) {
     if (!user) return;
@@ -154,8 +140,15 @@ export function AvatarPicker({
                 </svg>
               </button>
 
+              {/* Panel width: 7 x 42px cells + 6 x 6px gaps = 330, plus the
+                  scroll gutter and the panel's own padding. 380 leaves room
+                  for a Windows scrollbar without the last column clipping. */}
               {open && (
-                <div className="float-shadow absolute left-0 top-full z-40 mt-2 w-[22rem]">
+                <Anchored
+                  anchorRef={dropdown}
+                  onClose={() => setOpen(false)}
+                  width={380}
+                >
                 <div className="notch border border-line bg-surface p-3">
                   <p className="label-wide mb-2 text-muted">
                     Colour
@@ -183,7 +176,11 @@ export function AvatarPicker({
                   <p className="label-wide mb-2 text-muted">
                     Symbol
                   </p>
-                  <div className="grid max-h-64 grid-cols-8 gap-1.5 overflow-y-auto pr-1">
+                  {/* Seven across. `overflow-x-hidden` is load-bearing: the
+                      vertical scrollbar eats into the row width, which was
+                      enough to make the grid overflow sideways and give the
+                      panel a horizontal scroll as well as a vertical one. */}
+                  <div className="grid max-h-64 grid-cols-7 gap-1.5 overflow-y-auto overflow-x-hidden pr-1">
                     {AVATAR_SHAPES.map((shape) => {
                       const active =
                         !profile.avatar_url && current?.shape.key === shape.key;
@@ -212,7 +209,7 @@ export function AvatarPicker({
                     })}
                   </div>
                 </div>
-                </div>
+                </Anchored>
               )}
             </div>
 

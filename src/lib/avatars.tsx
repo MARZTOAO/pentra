@@ -281,6 +281,243 @@ export const AVATAR_SHAPES: AvatarShape[] = [
       </>
     ),
   },
+
+  // ----------------------------------------------------------------
+  // Emblems.
+  //
+  // Heavier than the line glyphs above: solid silhouettes with a
+  // 22%-opacity facet behind them for depth, so they read as artwork
+  // rather than as icons. Drawn to survive 32px in a friends list,
+  // which is what killed the first attempt at these — literal animal
+  // portraits turn to mush at that size, so these are heraldic and
+  // geometric instead. All original; none traces anyone else's mark.
+  // ----------------------------------------------------------------
+  {
+    key: "blades", label: "Crossed blades",
+    glyph: (
+      <>
+        <path d="M5 19 18 5M19 19 6 5" stroke="currentColor" strokeWidth="4.4" strokeLinecap="round" opacity=".22"/>
+        <path d="M6.4 18.2 17 5.6M17.6 18.2 7 5.6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+        <path d="M4.6 17.2 7.2 19.8M19.4 17.2 16.8 19.8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+      </>
+    ),
+  },
+  {
+    key: "chevron", label: "Chevrons",
+    glyph: (
+      <>
+        <path d="m5 10.6 7-5.2 7 5.2M5 15.6l7-5.2 7 5.2M5 20.2l7-5.2 7 5.2" fill="none" stroke="currentColor" strokeWidth="4.4" strokeLinecap="round" strokeLinejoin="round" opacity=".22"/>
+        <path d="m5 10.6 7-5.2 7 5.2M5 15.6l7-5.2 7 5.2M5 20.2l7-5.2 7 5.2" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+      </>
+    ),
+  },
+  {
+    key: "trident", label: "Trident",
+    glyph: (
+      <>
+        <path d="M12 4.2v16M6.6 7.4v2.4a5.4 5.4 0 0 0 10.8 0V7.4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+        <path d="m6.6 7.4-1.4 2.2M17.4 7.4l1.4 2.2M12 4.2l-1.8 2.4M12 4.2l1.8 2.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M9 19.4h6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+      </>
+    ),
+  },
+  {
+    key: "circuit", label: "Circuit",
+    glyph: (
+      <>
+        <path d="M12 5.4v3.8m0 5.6v3.8M5.4 12h3.8m5.6 0h3.8M8 8l2.2 2.2m3.6 3.6L16 16M16 8l-2.2 2.2m-3.6 3.6L8 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+        <circle cx="12" cy="12" r="6.4" fill="none" stroke="currentColor" strokeWidth="1.6" opacity=".45"/>
+      </>
+    ),
+  },
+  {
+    key: "core", label: "Core",
+    glyph: (
+      <>
+        <circle cx="12" cy="12" r="3.4" fill="currentColor"/>
+        <ellipse cx="12" cy="12" rx="8.4" ry="3.6" fill="none" stroke="currentColor" strokeWidth="1.9"/>
+        <ellipse cx="12" cy="12" rx="8.4" ry="3.6" fill="none" stroke="currentColor" strokeWidth="1.9" transform="rotate(60 12 12)"/>
+        <ellipse cx="12" cy="12" rx="8.4" ry="3.6" fill="none" stroke="currentColor" strokeWidth="1.9" transform="rotate(-60 12 12)"/>
+      </>
+    ),
+  },
+  {
+    key: "comet", label: "Comet",
+    glyph: (
+      <>
+        <circle cx="15.6" cy="8.4" r="3.8" fill="currentColor"/>
+        <path d="M12.4 11.6 4 20M11.4 8.8 4.6 11.4M15 13.2l-2.4 6.4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+      </>
+    ),
+  },
+  {
+    key: "compass", label: "Compass",
+    glyph: (
+      <>
+        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2"/>
+        <path d="m12 4.4 2.2 5.4 5.4 2.2-5.4 2.2-2.2 5.4-2.2-5.4L4.4 12l5.4-2.2z" fill="currentColor"/>
+      </>
+    ),
+  },
+  {
+    key: "hourglass", label: "Hourglass",
+    glyph: (
+      <>
+        <path d="M6.4 4.4h11.2L12.6 12l5 7.6H6.4l5-7.6z" fill="currentColor"/>
+        <path d="M5.4 4.4h13.2M5.4 19.6h13.2" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+      </>
+    ),
+  },
+  {
+    key: "kraken", label: "Kraken",
+    glyph: (
+      <>
+        <circle cx="12" cy="8.6" r="4.4" fill="currentColor"/>
+        <path d="M7.8 12.6c-1.6 3-3.2 4.2-4.8 4.8M10.2 14c-.9 3.6-1.8 5-2.9 6.2M13.8 14c.9 3.6 1.8 5 2.9 6.2M16.2 12.6c1.6 3 3.2 4.2 4.8 4.8" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round"/>
+        <path d="M10.3 8.1h1.2M12.5 8.1h1.2" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" opacity=".9"/>
+      </>
+    ),
+  },
+  {
+    key: "eclipse", label: "Eclipse",
+    glyph: (
+      <>
+        <path d="M15.4 3.8a8.6 8.6 0 1 0 0 16.4 8.8 8.8 0 0 1 0-16.4z" fill="currentColor"/>
+        <circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" strokeWidth="1.8" opacity=".45"/>
+      </>
+    ),
+  },
+  {
+    key: "anvil", label: "Anvil",
+    glyph: (
+      <>
+        <path d="M4.6 8.4h14.8L17 11.8h1.4l-1.6 5H7.2l-1.6-5H7z" fill="currentColor"/>
+        <path d="M8.6 19.4h6.8" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/>
+      </>
+    ),
+  },
+  {
+    key: "fang", label: "Fang",
+    glyph: (
+      <>
+        <path d="M5 4h14l-2.4 7.4L12 21 7.4 11.4z" fill="currentColor" opacity=".22"/>
+        <path d="M6.6 5.4h10.8l-2 6.4L12 18.8l-3.4-7z" fill="currentColor"/>
+        <path d="M12 9.6v5.4" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" opacity=".85"/>
+      </>
+    ),
+  },
+  {
+    key: "horns", label: "Horns",
+    glyph: (
+      <>
+        <path d="M4.2 4.4c-.6 5.2 1.4 8.2 4.4 9.6M19.8 4.4c.6 5.2-1.4 8.2-4.4 9.6" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/>
+        <path d="M8.2 13.6h7.6l-1.4 5.8H9.6z" fill="currentColor"/>
+      </>
+    ),
+  },
+  {
+    key: "claw", label: "Claw",
+    glyph: (
+      <>
+        <path d="M5.4 3.6c1.2 6.4 2 10.4 2.8 15.8M10.4 3c.5 6.6.7 10.8.8 16.4M16.2 3.6c-.6 6.5-1.2 10.6-2 16" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+        <path d="M4.6 19.8h15" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+      </>
+    ),
+  },
+  {
+    key: "wing", label: "Wings",
+    glyph: (
+      <>
+        <path d="M3 8.4c4.4-.6 7.4.8 9 4.2 1.6-3.4 4.6-4.8 9-4.2-2 1.6-2.8 3.2-3 5.2-2.2-1-4.2-.6-6 1.6-1.8-2.2-3.8-2.6-6-1.6-.2-2-1-3.6-3-5.2z" fill="currentColor"/>
+        <path d="M12 15.4v4.2" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+      </>
+    ),
+  },
+  {
+    key: "bastion", label: "Bastion",
+    glyph: (
+      <>
+        <path d="M4 4h4v2h3V4h2v2h3V4h4v8.4c0 4.4-3.6 7-8 8.6-4.4-1.6-8-4.2-8-8.6z" fill="currentColor" opacity=".22"/>
+        <path d="M5.4 5.4h3v2h2.2v-2h2.8v2H16v-2h2.6v7c0 3.6-3 5.8-6.6 7.2-3.6-1.4-6.6-3.6-6.6-7.2z" fill="currentColor"/>
+      </>
+    ),
+  },
+  {
+    key: "crosshair", label: "Crosshair",
+    glyph: (
+      <>
+        <circle cx="12" cy="12" r="7.2" fill="none" stroke="currentColor" strokeWidth="2.2"/>
+        <path d="M12 2.4v5M12 16.6v5M2.4 12h5M16.6 12h5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+        <circle cx="12" cy="12" r="2.2" fill="currentColor"/>
+      </>
+    ),
+  },
+  {
+    key: "rift", label: "Rift",
+    glyph: (
+      <>
+        <path d="M13.2 2.8 10 9.4l3.4 2.2-4.6 9.6 1.2-7.6-3.2-1.8z" fill="currentColor"/>
+        <path d="M17.6 5.6 19.8 4M18.6 12.4l2.4.6M5.4 6.2 3.2 4.8M4.8 13.2l-2.2.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" opacity=".5"/>
+      </>
+    ),
+  },
+  {
+    key: "pylon", label: "Pylon",
+    glyph: (
+      <>
+        <path d="M12 3.2 18.4 20H5.6z" fill="currentColor" opacity=".22"/>
+        <path d="M12 5.4 16.8 18.6H7.2z" fill="currentColor"/>
+        <path d="M9.4 14.2h5.2" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" opacity=".85"/>
+      </>
+    ),
+  },
+  {
+    key: "sawblade", label: "Sawblade",
+    glyph: (
+      <>
+        <path d="M12 3.4l1.9 2 2.7-.6.4 2.7 2.4 1.3-1.3 2.4 1.3 2.4-2.4 1.3-.4 2.7-2.7-.6-1.9 2-1.9-2-2.7.6-.4-2.7-2.4-1.3 1.3-2.4-1.3-2.4 2.4-1.3.4-2.7 2.7.6z" fill="currentColor"/>
+        <circle cx="12" cy="12" r="2.6" fill="#fff" opacity=".9"/>
+      </>
+    ),
+  },
+  {
+    key: "vortex", label: "Vortex",
+    glyph: (
+      <>
+        <path d="M12 4a8 8 0 1 1-8 8c0-3.4 2.6-6 6-6s5 2.2 5 4.6-1.8 3.8-3.6 3.8-3-1.2-3-2.8" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+      </>
+    ),
+  },
+  {
+    key: "monolith", label: "Monolith",
+    glyph: (
+      <>
+        <path d="M7.4 4.4h9.2v15.2H7.4z" fill="currentColor"/>
+        <path d="M12 7.4v9.2" stroke="#fff" strokeWidth="2" strokeLinecap="round" opacity=".85"/>
+      </>
+    ),
+  },
+  {
+    key: "beacon", label: "Beacon",
+    glyph: (
+      <>
+        <path d="M12 3.4 15 9h-6z" fill="currentColor"/>
+        <path d="M12 9.4v7.2" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+        <path d="M6.6 20.2h10.8" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/>
+        <path d="M5.4 12.4 3 11M18.6 12.4 21 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".55"/>
+      </>
+    ),
+  },
+  {
+    key: "prism", label: "Prism",
+    glyph: (
+      <>
+        <path d="M12 3.6 20.4 18H3.6z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"/>
+        <path d="M12 3.6V18M12 10.8l5.4 7.2M12 10.8 6.6 18" stroke="currentColor" strokeWidth="1.7" opacity=".5"/>
+      </>
+    ),
+  },
 ];
 
 export const AVATAR_COLORS: AvatarColor[] = [

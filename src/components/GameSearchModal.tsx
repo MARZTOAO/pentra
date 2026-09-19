@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   searchGames,
   releaseLabel,
@@ -70,7 +71,11 @@ export function GameSearchModal({
     else setRequested(true);
   }
 
-  return (
+  // Portalled to <body>. This modal is rendered from inside the Top 5 and
+  // Game Library panels, which are notched — and clip-path clips EVERY
+  // descendant, `position: fixed` included. In place, it gets cut to the
+  // panel's box and you can't add a game.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-6 pt-20"
       onClick={onClose}
@@ -175,6 +180,7 @@ export function GameSearchModal({
         </div>
       </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

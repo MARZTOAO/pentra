@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
   blockUser,
   fileReport,
   REPORT_REASONS,
 } from "../lib/safety";
+import { Anchored } from "./Anchored";
 import { Alert } from "./ui";
 
 /**
@@ -30,15 +32,8 @@ export function SafetyMenu({
   const [reporting, setReporting] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function onClick(e: MouseEvent) {
-      if (!menu.current?.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, [open]);
+  // Dismissal lives in <Anchored>, which owns it because the menu is
+  // portalled out of this subtree.
 
   async function doBlock() {
     const { error } = await blockUser(targetId);
@@ -70,10 +65,15 @@ export function SafetyMenu({
           </svg>
         </button>
 
-        {/* The shadow sits on the wrapper below, not on the notched panel:
-            clip-path discards a shadow set on the element it clips. */}
+        {/* <Anchored> portals this out of the notched tree and carries the
+            shadow, which clip-path would otherwise discard. */}
         {open && (
-          <div className="float-shadow absolute right-0 top-full z-40 mt-2 w-44">
+          <Anchored
+            anchorRef={menu}
+            onClose={() => setOpen(false)}
+            width={176}
+            align="right"
+          >
             <div className="overflow-hidden notch border border-line bg-surface">
               <button
                 onClick={() => {
@@ -94,7 +94,7 @@ export function SafetyMenu({
                 Block @{username}
               </button>
             </div>
-          </div>
+          </Anchored>
         )}
       </div>
 
@@ -287,7 +287,9 @@ function Overlay({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // Portalled to <body> — see PostMediaGrid for why. A notched ancestor
+  // would clip this overlay to its own box.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
       onClick={onClose}
@@ -300,6 +302,7 @@ function Overlay({
         {children}
       </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
