@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPost, type Post } from "../lib/feed";
+import { getCommentCounts } from "../lib/comments";
 import { PostCard } from "../components/PostCard";
 import { FullScreenLoader } from "../components/ui";
 
@@ -16,6 +17,7 @@ export default function PostPage() {
   const { id } = useParams<{ id: string }>();
 
   const [post, setPost] = useState<Post | null>(null);
+  const [commentCount, setCommentCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -26,8 +28,14 @@ export default function PostPage() {
       return;
     }
 
-    setPost(await getPost(numeric));
+    const row = await getPost(numeric);
+    setPost(row);
     setLoading(false);
+
+    if (row) {
+      const counts = await getCommentCounts([row.id]);
+      setCommentCount(counts[row.id] ?? 0);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -61,7 +69,15 @@ export default function PostPage() {
       {post ? (
         // No onPickGame: there's no feed on this page to filter, so the
         // game tag renders flat rather than as a button that does nothing.
-        <PostCard post={post} onChange={load} />
+        // The thread opens straight away here. Arriving from a
+        // notification about a comment and then having to click to see
+        // it would be an odd place to make someone click.
+        <PostCard
+          post={post}
+          onChange={load}
+          commentCount={commentCount}
+          openComments
+        />
       ) : (
         <div className="notch border border-dashed border-line p-10 text-center">
           <h1 className="mb-2 display text-xl">This post is gone</h1>

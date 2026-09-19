@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 /**
  * The bell, and what feeds it.
  *
- * Six kinds. Four are written by database triggers the moment the
+ * Seven kinds. Four are written by database triggers the moment the
  * thing happens; two are materialised by sync_session_reminders()
  * when the app asks, because nothing happens in the database an hour
  * before a session — the hour simply arrives. See
@@ -16,7 +16,8 @@ export type NotificationKind =
   | "session_day"
   | "session_hour"
   | "friend_lfg"
-  | "post_mention";
+  | "post_mention"
+  | "post_comment";
 
 export type AppNotification = {
   id: number;
@@ -41,6 +42,7 @@ export type NotificationSettings = {
   session_reminders: boolean;
   friend_lfg: boolean;
   post_mentions: boolean;
+  post_comments: boolean;
 };
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
@@ -49,6 +51,7 @@ export const DEFAULT_SETTINGS: NotificationSettings = {
   session_reminders: true,
   friend_lfg: true,
   post_mentions: true,
+  post_comments: true,
 };
 
 /** What each toggle says on the settings screen. */
@@ -82,6 +85,11 @@ export const SETTING_LABELS: {
     label: "Tagged in a post",
     hint: "When a friend puts your name in something they posted.",
   },
+  {
+    key: "post_comments",
+    label: "Comments on your posts",
+    hint: "When somebody replies to something you posted.",
+  },
 ];
 
 /** Where clicking a notification should take you. */
@@ -98,6 +106,7 @@ export function notificationLink(n: AppNotification): string {
     case "session_hour":
     case "friend_lfg":
     case "post_mention":
+    case "post_comment":
       return n.post_id ? `/p/${n.post_id}` : "/home";
   }
 }
@@ -125,6 +134,8 @@ export function notificationText(n: AppNotification): string {
       return `${who} is looking for players for ${game}.`;
     case "post_mention":
       return `${who} tagged you in a post.`;
+    case "post_comment":
+      return `${who} commented on your post.`;
   }
 }
 
@@ -180,8 +191,13 @@ export async function syncSessionReminders() {
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   const { data, error } = await supabase
     .from("notification_settings")
+    // One string literal, deliberately, however long it gets. The
+    // Supabase client infers the row type from this argument, and a
+    // concatenated expression is not a literal — split it across lines
+    // with `+` and the inferred type collapses to GenericStringError,
+    // which fails the build at the cast below.
     .select(
-      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions",
+      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions, post_comments",
     )
     .maybeSingle();
 

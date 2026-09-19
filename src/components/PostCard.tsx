@@ -11,6 +11,7 @@ import { Linkify } from "./Linkify";
 import { PostMediaGrid } from "./PostMediaGrid";
 import { SessionCard } from "./SessionCard";
 import { ReportDialog } from "./SafetyMenu";
+import { Comments } from "./Comments";
 
 /**
  * One post, everywhere a post is shown.
@@ -25,12 +26,19 @@ export function PostCard({
   post,
   onChange,
   onPickGame,
+  commentCount = 0,
+  openComments = false,
 }: {
   post: Post;
   onChange: () => void;
   /** Filters the feed to this game. Absent on a single-post page,
    *  where there is no feed to filter — the tag then renders flat. */
   onPickGame?: (id: number) => void;
+  /** From the feed's batched lookup, so a feed of thirty posts costs
+   *  one query rather than thirty. */
+  commentCount?: number;
+  /** The post's own page opens the thread straight away. */
+  openComments?: boolean;
 }) {
   // Flip the heart immediately, then tell the server. Waiting for a
   // round trip to acknowledge a like makes the whole app feel slow.
@@ -148,6 +156,12 @@ export function PostCard({
               {likes > 0 ? likes : "Like"}
             </button>
           </div>
+
+          <Comments
+            postId={post.id}
+            count={commentCount}
+            startOpen={openComments}
+          />
         </div>
       </div>
 

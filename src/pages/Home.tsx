@@ -15,6 +15,7 @@ import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
 import { SessionGuests } from "../components/SessionGuests";
 import { PostCard } from "../components/PostCard";
+import { getCommentCounts } from "../lib/comments";
 import { MentionBox } from "../components/MentionBox";
 import {
   useAttachments,
@@ -36,13 +37,18 @@ export default function Home() {
   const [gameId, setGameId] = useState<number | null>(null);
   const [sessionsOnly, setSessionsOnly] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
+  // One batched lookup for the whole feed. get_feed predates comments
+  // and returns a fixed column list — see lib/comments.ts.
+  const [commentCounts, setCommentCounts] = useState<Record<number, number>>({});
   const [games, setGames] = useState<FeedGame[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setPosts(await getFeed(scope, gameId, sessionsOnly));
+    const rows = await getFeed(scope, gameId, sessionsOnly);
+    setPosts(rows);
+    setCommentCounts(await getCommentCounts(rows.map((p) => p.id)));
     setLoading(false);
   }, [scope, gameId, sessionsOnly]);
 
@@ -182,6 +188,7 @@ export default function Home() {
               post={post}
               onChange={afterPost}
               onPickGame={setGameId}
+              commentCount={commentCounts[post.id] ?? 0}
             />
           ))}
         </div>

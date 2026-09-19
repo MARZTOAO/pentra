@@ -48,11 +48,36 @@ export function SessionCard({
       return;
     }
 
-    // The function reports what happened rather than just failing,
-    // so we can say something specific.
-    if (data === "full") setNote("That filled up first.");
-    else if (data === "past") setNote("That session has already started.");
-    else onChange();
+    // join_session reports what happened rather than raising, so every
+    // outcome needs a sentence. Saying nothing for the ones we did not
+    // expect is how a real bug hid for a day: the function was
+    // returning 'missing' for everyone and the card just refreshed,
+    // which is indistinguishable from a dead button.
+    switch (data) {
+      case "joined":
+        onChange();
+        break;
+      case "already":
+        setNote("You're already in this one.");
+        onChange();
+        break;
+      case "full":
+        setNote("That filled up first.");
+        break;
+      case "past":
+        setNote("That session has already started.");
+        break;
+      case "unavailable":
+        setNote("That player isn't available.");
+        break;
+      case "missing":
+      case "not_session":
+        setNote("That session has gone.");
+        break;
+      default:
+        // Something the function learned to say after this was written.
+        setNote("Couldn't join that — try again?");
+    }
   }
 
   async function drop(userId: string) {
