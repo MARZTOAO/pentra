@@ -1,7 +1,7 @@
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AppShell, ComingSoon } from "./components/AppShell";
+import { AppShell } from "./components/AppShell";
 import { Notifications } from "./components/Notifications";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -12,6 +12,7 @@ import Friends from "./pages/Friends";
 import Settings from "./pages/Settings";
 import Messages from "./pages/Messages";
 import Home from "./pages/Home";
+import Search from "./pages/Search";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -63,6 +64,15 @@ export default function App() {
             element={
               <Shell>
                 <Discover />
+              </Shell>
+            }
+          />
+
+          <Route
+            path="/search"
+            element={
+              <Shell>
+                <Search />
               </Shell>
             }
           />

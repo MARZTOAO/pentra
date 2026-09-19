@@ -29,6 +29,18 @@ export async function getConversations(): Promise<Conversation[]> {
   return data as Conversation[];
 }
 
+/**
+ * Whether you're allowed to start a conversation with someone.
+ *
+ * Used only to decide what the button looks like — the real check is
+ * in the database, where it can't be skipped.
+ */
+export async function canMessage(otherId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("can_message", { other: otherId });
+  if (error) return false;
+  return Boolean(data);
+}
+
 /** Opens the thread with someone, creating it the first time. */
 export async function openConversation(otherId: string) {
   return supabase.rpc("get_or_create_conversation", { other: otherId });

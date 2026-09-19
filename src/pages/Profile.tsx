@@ -18,6 +18,7 @@ import { TopFive } from "../components/TopFive";
 import { GamerTags } from "../components/GamerTags";
 import { BackgroundPicker } from "../components/BackgroundPicker";
 import { AvatarPicker } from "../components/AvatarPicker";
+import { FriendCode } from "../components/FriendCode";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -124,6 +125,8 @@ export default function Profile() {
 
       {error && <Alert>{error}</Alert>}
       {saved && <Alert kind="ok">Saved.</Alert>}
+
+      <FriendCode code={profile?.friend_code} />
 
       {profile && (
         <AvatarPicker profile={profile} onChange={setProfile} />

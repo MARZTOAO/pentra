@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { searchGames, type Game } from "../lib/topFive";
+import { searchGames, releaseLabel, type Game } from "../lib/topFive";
 
 export function GameSearchModal({
   onPick,
@@ -102,6 +102,15 @@ export function GameSearchModal({
                   {game.genres.slice(0, 3).join(" · ") || "—"}
                 </p>
               </div>
+
+              {/* Without this an unreleased game looks like a broken
+                  catalogue entry — no ratings, no posts, no reason to
+                  be there. The date explains it. */}
+              {releaseLabel(game) && (
+                <span className="shrink-0 rounded-full border border-accent/50 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                  {releaseLabel(game)}
+                </span>
+              )}
             </button>
           ))}
         </div>

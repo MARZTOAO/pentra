@@ -11,6 +11,12 @@
  *       Searches IGDB by name and imports every match, no matter how
  *       obscure. Use this for anything the bulk import missed.
  *
+ *   npm run sync-games
+ *       The one meant to run on a schedule. Pulls games coming out in
+ *       the next two years, plus anything IGDB has changed recently,
+ *       so the catalogue keeps up with what's being announced and
+ *       released without anyone doing anything.
+ *
  * Options for the bulk mode:
  *   --pages=40      how many pages of 500 to pull   (default 40 = 20,000)
  *   --min-ratings=2 minimum number of IGDB ratings  (default 2)
@@ -64,6 +70,20 @@ const searchTerms = argv.filter((a) => !a.startsWith("--"));
 const PAGES = flag("pages", 40);
 const MIN_RATINGS = flag("min-ratings", 2);
 
+const SYNC = argv.includes("--sync");
+
+// How far ahead to look for announced games. Two years covers anything
+// with a date worth planning around; past that, dates are placeholders
+// like "2028" that shift constantly.
+const SYNC_AHEAD_DAYS = flag("ahead", 730);
+
+// How far back to look for changes. A day's schedule with a 48-hour
+// window means a single missed run costs nothing.
+const SYNC_SINCE_HOURS = flag("since", 48);
+
+// A ceiling on the "what changed" pass, in case of a long gap.
+const SYNC_MAX_PAGES = flag("max-pages", 20);
+
 // ---- IGDB ---------------------------------------------------------
 
 async function getAccessToken() {
@@ -87,7 +107,14 @@ async function getAccessToken() {
 }
 
 const FIELDS =
-  "fields name, cover.image_id, genres.name, platforms.name, total_rating_count;";
+  "fields name, cover.image_id, genres.name, platforms.name, " +
+  "total_rating_count, first_release_date, hypes;";
+
+// DLC, expansions and alternate editions all carry a parent. Excluding
+// them keeps "Elden Ring" from arriving as nine near-identical rows.
+// Filtering this way rather than on IGDB's category field, because the
+// category numbering has changed before and a parent reference hasn't.
+const NO_DLC = "parent_game = null & version_parent = null";
 
 async function igdb(token, query) {
   const res = await fetch("https://api.igdb.com/v4/games", {
@@ -118,6 +145,11 @@ function toRow(game) {
     genres: (game.genres ?? []).map((g) => g.name),
     platforms: (game.platforms ?? []).map((p) => p.name),
     popularity: game.total_rating_count ?? 0,
+    // IGDB dates are unix seconds; Postgres wants an ISO timestamp.
+    release_date: game.first_release_date
+      ? new Date(game.first_release_date * 1000).toISOString()
+      : null,
+    hypes: game.hypes ?? 0,
   };
 }
 
@@ -221,6 +253,97 @@ async function bulkMode(token) {
   console.log(`Your games table now holds ${await totalRows()} rows.\n`);
 }
 
+
+/**
+ * The scheduled run.
+ *
+ * Two passes, because "new" means two different things:
+ *
+ *   announced  - games with a release date still in the future. These
+ *                are what the bulk import can never find, since it
+ *                ranks by rating count and an unreleased game has no
+ *                ratings. This is the pass that lets someone schedule
+ *                a session for launch night.
+ *
+ *   changed    - anything IGDB has touched since the last run: a game
+ *                that just came out, a date that slipped, cover art
+ *                that finally appeared, a name that was corrected.
+ *
+ * Both upsert on igdb_id, so re-running is free and nothing is ever
+ * duplicated. Nothing is deleted, ever - posts and Top 5 entries point
+ * at these rows.
+ */
+async function syncMode(token) {
+  const now = Math.floor(Date.now() / 1000);
+  const horizon = now + SYNC_AHEAD_DAYS * 86400;
+  const since = now - SYNC_SINCE_HOURS * 3600;
+
+  console.log(
+    `Syncing: games due in the next ${SYNC_AHEAD_DAYS} days, ` +
+      `plus anything changed in the last ${SYNC_SINCE_HOURS} hours.\n`,
+  );
+
+  let announced = 0;
+  let changed = 0;
+
+  // ---- pass one: what's coming ----
+  for (let page = 0; ; page++) {
+    const games = await igdb(
+      token,
+      `
+      ${FIELDS}
+      where first_release_date > ${now}
+        & first_release_date < ${horizon}
+        & cover != null
+        & ${NO_DLC};
+      sort first_release_date asc;
+      limit ${PAGE_SIZE};
+      offset ${page * PAGE_SIZE};
+    `,
+    );
+
+    if (games.length === 0) break;
+
+    announced += await save(games.map(toRow));
+    process.stdout.write(`  upcoming: ${announced}\r`);
+
+    if (games.length < PAGE_SIZE) break;
+    await sleep(DELAY_MS);
+  }
+
+  console.log(`  upcoming: ${announced} games with a date ahead of us.`);
+
+  // ---- pass two: what changed ----
+  for (let page = 0; ; page++) {
+    const games = await igdb(
+      token,
+      `
+      ${FIELDS}
+      where updated_at > ${since}
+        & cover != null
+        & ${NO_DLC}
+        & total_rating_count >= ${MIN_RATINGS};
+      sort updated_at desc;
+      limit ${PAGE_SIZE};
+      offset ${page * PAGE_SIZE};
+    `,
+    );
+
+    if (games.length === 0) break;
+
+    changed += await save(games.map(toRow));
+    process.stdout.write(`  updated: ${changed}\r`);
+
+    // A very long gap since the last run could return thousands of
+    // rows. Cap it rather than paging forever; the next run catches up.
+    if (games.length < PAGE_SIZE || page >= SYNC_MAX_PAGES) break;
+    await sleep(DELAY_MS);
+  }
+
+  console.log(`  updated: ${changed} games changed recently.`);
+  console.log(`\nDone. Your games table now holds ${await totalRows()} rows.\n`);
+}
+
 // ---- go -----------------------------------------------------------
 
 async function main() {
@@ -228,7 +351,8 @@ async function main() {
   const token = await getAccessToken();
   console.log("Got it.\n");
 
-  if (searchTerms.length > 0) await searchMode(token, searchTerms);
+  if (SYNC) await syncMode(token);
+  else if (searchTerms.length > 0) await searchMode(token, searchTerms);
   else await bulkMode(token);
 }
 

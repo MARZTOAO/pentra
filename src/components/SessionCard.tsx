@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   joinSession,
   leaveSession,
+  removeSessionPlayer,
   sessionTime,
   startsIn,
   type Post,
@@ -51,6 +52,18 @@ export function SessionCard({
     // so we can say something specific.
     if (data === "full") setNote("That filled up first.");
     else if (data === "past") setNote("That session has already started.");
+    else onChange();
+  }
+
+  async function drop(userId: string) {
+    setBusy(true);
+    setNote(null);
+
+    const { error } = await removeSessionPlayer(post.id, userId);
+
+    setBusy(false);
+
+    if (error) setNote(error.message);
     else onChange();
   }
 
@@ -109,25 +122,40 @@ export function SessionCard({
 
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {post.players.map((player) => (
-          <Link
-            key={player.username}
-            to={`/u/${player.username}`}
-            title={
-              (player.display_name || player.username) +
-              (player.is_host ? " (host)" : "")
-            }
-            className="relative"
-          >
-            <Avatar
-              of={{
-                username: player.username,
-                avatar_url: player.avatar_url,
-                avatar_preset: player.avatar_preset,
-              }}
-              size={32}
-              className={player.is_host ? "ring-2 ring-accent" : ""}
-            />
-          </Link>
+          <span key={player.username} className="group relative">
+            <Link
+              to={`/u/${player.username}`}
+              title={
+                (player.display_name || player.username) +
+                (player.is_host ? " (host)" : "")
+              }
+              className="block"
+            >
+              <Avatar
+                of={{
+                  username: player.username,
+                  avatar_url: player.avatar_url,
+                  avatar_preset: player.avatar_preset,
+                }}
+                size={32}
+                className={player.is_host ? "ring-2 ring-accent" : ""}
+              />
+            </Link>
+
+            {/* The host's undo for adding the wrong person. Hidden
+                until hover so the line of faces stays clean. */}
+            {post.mine && !player.is_host && !started && (
+              <button
+                onClick={() => drop(player.user_id)}
+                disabled={busy}
+                aria-label={`Remove ${player.display_name || player.username}`}
+                title={`Remove ${player.display_name || player.username}`}
+                className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white group-hover:flex"
+              >
+                ×
+              </button>
+            )}
+          </span>
         ))}
 
         {/* The gaps. */}
@@ -148,7 +176,8 @@ export function SessionCard({
         <p className="text-xs text-muted">This session has started.</p>
       ) : post.mine ? (
         <p className="text-xs text-muted">
-          You're hosting. Delete the post to cancel it.
+          You're hosting{open > 0 ? ` — ${open} ${open === 1 ? "slot" : "slots"} still open` : ""}.
+          Delete the post to cancel it.
         </p>
       ) : post.i_joined ? (
         <button

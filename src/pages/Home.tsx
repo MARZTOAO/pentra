@@ -13,11 +13,24 @@ import {
   type FeedScope,
   type FeedGame,
 } from "../lib/feed";
-import { type Game } from "../lib/topFive";
+import { releaseLabel, isUnreleased, type Game } from "../lib/topFive";
 import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
 import { SessionCard } from "../components/SessionCard";
+import { SessionGuests } from "../components/SessionGuests";
 import { ReportDialog } from "../components/SafetyMenu";
+import { PostMediaGrid } from "../components/PostMediaGrid";
+import {
+  useAttachments,
+  AttachmentThumbs,
+  AttachButton,
+} from "../components/Attachments";
+import {
+  uploadMedia,
+  MediaError,
+  type PreparedMedia,
+  type UploadedMedia,
+} from "../lib/media";
 import { Alert, FullScreenLoader } from "../components/ui";
 
 export default function Home() {
@@ -204,12 +217,19 @@ function Composer({
   const [isSession, setIsSession] = useState(false);
   const [startsAt, setStartsAt] = useState(defaultStart());
   const [slots, setSlots] = useState(4);
+  const [guests, setGuests] = useState<string[]>([]);
+  const [media, setMedia] = useState<PreparedMedia[]>([]);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  const attach = useAttachments(media, setMedia);
+
+  // A picture on its own is a perfectly good post.
+  const canPost = body.trim().length > 0 || media.length > 0;
+
   async function submit() {
-    const text = body.trim();
-    if (!text || busy) return;
+    if (!canPost || busy) return;
 
     setBusy(true);
     setError(null);
@@ -220,12 +240,34 @@ function Composer({
       return;
     }
 
+    // Files go up first, then the post that points at them. A failed
+    // upload this way costs a stray file; the other order would leave
+    // a post pointing at a picture that never arrived.
+    const uploaded: UploadedMedia[] = [];
+
+    try {
+      for (let i = 0; i < media.length; i++) {
+        setUploading(i + 1);
+        uploaded.push(await uploadMedia(profile.id, media[i]));
+      }
+    } catch (e) {
+      setBusy(false);
+      setUploading(0);
+      setError(
+        e instanceof MediaError ? e.message : "Couldn't upload that. Try again?",
+      );
+      return;
+    }
+
+    setUploading(0);
+
     const { error } = await createPost(
-      text,
+      body.trim(),
       game?.id ?? null,
       isSession
-        ? { startsAt: new Date(startsAt).toISOString(), slots }
+        ? { startsAt: new Date(startsAt).toISOString(), slots, guests }
         : null,
+      uploaded,
     );
 
     setBusy(false);
@@ -235,11 +277,15 @@ function Composer({
       return;
     }
 
+    media.forEach((m) => URL.revokeObjectURL(m.previewUrl));
+
     setBody("");
     setGame(null);
+    setMedia([]);
     setIsSession(false);
     setStartsAt(defaultStart());
     setSlots(4);
+    setGuests([]);
     onPosted();
   }
 
@@ -297,8 +343,33 @@ function Composer({
                 Including you — {slots - 1} {slots === 2 ? "slot" : "slots"} for
                 others.
               </span>
+
+              <SessionGuests
+                selected={guests}
+                onChange={setGuests}
+                max={slots - 1}
+              />
+
+              {/* Scheduling before a game is out is usually a slip, but
+                  not always — launch times move, and early access is a
+                  thing. Say it, don't block it. */}
+              {game &&
+                isUnreleased(game) &&
+                startsAt &&
+                new Date(startsAt) < new Date(game.release_date as string) && (
+                  <p className="w-full text-xs text-accent">
+                    Heads up — {game.name} isn't out until{" "}
+                    {new Date(game.release_date as string).toLocaleDateString([], {
+                      day: "numeric",
+                      month: "long",
+                    })}
+                    . You can still post this.
+                  </p>
+                )}
             </div>
           )}
+
+          <AttachmentThumbs attach={attach} />
 
           <div className="mt-2 flex items-center gap-2">
             <button
@@ -327,6 +398,11 @@ function Composer({
                   />
                 )}
                 <span className="max-w-40 truncate">{game.name}</span>
+                {releaseLabel(game) && (
+                  <span className="rounded-full bg-accent/20 px-1.5 text-[10px] font-semibold">
+                    {releaseLabel(game)}
+                  </span>
+                )}
                 <button
                   onClick={() => setGame(null)}
                   aria-label="Remove game"
@@ -344,14 +420,20 @@ function Composer({
               </button>
             )}
 
+            <AttachButton attach={attach} disabled={busy} />
+
             <span className="text-xs text-muted">{body.length}/500</span>
 
             <button
               onClick={submit}
-              disabled={!body.trim() || busy}
+              disabled={!canPost || busy}
               className="ml-auto rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
             >
-              {busy ? "Posting…" : "Post"}
+              {uploading > 0
+                ? `Uploading ${uploading}/${media.length}…`
+                : busy
+                  ? "Posting…"
+                  : "Post"}
             </button>
           </div>
         </div>
@@ -442,9 +524,13 @@ function PostCard({
             )}
           </div>
 
-          <p className="mt-1.5 whitespace-pre-wrap break-words text-sm">
-            {post.body}
-          </p>
+          {post.body && (
+            <p className="mt-1.5 whitespace-pre-wrap break-words text-sm">
+              {post.body}
+            </p>
+          )}
+
+          <PostMediaGrid media={post.media ?? []} />
 
           {/* Clicking the tag filters the feed to that game - the fastest
               path from "someone mentioned this" to "who else wants it". */}

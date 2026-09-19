@@ -24,6 +24,17 @@ export type Profile = {
   banner_url: string | null;
   /** Which colour palette this person uses. Personal, not public. */
   app_theme: string | null;
+  /** 'everyone' | 'friends' | 'nobody' — who can start a conversation. */
+  message_privacy: "everyone" | "friends" | "nobody";
+  /**
+   * Ten characters, like A1B2C3D4E5, unique across every account that
+   * has ever existed. Issued by the database, permanent, and rejected
+   * if written from here - see supabase/20_friend_codes.sql.
+   *
+   * Only fetched for your own profile. Someone else's comes back null,
+   * because the app has no reason to hand their code around.
+   */
+  friend_code: string | null;
   availability: string[];
   last_seen_at: string | null;
   created_at: string | null;
@@ -32,8 +43,12 @@ export type Profile = {
   tier_expires_at: string | null;
 };
 
-const COLUMNS =
-  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, availability, last_seen_at, created_at, tier, tier_expires_at";
+/** What anyone may see when they open a profile. */
+const PUBLIC_COLUMNS =
+  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, last_seen_at, created_at, tier, tier_expires_at";
+
+/** Your own row, which also carries your friend code. */
+const COLUMNS = `${PUBLIC_COLUMNS}, friend_code`;
 
 export async function getProfile(userId: string) {
   return supabase.from("profiles").select(COLUMNS).eq("id", userId).single();
@@ -42,7 +57,7 @@ export async function getProfile(userId: string) {
 export async function getProfileByUsername(username: string) {
   return supabase
     .from("profiles")
-    .select(COLUMNS)
+    .select(PUBLIC_COLUMNS)
     .ilike("username", username)
     .single();
 }
@@ -62,6 +77,7 @@ export type ProfileUpdate = Partial<
     | "background"
     | "banner_url"
     | "app_theme"
+    | "message_privacy"
     | "availability"
     | "avatar_url"
     | "avatar_preset"

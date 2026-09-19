@@ -28,6 +28,18 @@ export default function Settings() {
     getBlocked().then(setBlocked);
   }, [user]);
 
+  async function setPrivacy(value: "everyone" | "friends" | "nobody") {
+    if (!user) return;
+    setError(null);
+
+    const { data, error } = await updateProfile(user.id, {
+      message_privacy: value,
+    });
+
+    if (error) setError(error.message);
+    else if (data) setProfile(data as Profile);
+  }
+
   async function unblock(id: string) {
     const { error } = await unblockUser(id);
     if (error) setError(error.message);
@@ -87,6 +99,63 @@ export default function Settings() {
           onPick={choose}
           note="Newer than the dark ones — tell me if anything looks off."
         />
+      </section>
+
+      <section className="mb-8 rounded-xl border border-line bg-surface p-5">
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+          Who can message you
+        </h2>
+        <p className="mb-4 text-xs text-muted">
+          Only affects new conversations. Anyone you're already talking to can
+          still reach you.
+        </p>
+
+        <div className="space-y-1.5">
+          {(
+            [
+              {
+                key: "everyone",
+                label: "Anyone",
+                note: "Someone you matched with can actually reach you. This is how the app is meant to work.",
+              },
+              {
+                key: "friends",
+                label: "Friends only",
+                note: "People have to send a friend request first, and you have to accept it.",
+              },
+              {
+                key: "nobody",
+                label: "Nobody new",
+                note: "Nobody can start a conversation with you. Useful for a while, lonely forever.",
+              },
+            ] as const
+          ).map((option) => {
+            const active =
+              (profile?.message_privacy ?? "everyone") === option.key;
+            return (
+              <button
+                key={option.key}
+                onClick={() => setPrivacy(option.key)}
+                className={
+                  "w-full rounded-lg border px-3 py-2.5 text-left transition " +
+                  (active
+                    ? "border-accent bg-accent/10"
+                    : "border-line hover:border-muted")
+                }
+              >
+                <span
+                  className={
+                    "block text-sm font-medium " +
+                    (active ? "text-accent" : "text-ink")
+                  }
+                >
+                  {option.label}
+                </span>
+                <span className="block text-xs text-muted">{option.note}</span>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       <section className="rounded-xl border border-line bg-surface p-5">

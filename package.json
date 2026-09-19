@@ -10,6 +10,8 @@
     "tauri": "tauri",
     "import-games": "node --env-file=.env scripts/import-games.mjs",
     "add-game": "node --env-file=.env scripts/import-games.mjs",
+    "sync-games": "node --env-file=.env scripts/import-games.mjs --sync",
+    "sync-games:ci": "node scripts/import-games.mjs --sync",
     "seed-players": "node --env-file=.env scripts/seed-players.mjs"
   },
   "dependencies": {

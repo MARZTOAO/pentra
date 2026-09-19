@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { heartbeat } from "../lib/friends";
@@ -73,6 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { unread } = useNotifications();
+  const [query, setQuery] = useState("");
 
   // Check in every minute while the app is open. This is what drives
   // the online dots and the recency part of match scoring - without it
@@ -185,6 +186,42 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Icon d="m3 10.5 9-7 9 7V20a1.5 1.5 0 0 1-1.5 1.5h-4V14h-7v7.5h-4A1.5 1.5 0 0 1 3 20z" className="h-4 w-4" />
             Home
           </button>
+
+          {/* Looking up one specific person is something you do from
+              anywhere, so the box lives in the frame rather than on a
+              screen you'd have to navigate to first. */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const term = query.trim();
+              if (term.length < 2) return;
+              navigate(`/search?q=${encodeURIComponent(term)}`);
+              setQuery("");
+            }}
+            className="relative ml-auto w-64"
+          >
+            <svg
+              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.3-4.3" />
+            </svg>
+
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              maxLength={60}
+              placeholder="Find someone by name or code"
+              aria-label="Find a player"
+              className="w-full rounded-lg border border-line bg-surface-2/70 py-1.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-muted focus:border-accent focus:bg-surface-2"
+            />
+          </form>
         </header>
 
         <main className="flex-1 overflow-y-auto">{children}</main>

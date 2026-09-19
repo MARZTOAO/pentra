@@ -56,14 +56,23 @@ export default function Friends() {
 
   return (
     <div className="mx-auto max-w-2xl px-8 py-10">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Friends</h1>
-        <p className="mt-1 text-sm text-muted">
-          {friends.length === 0
-            ? "Nobody yet."
-            : `${friends.length} ${friends.length === 1 ? "friend" : "friends"}` +
-              `, ${friends.filter((f) => isOnline(f.last_seen_at)).length} online`}
-        </p>
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Friends</h1>
+          <p className="mt-1 text-sm text-muted">
+            {friends.length === 0
+              ? "Nobody yet."
+              : `${friends.length} ${friends.length === 1 ? "friend" : "friends"}` +
+                `, ${friends.filter((f) => isOnline(f.last_seen_at)).length} online`}
+          </p>
+        </div>
+
+        <Link
+          to="/search"
+          className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-onaccent transition hover:bg-accent-hi"
+        >
+          Add a friend
+        </Link>
       </header>
 
       {error && <Alert>{error}</Alert>}
@@ -96,9 +105,13 @@ export default function Friends() {
       <Section title="Friends">
         {friends.length === 0 ? (
           <Empty>
-            No friends yet.{" "}
+            No friends yet. If you already know someone here,{" "}
+            <Link to="/search" className="text-accent hover:underline">
+              search for them
+            </Link>{" "}
+            by name or friend code — otherwise{" "}
             <Link to="/discover" className="text-accent hover:underline">
-              Find players
+              find players
             </Link>{" "}
             and send a few requests.
           </Empty>

@@ -6,7 +6,43 @@ export type Game = {
   cover_url: string | null;
   genres: string[];
   platforms: string[];
+  /** Null means IGDB has no date — not that it's unreleased. */
+  release_date?: string | null;
 };
+
+/** Has this game come out yet? A missing date counts as released. */
+export function isUnreleased(game: Pick<Game, "release_date">): boolean {
+  if (!game.release_date) return false;
+  return new Date(game.release_date).getTime() > Date.now();
+}
+
+/**
+ * "Out 12 Mar", "Out tomorrow", "Out today" — or null once it's out.
+ *
+ * Worth saying on any unreleased game: without it, a game with no
+ * ratings and no posts looks like a mistake in the catalogue rather
+ * than something that simply hasn't happened yet.
+ */
+export function releaseLabel(game: Pick<Game, "release_date">): string | null {
+  if (!isUnreleased(game)) return null;
+
+  const date = new Date(game.release_date as string);
+  const days = Math.ceil((date.getTime() - Date.now()) / 86_400_000);
+
+  if (days <= 1) return "Out tomorrow";
+  if (days <= 7) return `Out in ${days} days`;
+
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+
+  return (
+    "Out " +
+    date.toLocaleDateString([], {
+      day: "numeric",
+      month: "short",
+      ...(sameYear ? {} : { year: "numeric" }),
+    })
+  );
+}
 
 /** One slot in someone's Top 5, with the game details joined in. */
 export type TopFiveEntry = {
@@ -65,9 +101,12 @@ export async function searchGames(query: string): Promise<Game[]> {
 
   const { data, error } = await supabase
     .from("games")
-    .select("id, name, cover_url, genres, platforms")
+    .select("id, name, cover_url, genres, platforms, release_date")
     .ilike("name", `%${term}%`)
-    .order("popularity", { ascending: false })
+    // `relevance` is rating count for released games and follower count
+    // for announced ones — see supabase/23_upcoming_games.sql. Sorting
+    // on popularity alone would bury every unreleased game.
+    .order("relevance", { ascending: false })
     .limit(24);
 
   if (error || !data) return [];

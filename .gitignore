@@ -27,3 +27,11 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Working copies dropped here during development - stale duplicates of
+# files that already live in src/ and supabase/. Nothing here is the
+# real version of anything.
+Claude outputs/
+
+# Tauri build output
+src-tauri/target
