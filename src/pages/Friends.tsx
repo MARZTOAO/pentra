@@ -55,7 +55,7 @@ export default function Friends() {
   const outgoing = rows.filter((r) => r.direction === "outgoing");
 
   return (
-    <div className="mx-auto max-w-2xl px-8 py-10">
+    <div className="mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="display text-2xl">Friends</h1>

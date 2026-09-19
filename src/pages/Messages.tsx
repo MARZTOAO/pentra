@@ -40,8 +40,16 @@ export default function Messages() {
 
   return (
     <div className="flex h-full">
-      {/* Conversation list */}
-      <aside className="w-72 shrink-0 overflow-y-auto border-r border-line">
+      {/* Conversation list.
+          Two panes side by side need a desktop's width. On a phone it's
+          one at a time — the list until you open a thread, then the
+          thread, with the top bar's Back returning you here. */}
+      <aside
+        className={
+          "shrink-0 overflow-y-auto border-r border-line md:block md:w-72 " +
+          (activeId ? "hidden w-full" : "block w-full")
+        }
+      >
         <div className="px-4 py-4">
           <h1 className="display text-lg">Messages</h1>
         </div>
@@ -103,7 +111,7 @@ export default function Messages() {
           onSent={load}
         />
       ) : (
-        <div className="flex flex-1 items-center justify-center p-10 text-center">
+        <div className="hidden flex-1 items-center justify-center p-6 text-center sm:p-10 md:flex">
           <p className="max-w-xs text-sm text-muted">
             {conversations.length === 0
               ? "Nothing here yet. Open someone's profile and hit Message."
@@ -214,7 +222,7 @@ function Thread({
 
       <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4">
         {messages.length === 0 && (
-          <p className="py-10 text-center text-sm text-muted">
+          <p className="py-6 sm:py-10 text-center text-sm text-muted">
             No messages yet. Say something.
           </p>
         )}

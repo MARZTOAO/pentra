@@ -5,7 +5,9 @@ import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
 
-type Item = { to: string; label: string; icon: ReactNode };
+/** `short` is the bottom-tab label: six of them share a phone's width,
+    so "Find players" has to become "Find". */
+type Item = { to: string; label: string; short: string; icon: ReactNode };
 
 function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
   return (
@@ -28,6 +30,7 @@ const ITEMS: Item[] = [
   {
     to: "/home",
     label: "Home",
+    short: "Home",
     icon: (
       <Icon d="m3 10.5 9-7 9 7V20a1.5 1.5 0 0 1-1.5 1.5h-4V14h-7v7.5h-4A1.5 1.5 0 0 1 3 20z" />
     ),
@@ -35,16 +38,19 @@ const ITEMS: Item[] = [
   {
     to: "/me",
     label: "Profile",
+    short: "You",
     icon: <Icon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0" />,
   },
   {
     to: "/discover",
     label: "Find players",
+    short: "Find",
     icon: <Icon d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.3-4.3" />,
   },
   {
     to: "/friends",
     label: "Friends",
+    short: "Friends",
     icon: (
       <Icon d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
     ),
@@ -52,11 +58,13 @@ const ITEMS: Item[] = [
   {
     to: "/messages",
     label: "Messages",
+    short: "Chat",
     icon: <Icon d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />,
   },
   {
     to: "/settings",
     label: "Settings",
+    short: "More",
     icon: (
       <Icon d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
     ),
@@ -103,7 +111,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-full">
-      <nav className="relative z-10 flex w-56 shrink-0 flex-col border-r border-line bg-surface/85 backdrop-blur-sm">
+      {/* Sidebar — desktop only. On a phone 224px of permanent chrome is
+          most of the screen, so below md this is replaced by the bottom
+          tab bar at the end of this component. */}
+      <nav className="relative z-10 hidden w-56 shrink-0 flex-col border-r border-line bg-surface/85 backdrop-blur-sm md:flex">
         {/* The wordmark. Two slashes rather than a logo for now — a
             mark that's only ever type is easier to keep consistent than
             one badly-drawn icon, and it scales to a favicon. */}
@@ -162,15 +173,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="label-wide flex items-center gap-1.5 px-2.5 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
           >
             <Icon d="m15 18-6-6 6-6" className="h-4 w-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </button>
 
+          {/* Forward and Home are desktop affordances — phones have a
+              system back gesture and the tab bar covers Home. */}
           <button
             type="button"
             onClick={() => navigate(1)}
             title="Forward"
             aria-label="Forward"
-            className="px-2 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink"
+            className="hidden px-2 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink md:block"
           >
             <Icon d="m9 18 6-6-6-6" className="h-4 w-4" />
           </button>
@@ -181,11 +194,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             disabled={atHome}
             title="Home"
             aria-label="Home"
-            className="label-wide ml-1 flex items-center gap-1.5 px-2.5 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
+            className="label-wide ml-1 hidden items-center gap-1.5 px-2.5 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30 md:flex"
           >
             <Icon d="m3 10.5 9-7 9 7V20a1.5 1.5 0 0 1-1.5 1.5h-4V14h-7v7.5h-4A1.5 1.5 0 0 1 3 20z" className="h-4 w-4" />
             Home
           </button>
+
+          {/* The wordmark only appears here on mobile, where the sidebar
+              that normally carries it is hidden. */}
+          <div className="display ml-1 text-base md:hidden">
+            <span className="text-accent">//</span> PENTRA
+          </div>
 
           {/* Looking up one specific person is something you do from
               anywhere, so the box lives in the frame rather than on a
@@ -198,7 +217,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               navigate(`/search?q=${encodeURIComponent(term)}`);
               setQuery("");
             }}
-            className="relative ml-auto w-64"
+            className="relative ml-auto hidden w-64 md:block"
           >
             <svg
               className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted"
@@ -222,15 +241,83 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="notch-sm w-full border border-line bg-surface-2/70 py-1.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-muted focus:border-accent focus:bg-surface-2"
             />
           </form>
+
+          {/* On mobile the box won't fit beside the wordmark, so search
+              becomes a button that opens the screen built for it. */}
+          <button
+            type="button"
+            onClick={() => navigate("/search")}
+            aria-label="Find a player"
+            title="Find a player"
+            className="ml-auto p-2 text-muted transition hover:text-ink md:hidden"
+          >
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.3-4.3" />
+            </svg>
+          </button>
         </header>
 
         {/* Keyed on the path so each screen arrives rather than
             appearing — the cheapest thing that makes an app feel built
             rather than assembled. */}
-        <main key={location.pathname} className="rise flex-1 overflow-y-auto">
+        <main
+          key={location.pathname}
+          className="rise flex-1 overflow-y-auto pb-[4.5rem] md:pb-0"
+        >
           {children}
         </main>
       </div>
+
+      {/* Bottom tab bar — mobile only, and the sidebar's replacement.
+          Fixed rather than sticky so it survives any scroll container,
+          and it carries the iOS home-indicator inset so the last row of
+          labels isn't sitting under the bar on a notched phone. */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur-sm md:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        {ITEMS.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            title={item.label}
+            className={({ isActive }) =>
+              "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[9px] font-bold uppercase tracking-wider transition " +
+              (isActive ? "text-accent" : "text-muted")
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {/* A bar above the active tab rather than a filled block:
+                    at this size a solid accent chip swamps the icon. */}
+                <span
+                  className={
+                    "absolute inset-x-3 top-0 h-0.5 " +
+                    (isActive ? "bg-accent" : "bg-transparent")
+                  }
+                />
+                {item.icon}
+                <span className="leading-none">{item.short}</span>
+
+                {item.to === "/messages" && unread > 0 && (
+                  <span className="numeric absolute right-1/2 top-1 -mr-3 bg-accent px-1 text-[9px] font-bold text-onaccent">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }
@@ -238,7 +325,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 /** Placeholder for destinations that arrive in a later phase. */
 export function ComingSoon({ title, note }: { title: string; note: string }) {
   return (
-    <div className="flex h-full items-center justify-center p-10 text-center">
+    <div className="flex h-full items-center justify-center p-6 sm:p-10 text-center">
       <div className="max-w-sm">
         <h1 className="mb-2 text-xl font-semibold">{title}</h1>
         <p className="text-sm text-muted">{note}</p>

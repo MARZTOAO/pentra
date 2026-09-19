@@ -49,7 +49,7 @@ export default function Discover() {
   }, [load]);
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-10">
+    <div className="mx-auto max-w-4xl px-4 sm:px-8 py-6 sm:py-10">
       <header className="mb-6">
         <h1 className="display text-2xl">Find players</h1>
         <p className="mt-1 text-sm text-muted">

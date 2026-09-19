@@ -107,7 +107,7 @@ export default function Search() {
   const codeSearch = looksLikeCode(q);
 
   return (
-    <div className="mx-auto max-w-2xl px-8 py-10">
+    <div className="mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
       <header className="mb-6">
         <h1 className="display text-2xl">Find someone</h1>
         <p className="mt-1 text-sm text-muted">
@@ -148,7 +148,7 @@ export default function Search() {
       </p>
 
       {searching && results.length === 0 && (
-        <p className="py-10 text-center text-sm text-muted">Searching…</p>
+        <p className="py-6 sm:py-10 text-center text-sm text-muted">Searching…</p>
       )}
 
       {!searching && ran && results.length === 0 && (

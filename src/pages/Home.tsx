@@ -77,7 +77,7 @@ export default function Home() {
   const activeGame = games.find((g) => g.game_id === gameId);
 
   return (
-    <div className="mx-auto max-w-2xl px-8 py-8">
+    <div className="mx-auto max-w-2xl px-4 sm:px-8 py-8">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="display text-2xl">Home</h1>
 

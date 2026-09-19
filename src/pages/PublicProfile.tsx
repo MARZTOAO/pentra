@@ -55,7 +55,7 @@ export default function PublicProfile() {
 
   if (notFound || !profile) {
     return (
-      <div className="flex h-full items-center justify-center p-10 text-center">
+      <div className="flex h-full items-center justify-center p-6 sm:p-10 text-center">
         <div>
           <h1 className="mb-2 display text-xl">No such player</h1>
           <p className="mb-6 text-sm text-muted">
@@ -72,7 +72,7 @@ export default function PublicProfile() {
   const isSelf = user?.id === profile.id;
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-10">
+    <div className="mx-auto max-w-3xl px-4 sm:px-8 py-6 sm:py-10">
       {isSelf && (
         <div className="mb-6 flex items-center justify-between notch-md border border-accent/40 bg-accent/10 px-4 py-3">
           <p className="text-sm text-accent">
