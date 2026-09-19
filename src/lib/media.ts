@@ -570,3 +570,128 @@ export function savingsLabel(item: PreparedMedia): string | null {
     saved * 100,
   )}% smaller)`;
 }
+
+
+// ============================================================
+//  Avatars
+//
+//  Same argument as the feed, only sharper. An avatar is drawn at 96px
+//  at the very largest — the profile header — and at 40px or less
+//  almost everywhere else. Uploading the 3000x3000 original means every
+//  screen showing a 40px circle downloads several megabytes to paint
+//  about sixteen hundred pixels. A feed of twenty posts pays that
+//  twenty times over.
+//
+//  256 is deliberately generous: it covers 96px at 2x with room to
+//  spare, and still looks right on a 3x phone. Beyond that the file
+//  grows and nothing on screen changes.
+// ============================================================
+
+/** Stored edge. Square, because every avatar is drawn in a circle. */
+const AVATAR_EDGE = 256;
+
+/** Avatars are usually photographs of something. 0.85 rather than the
+ *  feed's 0.82 — the file is tiny either way at this size, so there's
+ *  no reason to be stingy. */
+const AVATAR_QUALITY = 0.85;
+
+/** We resize, so there's no reason to refuse a normal phone photo.
+ *  This only exists to stop someone opening a 200MB TIFF. */
+const MAX_AVATAR_INPUT_BYTES = 25 * 1024 * 1024;
+
+/** An animated GIF can't survive a canvas — it would come out as a
+ *  still first frame. So GIFs pass through untouched, and the size cap
+ *  stays tight to make up for not being able to shrink them. */
+const MAX_AVATAR_GIF_BYTES = 2 * 1024 * 1024;
+
+export type PreparedAvatar = {
+  blob: Blob;
+  extension: string;
+  /** Edge length actually stored, for showing in the interface. */
+  edge: number;
+  previewUrl: string;
+  originalBytes: number;
+};
+
+/**
+ * Square-crops, resizes and re-encodes an avatar before upload.
+ *
+ * The centre crop happens here rather than at display time. It already
+ * happened at display time — `object-cover` on a circle — but invisibly,
+ * so a portrait upload lost its top and bottom with no warning and no
+ * way to see it coming. Doing it up front means what's stored is what
+ * people see.
+ */
+export async function prepareAvatar(file: File): Promise<PreparedAvatar> {
+  if (!file.type.startsWith("image/")) {
+    throw new MediaError("That's not an image.");
+  }
+
+  if (file.size > MAX_AVATAR_INPUT_BYTES) {
+    throw new MediaError(
+      `That image is ${mb(file.size)} — 25MB is the most I can open.`,
+    );
+  }
+
+  // Animated, and a canvas would flatten it to frame one.
+  if (file.type === "image/gif") {
+    if (file.size > MAX_AVATAR_GIF_BYTES) {
+      throw new MediaError(
+        `Animated avatars have to be under 2MB — that one is ${mb(file.size)}.`,
+      );
+    }
+    return {
+      blob: file,
+      extension: "gif",
+      edge: 0,
+      previewUrl: URL.createObjectURL(file),
+      originalBytes: file.size,
+    };
+  }
+
+  const bitmap = await decode(file);
+
+  // Never upscale. A 64px source stays 64px rather than being blown up
+  // to 256 and looking soft for it.
+  const side = Math.min(bitmap.width, bitmap.height);
+  const edge = Math.min(AVATAR_EDGE, side);
+  const canvas = squareCrop(bitmap, side, edge);
+  bitmap.close();
+
+  let blob = await encode(canvas, "image/webp", AVATAR_QUALITY);
+  let extension = "webp";
+
+  if (!blob) {
+    blob = await encode(canvas, "image/jpeg", AVATAR_QUALITY);
+    extension = "jpg";
+  }
+
+  if (!blob) throw new MediaError("Couldn't read that image.");
+
+  return {
+    blob,
+    extension,
+    edge,
+    previewUrl: URL.createObjectURL(blob),
+    originalBytes: file.size,
+  };
+}
+
+/** Centre-crops to a square and scales it to `edge`. */
+function squareCrop(bitmap: ImageBitmap, side: number, edge: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = edge;
+  canvas.height = edge;
+
+  const context = canvas.getContext("2d");
+  if (!context) throw new MediaError("Couldn't process that image.");
+
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+
+  const sx = Math.round((bitmap.width - side) / 2);
+  const sy = Math.round((bitmap.height - side) / 2);
+  context.drawImage(bitmap, sx, sy, side, side, 0, 0, edge, edge);
+
+  return canvas;
+}

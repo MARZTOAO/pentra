@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { updateProfile, uploadAvatar, type Profile } from "../lib/profile";
+import { prepareAvatar, MediaError } from "../lib/media";
 import {
   AVATAR_SHAPES,
   AVATAR_COLORS,
@@ -68,23 +69,40 @@ export function AvatarPicker({
   async function handleUpload(file: File) {
     if (!user) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError("That image is over 2 MB. Try a smaller one.");
-      return;
-    }
-
     setBusy(true);
     setError(null);
 
-    const { url, error: uploadError } = await uploadAvatar(user.id, file);
+    // Resized to 256px square on this machine before anything is sent.
+    // An avatar is drawn at 96px at the very largest, so uploading the
+    // original means everyone downloads megabytes to paint a 40px
+    // circle in the feed. See prepareAvatar() for the arithmetic.
+    let prepared;
+    try {
+      prepared = await prepareAvatar(file);
+    } catch (problem) {
+      setBusy(false);
+      setError(
+        problem instanceof MediaError
+          ? problem.message
+          : "Couldn't process that image.",
+      );
+      return;
+    }
+
+    const { url, error: uploadError } = await uploadAvatar(
+      user.id,
+      prepared.blob,
+      prepared.extension,
+    );
+
+    setBusy(false);
 
     if (uploadError || !url) {
-      setBusy(false);
       setError(uploadError?.message ?? "Upload failed.");
       return;
     }
 
-    setBusy(false);
+    URL.revokeObjectURL(prepared.previewUrl);
     save({ avatar_url: url });
   }
 

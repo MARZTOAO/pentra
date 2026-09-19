@@ -118,8 +118,31 @@ export async function uploadBanner(userId: string, file: File) {
   return uploadTo("banners", userId, "banner", file);
 }
 
-export async function uploadAvatar(userId: string, file: File) {
-  return uploadTo("avatars", userId, "avatar", file);
+/**
+ * Avatars arrive already resized and re-encoded by prepareAvatar(), so
+ * this takes a blob and an explicit extension rather than a File — the
+ * processed blob has no filename to read one from.
+ */
+export async function uploadAvatar(
+  userId: string,
+  blob: Blob,
+  extension: string,
+) {
+  const result = await uploadTo("avatars", userId, "avatar", blob, extension);
+
+  // `upsert` only replaces the identical path, so someone who uploaded a
+  // PNG before and a WebP now would leave avatar.png sitting in the
+  // bucket forever — unreferenced, but still stored and still public.
+  // Best effort: a failure here doesn't affect the avatar they just set.
+  if (!result.error) {
+    const stale = ["png", "jpg", "jpeg", "webp", "gif"]
+      .filter((e) => e !== extension)
+      .map((e) => `${userId}/avatar.${e}`);
+
+    await supabase.storage.from("avatars").remove(stale);
+  }
+
+  return result;
 }
 
 /**
@@ -133,9 +156,13 @@ async function uploadTo(
   bucket: string,
   userId: string,
   name: string,
-  file: File,
+  file: Blob,
+  forcedExtension?: string,
 ) {
-  const extension = file.name.split(".").pop()?.toLowerCase() ?? "png";
+  const extension =
+    forcedExtension ??
+    (file instanceof File ? file.name.split(".").pop()?.toLowerCase() : null) ??
+    "png";
   const path = `${userId}/${name}.${extension}`;
 
   const { error } = await supabase.storage
