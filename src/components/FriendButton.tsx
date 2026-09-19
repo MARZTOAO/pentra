@@ -55,7 +55,7 @@ export function FriendButton({
     return (
       <button
         disabled
-        className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted opacity-50"
+        className="notch-md border border-line px-4 py-2 text-sm font-semibold text-muted opacity-50"
       >
         …
       </button>
@@ -63,7 +63,7 @@ export function FriendButton({
   }
 
   const base =
-    "rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50";
+    "notch-md px-4 py-2 text-sm font-semibold transition disabled:opacity-50";
 
   return (
     <div className="flex flex-col items-end gap-1">

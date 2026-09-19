@@ -51,7 +51,7 @@ export function MessageButton({ targetId }: { targetId: string }) {
             ? "They only accept messages from friends"
             : undefined
         }
-        className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted transition hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-40"
+        className="notch-md border border-line px-4 py-2 text-sm font-semibold text-muted transition hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-40"
       >
         {busy ? "Opening…" : "Message"}
       </button>

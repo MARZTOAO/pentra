@@ -103,12 +103,12 @@ export function AvatarPicker({
   }
 
   return (
-    <section className="mb-8 rounded-xl border border-line bg-surface p-5">
+    <section className="mb-8 notch border border-line bg-surface p-5">
       <div className="flex items-center gap-5">
         <Avatar of={profile} size={80} />
 
         <div className="flex-1">
-          <p className="text-lg font-semibold">@{profile.username}</p>
+          <p className="display text-lg">@{profile.username}</p>
           <p className="mb-3 text-xs text-muted">
             Your username can't be changed for now.
           </p>
@@ -133,7 +133,7 @@ export function AvatarPicker({
                 disabled={busy}
                 onClick={() => setOpen((v) => !v)}
                 className={
-                  "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 " +
+                  "flex items-center gap-2 notch-md border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 " +
                   (open
                     ? "border-accent text-accent"
                     : "border-line text-muted hover:border-accent hover:text-accent")
@@ -155,8 +155,9 @@ export function AvatarPicker({
               </button>
 
               {open && (
-                <div className="absolute left-0 top-full z-40 mt-2 w-[22rem] rounded-xl border border-line bg-surface p-3 shadow-2xl">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                <div className="float-shadow absolute left-0 top-full z-40 mt-2 w-[22rem]">
+                <div className="notch border border-line bg-surface p-3">
+                  <p className="label-wide mb-2 text-muted">
                     Colour
                   </p>
                   <div className="mb-3 flex gap-2">
@@ -179,7 +180,7 @@ export function AvatarPicker({
                     ))}
                   </div>
 
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  <p className="label-wide mb-2 text-muted">
                     Symbol
                   </p>
                   <div className="grid max-h-64 grid-cols-8 gap-1.5 overflow-y-auto pr-1">
@@ -211,6 +212,7 @@ export function AvatarPicker({
                     })}
                   </div>
                 </div>
+                </div>
               )}
             </div>
 
@@ -218,7 +220,7 @@ export function AvatarPicker({
               type="button"
               disabled={busy}
               onClick={() => fileInput.current?.click()}
-              className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-accent hover:text-accent disabled:opacity-50"
+              className="notch-md border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-accent hover:text-accent disabled:opacity-50"
             >
               {busy ? "Working…" : "Upload a photo"}
             </button>
@@ -228,7 +230,7 @@ export function AvatarPicker({
                 type="button"
                 disabled={busy}
                 onClick={() => save({ avatar_url: null })}
-                className="rounded-lg px-3 py-1.5 text-xs text-muted transition hover:text-danger disabled:opacity-50"
+                className="notch-md px-3 py-1.5 text-xs text-muted transition hover:text-danger disabled:opacity-50"
               >
                 Remove photo
               </button>

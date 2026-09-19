@@ -99,7 +99,7 @@ export function SessionGuests({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter"
-            className="ml-auto w-28 rounded-lg border border-line bg-surface-2 px-2 py-1 text-xs outline-none focus:border-accent"
+            className="ml-auto w-28 notch-md border border-line bg-surface-2 px-2 py-1 text-xs outline-none focus:border-accent"
           />
         )}
       </div>

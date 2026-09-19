@@ -43,7 +43,7 @@ export default function Messages() {
       {/* Conversation list */}
       <aside className="w-72 shrink-0 overflow-y-auto border-r border-line">
         <div className="px-4 py-4">
-          <h1 className="text-lg font-semibold">Messages</h1>
+          <h1 className="display text-lg">Messages</h1>
         </div>
 
         {conversations.length === 0 ? (
@@ -228,7 +228,7 @@ function Thread({
             >
               <div
                 className={
-                  "max-w-[70%] rounded-2xl px-3.5 py-2 text-sm " +
+                  "max-w-[70%] notch px-3.5 py-2 text-sm " +
                   (mine
                     ? "bg-accent text-onaccent"
                     : "border border-line bg-surface")
@@ -259,12 +259,12 @@ function Thread({
           onChange={(e) => setDraft(e.target.value)}
           maxLength={2000}
           placeholder={`Message ${conversation.display_name || conversation.username}`}
-          className="flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
         <button
           type="submit"
           disabled={!draft.trim() || sending}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+          className="notch-md bg-accent px-4 py-2 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
         >
           Send
         </button>

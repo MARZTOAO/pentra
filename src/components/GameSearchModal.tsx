@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { searchGames, releaseLabel, type Game } from "../lib/topFive";
+import {
+  searchGames,
+  releaseLabel,
+  requestGame,
+  type Game,
+} from "../lib/topFive";
 
 export function GameSearchModal({
   onPick,
@@ -13,6 +18,9 @@ export function GameSearchModal({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Game[]>([]);
   const [searching, setSearching] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const [requested, setRequested] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -28,6 +36,9 @@ export function GameSearchModal({
   // Wait until typing pauses before searching, so a five-letter word
   // doesn't fire five separate queries.
   useEffect(() => {
+    setRequested(false);
+    setAskError(null);
+
     if (query.trim().length < 2) {
       setResults([]);
       return;
@@ -43,13 +54,31 @@ export function GameSearchModal({
     return () => clearTimeout(timer);
   }, [query, excludeIds]);
 
+  /**
+   * Ask for a game the catalogue doesn't have. The daily sync picks
+   * these up and imports them — see supabase/25_game_requests.sql.
+   */
+  async function ask() {
+    setAsking(true);
+    setAskError(null);
+
+    const problem = await requestGame(query);
+
+    setAsking(false);
+
+    if (problem) setAskError(problem);
+    else setRequested(true);
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-6 pt-20"
       onClick={onClose}
     >
+      {/* Shadow on the wrapper — clip-path drops one set on the panel. */}
+      <div className="float-shadow w-full max-w-lg">
       <div
-        className="w-full max-w-lg overflow-hidden rounded-xl border border-line bg-surface shadow-2xl"
+        className="w-full overflow-hidden notch border border-line bg-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="border-b border-line p-4">
@@ -58,7 +87,7 @@ export function GameSearchModal({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search for a game…"
-            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className="w-full notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
           />
         </div>
 
@@ -74,10 +103,40 @@ export function GameSearchModal({
           )}
 
           {query.trim().length >= 2 && !searching && results.length === 0 && (
-            <p className="p-6 text-center text-sm text-muted">
-              Nothing found. The catalogue holds the 5,000 most-rated games —
-              very new or very obscure titles may be missing.
-            </p>
+            <div className="p-6 text-center">
+              <p className="mb-3 text-sm text-muted">
+                Nothing found for “{query.trim()}”.
+              </p>
+
+              {/* The important bit. Someone who hits this while filling
+                  in their profile will otherwise leave the field blank
+                  and say nothing — and a half-filled profile is what
+                  makes matching useless. */}
+              {requested ? (
+                <p className="text-sm text-ok">
+                  Asked for. It'll be in the catalogue within a day —
+                  search again then.
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={ask}
+                    disabled={asking}
+                    className="notch-md border border-accent px-4 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10 disabled:opacity-50"
+                  >
+                    {asking ? "Asking…" : `Add “${query.trim()}” to the catalogue`}
+                  </button>
+                  <p className="mt-2 text-xs text-muted">
+                    We'll look it up and add it for everyone.
+                  </p>
+                </>
+              )}
+
+              {askError && (
+                <p className="mt-2 text-xs text-danger">{askError}</p>
+              )}
+            </div>
           )}
 
           {results.map((game) => (
@@ -114,6 +173,7 @@ export function GameSearchModal({
             </button>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

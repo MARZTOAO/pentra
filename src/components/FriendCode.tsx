@@ -33,8 +33,8 @@ export function FriendCode({ code }: { code: string | null | undefined }) {
   if (!code) return null;
 
   return (
-    <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-      <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+    <section className="mb-8 notch border border-line bg-surface p-5">
+      <h2 className="mb-1 label-wide text-muted">
         Your friend code
       </h2>
       <p className="mb-4 text-xs text-muted">
@@ -43,14 +43,14 @@ export function FriendCode({ code }: { code: string | null | undefined }) {
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
-        <code className="rounded-lg border border-line bg-surface-2 px-4 py-2.5 font-mono text-lg font-semibold tracking-[0.18em] text-accent">
+        <code className="notch-md border border-line bg-surface-2 px-4 py-2.5 font-mono display text-lg tracking-[0.18em] text-accent">
           {pretty}
         </code>
 
         <button
           type="button"
           onClick={copy}
-          className="rounded-lg border border-line px-3.5 py-2.5 text-sm font-medium text-muted transition hover:border-accent hover:text-accent"
+          className="notch-md border border-line px-3.5 py-2.5 text-sm font-medium text-muted transition hover:border-accent hover:text-accent"
         >
           {copied ? "Copied" : "Copy"}
         </button>

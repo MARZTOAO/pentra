@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { getProfile, updateProfile, type Profile } from "../lib/profile";
-import {
-  PALETTES,
-  applyTheme,
-  findPalette,
-  DEFAULT_THEME,
-} from "../lib/themes";
 import { Alert, FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 import { getBlocked, unblockUser, type BlockedUser } from "../lib/safety";
@@ -46,30 +40,14 @@ export default function Settings() {
     else setBlocked(await getBlocked());
   }
 
-  async function choose(key: string) {
-    if (!user) return;
-
-    // Apply first, save second. The colours should change the instant
-    // you click, not after a round trip to the database.
-    applyTheme(key);
-    setError(null);
-
-    const { data, error } = await updateProfile(user.id, { app_theme: key });
-
-    if (error) setError(error.message);
-    else if (data) setProfile(data as Profile);
-  }
 
   if (loading) return <FullScreenLoader />;
 
-  const current = profile?.app_theme ?? DEFAULT_THEME;
-  const dark = PALETTES.filter((p) => p.mode === "dark");
-  const light = PALETTES.filter((p) => p.mode === "light");
 
   return (
     <div className="mx-auto max-w-2xl px-8 py-10">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold">Settings</h1>
+        <h1 className="display text-2xl">Settings</h1>
         <p className="mt-1 text-sm text-muted">
           How the app looks and behaves for you.
         </p>
@@ -77,32 +55,8 @@ export default function Settings() {
 
       {error && <Alert>{error}</Alert>}
 
-      <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
-          Colour theme
-        </h2>
-        <p className="mb-5 text-xs text-muted">
-          Changes the whole app for you only — nobody else sees it. Saves the
-          moment you pick one, and follows you to another machine.
-        </p>
-
-        <ThemeGrid
-          title="Dark"
-          palettes={dark}
-          current={current}
-          onPick={choose}
-        />
-        <ThemeGrid
-          title="Light"
-          palettes={light}
-          current={current}
-          onPick={choose}
-          note="Newer than the dark ones — tell me if anything looks off."
-        />
-      </section>
-
-      <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+      <section className="mb-8 notch border border-line bg-surface p-5">
+        <h2 className="mb-1 label-wide text-muted">
           Who can message you
         </h2>
         <p className="mb-4 text-xs text-muted">
@@ -137,7 +91,7 @@ export default function Settings() {
                 key={option.key}
                 onClick={() => setPrivacy(option.key)}
                 className={
-                  "w-full rounded-lg border px-3 py-2.5 text-left transition " +
+                  "w-full notch-md border px-3 py-2.5 text-left transition " +
                   (active
                     ? "border-accent bg-accent/10"
                     : "border-line hover:border-muted")
@@ -158,8 +112,8 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-line bg-surface p-5">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+      <section className="notch border border-line bg-surface p-5">
+        <h2 className="mb-1 label-wide text-muted">
           Blocked players
         </h2>
         <p className="mb-4 text-xs text-muted">
@@ -174,7 +128,7 @@ export default function Settings() {
             {blocked.map((person) => (
               <div
                 key={person.user_id}
-                className="flex items-center gap-3 rounded-lg border border-line bg-surface-2 p-2.5"
+                className="flex items-center gap-3 notch-md border border-line bg-surface-2 p-2.5"
               >
                 <Avatar of={person} size={36} />
                 <div className="min-w-0 flex-1">
@@ -187,7 +141,7 @@ export default function Settings() {
                 </div>
                 <button
                   onClick={() => unblock(person.user_id)}
-                  className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-accent hover:text-accent"
+                  className="shrink-0 notch-md border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-accent hover:text-accent"
                 >
                   Unblock
                 </button>
@@ -200,55 +154,3 @@ export default function Settings() {
   );
 }
 
-function ThemeGrid({
-  title,
-  palettes,
-  current,
-  onPick,
-  note,
-}: {
-  title: string;
-  palettes: typeof PALETTES;
-  current: string;
-  onPick: (key: string) => void;
-  note?: string;
-}) {
-  return (
-    <div className="mb-5 last:mb-0">
-      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-        {title}
-      </p>
-      {note && <p className="mb-2 text-[11px] text-muted">{note}</p>}
-
-      <div className="grid grid-cols-4 gap-3">
-        {palettes.map((palette) => {
-          const active = findPalette(current).key === palette.key;
-          return (
-            <button
-              key={palette.key}
-              type="button"
-              onClick={() => onPick(palette.key)}
-              className={
-                "rounded-lg border-2 p-2 text-left transition " +
-                (active
-                  ? "border-accent ring-2 ring-accent/30"
-                  : "border-line hover:border-muted")
-              }
-            >
-              <div className="mb-2 flex h-9 overflow-hidden rounded">
-                {palette.swatch.map((colour, i) => (
-                  <div
-                    key={i}
-                    className="flex-1"
-                    style={{ backgroundColor: colour }}
-                  />
-                ))}
-              </div>
-              <span className="text-xs font-medium">{palette.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}

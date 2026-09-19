@@ -58,7 +58,7 @@ export default function Friends() {
     <div className="mx-auto max-w-2xl px-8 py-10">
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Friends</h1>
+          <h1 className="display text-2xl">Friends</h1>
           <p className="mt-1 text-sm text-muted">
             {friends.length === 0
               ? "Nobody yet."
@@ -69,7 +69,7 @@ export default function Friends() {
 
         <Link
           to="/search"
-          className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-onaccent transition hover:bg-accent-hi"
+          className="shrink-0 notch-md bg-accent px-4 py-2 text-sm font-semibold text-onaccent transition hover:bg-accent-hi"
         >
           Add a friend
         </Link>
@@ -86,14 +86,14 @@ export default function Friends() {
               <button
                 disabled={busy === row.other_id}
                 onClick={() => respond(row, true)}
-                className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
+                className="notch-md bg-accent px-3 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
               >
                 Accept
               </button>
               <button
                 disabled={busy === row.other_id}
                 onClick={() => respond(row, false)}
-                className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
+                className="notch-md border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
               >
                 Decline
               </button>
@@ -121,7 +121,7 @@ export default function Friends() {
               <button
                 disabled={busy === row.other_id}
                 onClick={() => remove(row)}
-                className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-danger hover:text-danger disabled:opacity-50"
+                className="notch-md border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-danger hover:text-danger disabled:opacity-50"
               >
                 Remove
               </button>
@@ -138,7 +138,7 @@ export default function Friends() {
               <button
                 disabled={busy === row.other_id}
                 onClick={() => remove(row)}
-                className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
+                className="notch-md border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -159,7 +159,7 @@ function Section({
 }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+      <h2 className="mb-3 label-wide text-muted">
         {title}
       </h2>
       <div className="space-y-2">{children}</div>
@@ -177,7 +177,7 @@ function Row({
   const online = isOnline(row.last_seen_at);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3">
+    <div className="flex items-center gap-3 notch border border-line bg-surface p-3">
       <Link to={`/u/${row.username}`} className="relative shrink-0">
         <Avatar of={row} size={44} />
         {online && (
@@ -204,7 +204,7 @@ function Row({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
+    <p className="notch border border-dashed border-line p-8 text-center text-sm text-muted">
       {children}
     </p>
   );

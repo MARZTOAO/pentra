@@ -56,7 +56,7 @@ export function SafetyMenu({
           onClick={() => setOpen((v) => !v)}
           aria-label="More"
           title="More"
-          className="rounded-lg border border-line px-2.5 py-2 text-muted transition hover:border-muted hover:text-ink"
+          className="notch-md border border-line px-2.5 py-2 text-muted transition hover:border-muted hover:text-ink"
         >
           <svg
             className="h-4 w-4"
@@ -70,26 +70,30 @@ export function SafetyMenu({
           </svg>
         </button>
 
+        {/* The shadow sits on the wrapper below, not on the notched panel:
+            clip-path discards a shadow set on the element it clips. */}
         {open && (
-          <div className="absolute right-0 top-full z-40 mt-2 w-44 overflow-hidden rounded-xl border border-line bg-surface shadow-2xl">
-            <button
-              onClick={() => {
-                setOpen(false);
-                setReporting(true);
-              }}
-              className="w-full px-3 py-2.5 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-ink"
-            >
-              Report @{username}
-            </button>
-            <button
-              onClick={() => {
-                setOpen(false);
-                setConfirmBlock(true);
-              }}
-              className="w-full px-3 py-2.5 text-left text-sm text-danger transition hover:bg-danger/10"
-            >
-              Block @{username}
-            </button>
+          <div className="float-shadow absolute right-0 top-full z-40 mt-2 w-44">
+            <div className="overflow-hidden notch border border-line bg-surface">
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  setReporting(true);
+                }}
+                className="w-full px-3 py-2.5 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-ink"
+              >
+                Report @{username}
+              </button>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  setConfirmBlock(true);
+                }}
+                className="w-full px-3 py-2.5 text-left text-sm text-danger transition hover:bg-danger/10"
+              >
+                Block @{username}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -148,21 +152,21 @@ export function ReportDialog({
     <Overlay onClose={onClose}>
       {done ? (
         <>
-          <h2 className="mb-2 text-lg font-semibold">Report sent</h2>
+          <h2 className="mb-2 display text-lg">Report sent</h2>
           <p className="mb-5 text-sm text-muted">
             Thanks — it'll be reviewed. If you'd rather not see this person
             again, you can block them from their profile.
           </p>
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-onaccent"
+            className="w-full notch-md bg-accent px-4 py-2.5 text-sm font-semibold text-onaccent"
           >
             Done
           </button>
         </>
       ) : (
         <>
-          <h2 className="mb-1 text-lg font-semibold">
+          <h2 className="mb-1 display text-lg">
             Report {postId ? "this post" : `@${username}`}
           </h2>
           <p className="mb-4 text-sm text-muted">
@@ -177,7 +181,7 @@ export function ReportDialog({
               <label
                 key={r.key}
                 className={
-                  "flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition " +
+                  "flex cursor-pointer items-center gap-2.5 notch-md border px-3 py-2 text-sm transition " +
                   (reason === r.key
                     ? "border-accent bg-accent/10 text-accent"
                     : "border-line text-muted hover:border-muted hover:text-ink")
@@ -201,20 +205,20 @@ export function ReportDialog({
             maxLength={1000}
             rows={3}
             placeholder="Anything else worth knowing (optional)"
-            className="mb-4 w-full resize-none rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none focus:border-accent"
+            className="mb-4 w-full resize-none notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none focus:border-accent"
           />
 
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="flex-1 rounded-lg border border-line px-4 py-2.5 text-sm font-medium text-muted transition hover:text-ink"
+              className="flex-1 notch-md border border-line px-4 py-2.5 text-sm font-medium text-muted transition hover:text-ink"
             >
               Cancel
             </button>
             <button
               onClick={submit}
               disabled={busy}
-              className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
+              className="flex-1 notch-md bg-accent px-4 py-2.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
             >
               {busy ? "Sending…" : "Send report"}
             </button>
@@ -242,13 +246,13 @@ export function Confirm({
 
   return (
     <Overlay onClose={onCancel}>
-      <h2 className="mb-2 text-lg font-semibold">{title}</h2>
+      <h2 className="mb-2 display text-lg">{title}</h2>
       <p className="mb-5 text-sm text-muted">{body}</p>
 
       <div className="flex gap-2">
         <button
           onClick={onCancel}
-          className="flex-1 rounded-lg border border-line px-4 py-2.5 text-sm font-medium text-muted transition hover:text-ink"
+          className="flex-1 notch-md border border-line px-4 py-2.5 text-sm font-medium text-muted transition hover:text-ink"
         >
           Cancel
         </button>
@@ -259,7 +263,7 @@ export function Confirm({
             setBusy(false);
           }}
           disabled={busy}
-          className="flex-1 rounded-lg bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="flex-1 notch-md bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {busy ? "…" : confirmLabel}
         </button>
@@ -288,11 +292,13 @@ function Overlay({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
       onClick={onClose}
     >
+      <div className="float-shadow w-full max-w-md">
       <div
-        className="w-full max-w-md rounded-xl border border-line bg-surface p-5 shadow-2xl"
+        className="w-full notch border border-line bg-surface p-5"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
+      </div>
       </div>
     </div>
   );

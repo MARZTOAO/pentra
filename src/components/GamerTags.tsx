@@ -52,9 +52,9 @@ export function GamerTags() {
   const filled = Object.values(handles).filter((h) => h.trim()).length;
 
   return (
-    <section className="mb-8 rounded-xl border border-line bg-surface p-5">
+    <section className="mb-8 notch border border-line bg-surface p-5">
       <div className="mb-1 flex items-center gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+        <h2 className="label-wide text-muted">
           Gamer tags
         </h2>
         <span className="flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-[10px] font-medium text-muted">
@@ -102,7 +102,7 @@ export function GamerTags() {
                   }
                   maxLength={100}
                   placeholder={network.placeholder}
-                  className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+                  className="w-full notch-md border border-line bg-surface-2 px-3 py-2 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
                 />
               </label>
             ))}

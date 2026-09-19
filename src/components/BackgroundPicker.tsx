@@ -69,8 +69,8 @@ export function BackgroundPicker({
       : "None";
 
   return (
-    <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+    <section className="mb-8 notch border border-line bg-surface p-5">
+      <h2 className="mb-3 label-wide text-muted">
         Profile background
       </h2>
 
@@ -79,7 +79,7 @@ export function BackgroundPicker({
       <div className="flex items-center gap-4">
         {/* Preview stays visible - it's the thing you're actually choosing. */}
         <div
-          className="h-16 w-28 shrink-0 rounded-lg border border-line"
+          className="h-16 w-28 shrink-0 notch-md border border-line"
           style={bannerStyle(profile)}
         />
 
@@ -90,7 +90,7 @@ export function BackgroundPicker({
               disabled={busy}
               onClick={() => setOpen((v) => !v)}
               className={
-                "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 " +
+                "flex items-center gap-2 notch-md border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 " +
                 (open
                   ? "border-accent text-accent"
                   : "border-line text-muted hover:border-accent hover:text-accent")
@@ -112,10 +112,11 @@ export function BackgroundPicker({
             </button>
 
             {open && (
-              <div className="absolute left-0 top-full z-40 mt-2 max-h-80 w-[26rem] overflow-y-auto rounded-xl border border-line bg-surface p-3 shadow-2xl">
+              <div className="float-shadow absolute left-0 top-full z-40 mt-2 w-[26rem]">
+              <div className="max-h-80 overflow-y-auto notch border border-line bg-surface p-3">
                 {GROUPS.map((group) => (
                   <div key={group} className="mb-3 last:mb-0">
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                    <p className="label-wide mb-1.5 text-muted">
                       {group}
                     </p>
                     <div className="grid grid-cols-8 gap-1.5">
@@ -129,7 +130,7 @@ export function BackgroundPicker({
                             title={bg.label}
                             onClick={() => choosePreset(bg.key)}
                             className={
-                              "h-9 rounded-md border-2 transition " +
+                              "h-9 notch-sm border-2 transition " +
                               (active
                                 ? "border-accent ring-2 ring-accent/30"
                                 : "border-transparent hover:border-muted")
@@ -144,10 +145,11 @@ export function BackgroundPicker({
                   </div>
                 ))}
               </div>
+              </div>
             )}
           </div>
 
-          <p className="text-xs text-muted">
+          <p className="numeric text-xs text-muted">
             {BACKGROUNDS.length} to choose from.
           </p>
         </div>

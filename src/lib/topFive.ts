@@ -112,3 +112,28 @@ export async function searchGames(query: string): Promise<Game[]> {
   if (error || !data) return [];
   return data as Game[];
 }
+
+/**
+ * Ask for a game the catalogue doesn't have.
+ *
+ * The daily sync looks these up on IGDB and imports them — see
+ * supabase/25_game_requests.sql. Returns an error message worth
+ * showing, or null when it landed.
+ */
+export async function requestGame(name: string): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getSession();
+  const userId = auth.session?.user.id;
+  if (!userId) return "You need to be signed in.";
+
+  const { error } = await supabase
+    .from("game_requests")
+    .insert({ user_id: userId, name: name.trim() });
+
+  if (!error) return null;
+
+  // Someone else already asked for it — which is a success, not a
+  // failure, from this person's point of view.
+  if (error.code === "23505") return null;
+
+  return error.message;
+}

@@ -84,7 +84,7 @@ export function SessionCard({
   return (
     <div
       className={
-        "mt-3 rounded-xl border p-3 " +
+        "mt-3 notch border p-3 " +
         (started
           ? "border-line bg-surface-2/50 opacity-70"
           : open > 0
@@ -110,12 +110,12 @@ export function SessionCard({
         </span>
 
         {countdown && !started && (
-          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
+          <span className="numeric notch-sm bg-accent-dim px-2 py-0.5 text-xs font-bold text-accent">
             {countdown}
           </span>
         )}
 
-        <span className="ml-auto text-xs text-muted">
+        <span className="numeric ml-auto text-xs text-muted">
           {taken}/{slots} players
         </span>
       </div>
@@ -183,7 +183,7 @@ export function SessionCard({
         <button
           onClick={leave}
           disabled={busy}
-          className="rounded-lg border border-ok/50 px-3 py-1.5 text-xs font-semibold text-ok transition hover:border-danger hover:text-danger disabled:opacity-50"
+          className="notch-md border border-ok/50 px-3 py-1.5 text-xs font-semibold text-ok transition hover:border-danger hover:text-danger disabled:opacity-50"
         >
           {busy ? "…" : "You're in — leave"}
         </button>
@@ -191,7 +191,7 @@ export function SessionCard({
         <button
           onClick={join}
           disabled={busy}
-          className="rounded-lg bg-accent px-4 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
+          className="notch-md bg-accent px-4 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
         >
           {busy ? "Joining…" : `Join — ${open} ${open === 1 ? "slot" : "slots"} left`}
         </button>

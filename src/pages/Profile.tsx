@@ -19,6 +19,7 @@ import { GamerTags } from "../components/GamerTags";
 import { BackgroundPicker } from "../components/BackgroundPicker";
 import { AvatarPicker } from "../components/AvatarPicker";
 import { FriendCode } from "../components/FriendCode";
+import { GameLibrary } from "../components/GameLibrary";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -106,7 +107,7 @@ export default function Profile() {
     <div className="mx-auto max-w-2xl px-8 py-10">
       <header className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Your profile</h1>
+          <h1 className="display text-2xl">Your profile</h1>
           <p className="mt-1 text-sm text-muted">
             This is what other players see. The more you fill in, the better your
             matches.
@@ -116,7 +117,7 @@ export default function Profile() {
         {profile?.username && (
           <Link
             to={`/u/${profile.username}`}
-            className="shrink-0 rounded-lg border border-line px-4 py-2 text-sm font-medium text-muted transition hover:border-accent hover:text-accent"
+            className="shrink-0 notch-md border border-line px-4 py-2 text-sm font-medium text-muted transition hover:border-accent hover:text-accent"
           >
             View as others see it
           </Link>
@@ -138,9 +139,11 @@ export default function Profile() {
 
       <TopFive />
 
+      {user && <GameLibrary userId={user.id} editable />}
+
       {/* Basics */}
-      <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted">
+      <section className="mb-8 notch border border-line bg-surface p-5">
+        <h2 className="mb-4 label-wide text-muted">
           Basics
         </h2>
 
@@ -151,7 +154,7 @@ export default function Profile() {
             onChange={(e) => setDisplayName(e.target.value)}
             maxLength={40}
             placeholder="What people call you"
-            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className="w-full notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
           />
         </label>
 
@@ -163,7 +166,7 @@ export default function Profile() {
             maxLength={500}
             rows={3}
             placeholder="Chill co-op, hate PvP, will absolutely carry you through a raid."
-            className="w-full resize-none rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className="w-full resize-none notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
           />
           <span className="mt-1 block text-right text-xs text-muted">
             {bio.length}/500
@@ -175,7 +178,7 @@ export default function Profile() {
           <select
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className="w-full notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
           >
             <option value="">Not set</option>
             {REGIONS.map((r) => (
@@ -198,14 +201,14 @@ export default function Profile() {
               onChange={(e) => setCity(e.target.value)}
               maxLength={60}
               placeholder="City"
-              className="flex-1 rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+              className="flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
 
             {isUS ? (
               <select
                 value={stateCode}
                 onChange={(e) => setStateCode(e.target.value)}
-                className="w-24 rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+                className="w-24 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
               >
                 <option value="">State</option>
                 {US_STATES.map((s) => (
@@ -221,7 +224,7 @@ export default function Profile() {
               onChange={(e) => setCountry(e.target.value)}
               maxLength={60}
               placeholder="Country"
-              className="w-36 rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+              className="w-36 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
           </div>
 
@@ -238,8 +241,8 @@ export default function Profile() {
       </section>
 
       {/* Platforms */}
-      <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+      <section className="mb-8 notch border border-line bg-surface p-5">
+        <h2 className="mb-1 label-wide text-muted">
           Platforms
         </h2>
         <p className="mb-4 text-xs text-muted">
@@ -259,7 +262,7 @@ export default function Profile() {
             value={platforms.includes(primaryPlatform) ? primaryPlatform : ""}
             onChange={(e) => setPrimaryPlatform(e.target.value)}
             disabled={platforms.length === 0}
-            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
+            className="w-full notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
           >
             <option value="">Not set</option>
             {platforms.map((p) => (
@@ -279,8 +282,8 @@ export default function Profile() {
       <GamerTags />
 
       {/* Availability */}
-      <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+      <section className="mb-8 notch border border-line bg-surface p-5">
+        <h2 className="mb-1 label-wide text-muted">
           When you play
         </h2>
         <p className="mb-4 text-xs text-muted">

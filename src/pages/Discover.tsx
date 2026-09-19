@@ -51,7 +51,7 @@ export default function Discover() {
   return (
     <div className="mx-auto max-w-4xl px-8 py-10">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Find players</h1>
+        <h1 className="display text-2xl">Find players</h1>
         <p className="mt-1 text-sm text-muted">
           Ranked by how much you have in common. Every result says why.
         </p>
@@ -88,7 +88,7 @@ export default function Discover() {
               setPlatform(null);
               setRegion(null);
             }}
-            className="rounded-lg px-3 py-2 text-sm text-muted transition hover:text-ink"
+            className="notch-md px-3 py-2 text-sm text-muted transition hover:text-ink"
           >
             Clear
           </button>
@@ -110,7 +110,7 @@ export default function Discover() {
       )}
 
       {myTopFive.length === 0 && !loading && (
-        <div className="mt-6 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent">
+        <div className="mt-6 notch-md border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent">
           You haven't picked a Top 5 yet, so matching has almost nothing to go
           on.{" "}
           <Link to="/me" className="font-medium underline underline-offset-2">
@@ -130,7 +130,7 @@ function MatchCard({ match }: { match: Match }) {
   return (
     <Link
       to={`/u/${match.username}`}
-      className="flex gap-4 rounded-xl border border-line bg-surface p-4 transition hover:border-accent/50 hover:bg-surface-2"
+      className="flex gap-4 notch border border-line bg-surface p-4 transition hover:border-accent/50 hover:bg-surface-2"
     >
       <Avatar of={match} size={56} className="shrink-0" />
 
@@ -194,7 +194,9 @@ function MatchScore({ score, max }: { score: number; max: number }) {
       className="flex w-20 shrink-0 flex-col items-end justify-center"
       title={`${Math.round(score)} of a possible ${Math.round(max)} points`}
     >
-      <span className={`text-2xl font-bold ${tone}`}>{percent}%</span>
+      {/* Monospaced, not display: this is a number people compare across
+          cards, and tabular figures stop it jittering as it changes. */}
+      <span className={`numeric text-2xl font-bold ${tone}`}>{percent}%</span>
 
       <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
         <div
@@ -212,7 +214,7 @@ function MatchScore({ score, max }: { score: number; max: number }) {
 
 function EmptyState({ hasFilters }: { hasFilters: boolean }) {
   return (
-    <div className="rounded-xl border border-dashed border-line p-12 text-center">
+    <div className="notch border border-dashed border-line p-12 text-center">
       <h2 className="mb-2 font-semibold">
         {hasFilters ? "Nobody matches those filters" : "Nobody here yet"}
       </h2>
@@ -241,7 +243,7 @@ function Select({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={
-        "rounded-lg border bg-surface-2 px-3 py-2 text-sm outline-none transition focus:border-accent " +
+        "notch-md border bg-surface-2 px-3 py-2 text-sm outline-none transition focus:border-accent " +
         (value ? "border-accent text-accent" : "border-line text-muted")
       }
     >

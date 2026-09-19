@@ -11,6 +11,11 @@
  *       Searches IGDB by name and imports every match, no matter how
  *       obscure. Use this for anything the bulk import missed.
  *
+ *   npm run backfill-games
+ *       Everything released in the last five years, however obscure.
+ *       Run once; it takes a few minutes and pulls tens of thousands
+ *       of titles. Use --years=N for a different window.
+ *
  *   npm run sync-games
  *       The one meant to run on a schedule. Pulls games coming out in
  *       the next two years, plus anything IGDB has changed recently,
@@ -71,6 +76,10 @@ const PAGES = flag("pages", 40);
 const MIN_RATINGS = flag("min-ratings", 2);
 
 const SYNC = argv.includes("--sync");
+const BACKFILL = argv.includes("--backfill");
+
+// How far back the backfill reaches.
+const BACKFILL_YEARS = flag("years", 5);
 
 // How far ahead to look for announced games. Two years covers anything
 // with a date worth planning around; past that, dates are placeholders
@@ -254,6 +263,92 @@ async function bulkMode(token) {
 }
 
 
+
+/**
+ * Games people asked for by name.
+ *
+ * Runs as part of the daily sync, using the service role key, so it
+ * can see requests from every user - the policy on that table only
+ * lets each person read their own.
+ *
+ * A request that IGDB has never heard of is marked not_found rather
+ * than left pending. Otherwise a single misspelling gets retried
+ * every night forever.
+ */
+async function fulfilRequests(token) {
+  const { data: requests, error } = await supabase
+    .from("game_requests")
+    .select("id, name")
+    .eq("status", "pending")
+    .order("created_at")
+    .limit(50);
+
+  if (error) {
+    console.log(`  requests: skipped (${error.message})`);
+    return;
+  }
+
+  if (!requests || requests.length === 0) {
+    console.log("  requests: none waiting.");
+    return;
+  }
+
+  let found = 0;
+  let missing = 0;
+
+  for (const request of requests) {
+    const escaped = request.name.replace(/"/g, '\\"');
+
+    const games = await igdb(
+      token,
+      `
+      search "${escaped}";
+      ${FIELDS}
+      where cover != null & ${NO_DLC};
+      limit 10;
+    `,
+    );
+
+    if (games.length === 0) {
+      await supabase
+        .from("game_requests")
+        .update({ status: "not_found", resolved_at: new Date().toISOString() })
+        .eq("id", request.id);
+
+      missing++;
+      console.log(`    · "${request.name}" — nothing on IGDB`);
+      await sleep(DELAY_MS);
+      continue;
+    }
+
+    await save(games.map(toRow));
+
+    // Point the request at the closest match so the app can say what
+    // it actually added - "Helldivers 2" when they typed "helldivers".
+    const { data: row } = await supabase
+      .from("games")
+      .select("id")
+      .eq("igdb_id", games[0].id)
+      .single();
+
+    await supabase
+      .from("game_requests")
+      .update({
+        status: "imported",
+        resolved_at: new Date().toISOString(),
+        game_id: row?.id ?? null,
+      })
+      .eq("id", request.id);
+
+    found++;
+    console.log(`    · "${request.name}" — added ${games.length}, top match ${games[0].name}`);
+
+    await sleep(DELAY_MS);
+  }
+
+  console.log(`  requests: ${found} filled, ${missing} not found on IGDB.`);
+}
+
 /**
  * The scheduled run.
  *
@@ -341,6 +436,70 @@ async function syncMode(token) {
   }
 
   console.log(`  updated: ${changed} games changed recently.`);
+
+  // ---- pass three: what people asked for by name ----
+  await fulfilRequests(token);
+
+  console.log(`\nDone. Your games table now holds ${await totalRows()} rows.\n`);
+}
+
+
+/**
+ * Everything from the last few years, however obscure.
+ *
+ * Paging by `offset` breaks down here. Offsets get slower the deeper
+ * they go, and IGDB stops honouring them past a point - which is the
+ * wall you hit trying to walk forty thousand rows five hundred at a
+ * time. So this pages by id instead: sort by id, remember the last one
+ * seen, and ask for everything after it. The cost is flat no matter
+ * how far in you are, and nothing is skipped or repeated if rows shift
+ * underneath you mid-run.
+ *
+ * No upper bound on the date, so anything already announced for the
+ * future comes along too.
+ */
+async function backfillMode(token) {
+  const since = Math.floor(
+    (Date.now() - BACKFILL_YEARS * 365.25 * 86400 * 1000) / 1000,
+  );
+
+  console.log(
+    `Pulling everything released since ` +
+      `${new Date(since * 1000).toISOString().slice(0, 10)}.\n` +
+      `This takes a few minutes. Leave it running.\n`,
+  );
+
+  let lastId = 0;
+  let total = 0;
+  let page = 0;
+
+  for (;;) {
+    const games = await igdb(
+      token,
+      `
+      ${FIELDS}
+      where id > ${lastId}
+        & first_release_date > ${since}
+        & cover != null
+        & ${NO_DLC};
+      sort id asc;
+      limit ${PAGE_SIZE};
+    `,
+    );
+
+    if (games.length === 0) break;
+
+    total += await save(games.map(toRow));
+    lastId = games[games.length - 1].id;
+    page++;
+
+    process.stdout.write(`  page ${page}: ${total} saved so far…\r`);
+
+    if (games.length < PAGE_SIZE) break;
+    await sleep(DELAY_MS);
+  }
+
+  console.log(`  ${total} games imported or updated over ${page} pages.`);
   console.log(`\nDone. Your games table now holds ${await totalRows()} rows.\n`);
 }
 
@@ -351,7 +510,8 @@ async function main() {
   const token = await getAccessToken();
   console.log("Got it.\n");
 
-  if (SYNC) await syncMode(token);
+  if (BACKFILL) await backfillMode(token);
+  else if (SYNC) await syncMode(token);
   else if (searchTerms.length > 0) await searchMode(token, searchTerms);
   else await bulkMode(token);
 }

@@ -24,7 +24,7 @@ export function PostMediaGrid({ media }: { media: PostMedia[] }) {
     <>
       <div
         className={
-          "mt-2.5 overflow-hidden rounded-xl border border-line " +
+          "mt-2.5 overflow-hidden notch border border-line " +
           (single
             ? ""
             : media.length === 2
@@ -148,7 +148,7 @@ function Lightbox({
       <button
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-4 top-4 rounded-lg px-3 py-1.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+        className="absolute right-4 top-4 notch-md px-3 py-1.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
       >
         Close
       </button>
@@ -176,13 +176,13 @@ function Lightbox({
             muted
             playsInline
             controls
-            className="max-h-[85vh] max-w-full rounded-lg"
+            className="max-h-[85vh] max-w-full notch-md"
           />
         ) : (
           <img
             src={item.url}
             alt={item.alt ?? ""}
-            className="max-h-[85vh] max-w-full rounded-lg object-contain"
+            className="max-h-[85vh] max-w-full notch-md object-contain"
           />
         )}
       </div>

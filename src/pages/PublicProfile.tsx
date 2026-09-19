@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { getProfileByUsername, type Profile } from "../lib/profile";
 import { getTopFive, type TopFiveEntry } from "../lib/topFive";
+import { GameLibrary } from "../components/GameLibrary";
 import { formatLocation } from "../lib/constants";
 import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
 import { bannerStyle } from "../lib/backgrounds";
@@ -56,7 +57,7 @@ export default function PublicProfile() {
     return (
       <div className="flex h-full items-center justify-center p-10 text-center">
         <div>
-          <h1 className="mb-2 text-xl font-semibold">No such player</h1>
+          <h1 className="mb-2 display text-xl">No such player</h1>
           <p className="mb-6 text-sm text-muted">
             Nobody here goes by @{username}.
           </p>
@@ -73,7 +74,7 @@ export default function PublicProfile() {
   return (
     <div className="mx-auto max-w-3xl px-8 py-10">
       {isSelf && (
-        <div className="mb-6 flex items-center justify-between rounded-lg border border-accent/40 bg-accent/10 px-4 py-3">
+        <div className="mb-6 flex items-center justify-between notch-md border border-accent/40 bg-accent/10 px-4 py-3">
           <p className="text-sm text-accent">
             This is how your profile looks to everyone else.
           </p>
@@ -102,7 +103,7 @@ export default function PublicProfile() {
         <Avatar of={profile} size={96} className="shrink-0 border-4 border-bg" />
 
         <div className="min-w-0 flex-1 pb-1">
-          <h1 className="text-2xl font-semibold">
+          <h1 className="display text-2xl">
             {profile.display_name || profile.username}
           </h1>
           <p className="mb-3 text-sm text-muted">@{profile.username}</p>
@@ -135,12 +136,12 @@ export default function PublicProfile() {
 
       {/* Top 5 */}
       <section className="mb-8">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted">
+        <h2 className="mb-4 label-wide text-muted">
           Top 5
         </h2>
 
         {topFive.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
+          <p className="notch border border-dashed border-line p-8 text-center text-sm text-muted">
             {isSelf
               ? "You haven't picked your Top 5 yet — it's the first thing people look at."
               : "This player hasn't picked a Top 5 yet."}
@@ -149,7 +150,7 @@ export default function PublicProfile() {
           <div className="grid grid-cols-5 gap-3">
             {topFive.map((entry, index) => (
               <div key={entry.game.id}>
-                <div className="relative mb-2 aspect-[3/4] overflow-hidden rounded-lg border border-line bg-surface-2">
+                <div className="relative mb-2 aspect-[3/4] overflow-hidden notch-md border border-line bg-surface-2">
                   {entry.game.cover_url && (
                     <img
                       src={entry.game.cover_url}
@@ -184,6 +185,8 @@ export default function PublicProfile() {
         )}
       </section>
 
+      <GameLibrary userId={profile.id} editable={false} />
+
       {/* Details */}
       <div className="mb-4 grid grid-cols-2 gap-4">
         <PlatformPanel
@@ -196,8 +199,8 @@ export default function PublicProfile() {
       {/* Gamer tags. The database only returns these to the person
           themselves and their accepted friends - if the list comes back
           empty, either they haven't added any or you aren't friends. */}
-      <section className="rounded-xl border border-line bg-surface/85 p-5 backdrop-blur-sm">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+      <section className="notch border border-line bg-surface/85 p-5 backdrop-blur-sm">
+        <h2 className="mb-3 label-wide text-muted">
           Gamer tags
         </h2>
 
@@ -249,8 +252,8 @@ function Panel({
   empty: string;
 }) {
   return (
-    <section className="rounded-xl border border-line bg-surface/85 p-5 backdrop-blur-sm">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+    <section className="notch border border-line bg-surface/85 p-5 backdrop-blur-sm">
+      <h2 className="mb-3 label-wide text-muted">
         {title}
       </h2>
       {!items || items.length === 0 ? (
@@ -286,13 +289,13 @@ function PlatformPanel({
   const others = (all ?? []).filter((p) => p !== primary);
 
   return (
-    <section className="rounded-xl border border-line bg-surface/85 p-5 backdrop-blur-sm">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+    <section className="notch border border-line bg-surface/85 p-5 backdrop-blur-sm">
+      <h2 className="mb-3 label-wide text-muted">
         Primarily plays on
       </h2>
 
       {primary ? (
-        <p className="mb-3 text-lg font-semibold text-accent">{primary}</p>
+        <p className="mb-3 display text-lg text-accent">{primary}</p>
       ) : (
         <p className="mb-3 text-sm text-muted">Not set</p>
       )}

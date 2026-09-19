@@ -82,7 +82,7 @@ export function AttachmentThumbs({ attach }: { attach: AttachmentState }) {
           {items.map((item, i) => (
             <figure
               key={item.previewUrl}
-              className="w-28 overflow-hidden rounded-lg border border-line bg-surface-2"
+              className="w-28 overflow-hidden notch-md border border-line bg-surface-2"
             >
               <div className="relative h-20 w-full">
                 {item.kind === "video" ? (
@@ -128,7 +128,7 @@ export function AttachmentThumbs({ attach }: { attach: AttachmentState }) {
           ))}
 
           {working > 0 && (
-            <div className="flex h-[104px] w-28 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line">
+            <div className="flex h-[104px] w-28 flex-col items-center justify-center gap-2 notch-md border border-dashed border-line">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-accent" />
               <span className="px-1 text-center text-[10px] leading-tight text-muted">
                 Compressing…

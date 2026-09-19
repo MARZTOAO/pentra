@@ -169,9 +169,9 @@ export function Notifications({ children }: { children: ReactNode }) {
       {/* Stacked bottom-right, newest at the bottom. */}
       <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2">
         {toasts.map((toast) => (
+          <div key={toast.id} className="float-shadow pointer-events-auto">
           <div
-            key={toast.id}
-            className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-line bg-surface p-3 shadow-2xl transition hover:border-accent"
+            className="flex w-full items-start gap-3 notch border border-line bg-surface p-3 transition hover:border-accent"
           >
             <button
               onClick={() => {
@@ -214,6 +214,7 @@ export function Notifications({ children }: { children: ReactNode }) {
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
+          </div>
           </div>
         ))}
       </div>

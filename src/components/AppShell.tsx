@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { heartbeat } from "../lib/friends";
-import { getProfile } from "../lib/profile";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
 
@@ -86,14 +85,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [user]);
 
-  // The saved theme may differ from what this machine last used - for
-  // instance after signing in somewhere new. Profile wins.
+  // One palette now, so there's nothing to fetch or reconcile — just
+  // make sure the variables are on the root element. See lib/themes.ts
+  // for why the twenty-four went away.
   useEffect(() => {
-    if (!user) return;
-    getProfile(user.id).then(({ data }) => {
-      if (data?.app_theme) applyTheme(data.app_theme);
-    });
-  }, [user]);
+    applyTheme();
+  }, []);
 
   // React Router tracks position in history as `idx`. At 0 there's
   // nothing behind us, so Back would do nothing - better to grey it out
@@ -107,8 +104,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full">
       <nav className="relative z-10 flex w-56 shrink-0 flex-col border-r border-line bg-surface/85 backdrop-blur-sm">
-        <div className="px-5 py-5 text-lg font-bold tracking-tight">
-          <span className="text-accent">▲</span> Gamer Social
+        {/* The wordmark. Two slashes rather than a logo for now — a
+            mark that's only ever type is easier to keep consistent than
+            one badly-drawn icon, and it scales to a favicon. */}
+        <div className="display px-5 py-6 text-xl">
+          <span className="text-accent">//</span> PENTRA
         </div>
 
         <div className="flex-1 space-y-1 px-3">
@@ -117,9 +117,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition " +
+                "label-wide flex items-center gap-3 px-3 py-2.5 transition " +
                 (isActive
-                  ? "bg-accent/15 text-accent"
+                  ? "notch-sm bg-accent text-onaccent"
                   : "text-muted hover:bg-surface-2 hover:text-ink")
               }
             >
@@ -129,7 +129,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {/* Unread count, so a message isn't missed while you're
                   on another screen. */}
               {item.to === "/messages" && unread > 0 && (
-                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-onaccent">
+                <span className="numeric bg-ink px-1.5 py-0.5 text-[10px] font-bold text-bg">
                   {unread > 99 ? "99+" : unread}
                 </span>
               )}
@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </p>
           <button
             onClick={signOut}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-ink"
+            className="label-wide w-full px-3 py-2 text-left text-muted transition hover:bg-surface-2 hover:text-ink"
           >
             Sign out
           </button>
@@ -159,7 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             disabled={!canGoBack}
             title="Back"
             aria-label="Back"
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
+            className="label-wide flex items-center gap-1.5 px-2.5 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
           >
             <Icon d="m15 18-6-6 6-6" className="h-4 w-4" />
             Back
@@ -170,7 +170,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             onClick={() => navigate(1)}
             title="Forward"
             aria-label="Forward"
-            className="rounded-lg px-2 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink"
+            className="px-2 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink"
           >
             <Icon d="m9 18 6-6-6-6" className="h-4 w-4" />
           </button>
@@ -181,7 +181,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             disabled={atHome}
             title="Home"
             aria-label="Home"
-            className="ml-1 flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
+            className="label-wide ml-1 flex items-center gap-1.5 px-2.5 py-1.5 text-muted transition hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
           >
             <Icon d="m3 10.5 9-7 9 7V20a1.5 1.5 0 0 1-1.5 1.5h-4V14h-7v7.5h-4A1.5 1.5 0 0 1 3 20z" className="h-4 w-4" />
             Home
@@ -219,12 +219,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               maxLength={60}
               placeholder="Find someone by name or code"
               aria-label="Find a player"
-              className="w-full rounded-lg border border-line bg-surface-2/70 py-1.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-muted focus:border-accent focus:bg-surface-2"
+              className="notch-sm w-full border border-line bg-surface-2/70 py-1.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-muted focus:border-accent focus:bg-surface-2"
             />
           </form>
         </header>
 
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        {/* Keyed on the path so each screen arrives rather than
+            appearing — the cheapest thing that makes an app feel built
+            rather than assembled. */}
+        <main key={location.pathname} className="rise flex-1 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );

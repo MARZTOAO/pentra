@@ -109,7 +109,7 @@ export default function Search() {
   return (
     <div className="mx-auto max-w-2xl px-8 py-10">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Find someone</h1>
+        <h1 className="display text-2xl">Find someone</h1>
         <p className="mt-1 text-sm text-muted">
           Search by username, display name, or friend code.
         </p>
@@ -135,7 +135,7 @@ export default function Search() {
           autoFocus
           maxLength={60}
           placeholder="ashfallen, or A1B2C-3D4E5"
-          className="w-full rounded-xl border border-line bg-surface-2 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="w-full notch border border-line bg-surface-2 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
       </div>
 
@@ -212,7 +212,7 @@ function ResultRow({ row }: { row: SearchResult }) {
   return (
     <div
       className={
-        "rounded-xl border bg-surface p-3 transition " +
+        "notch border bg-surface p-3 transition " +
         (row.matched_code ? "border-accent/60" : "border-line")
       }
     >
@@ -240,7 +240,7 @@ function ResultRow({ row }: { row: SearchResult }) {
             <button
               disabled={busy}
               onClick={() => act(() => sendFriendRequest(row.user_id), "outgoing")}
-              className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
+              className="notch-md bg-accent px-3 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
             >
               {busy ? "…" : "Add friend"}
             </button>
@@ -251,7 +251,7 @@ function ResultRow({ row }: { row: SearchResult }) {
             <button
               disabled={busy}
               onClick={() => act(() => sendFriendRequest(row.user_id), "friend")}
-              className="rounded-lg bg-ok px-3 py-1.5 text-xs font-semibold text-black transition hover:opacity-90 disabled:opacity-50"
+              className="notch-md bg-ok px-3 py-1.5 text-xs font-semibold text-black transition hover:opacity-90 disabled:opacity-50"
             >
               {busy ? "…" : "Accept"}
             </button>
@@ -261,14 +261,14 @@ function ResultRow({ row }: { row: SearchResult }) {
             <button
               disabled={busy}
               onClick={() => act(() => removeFriend(row.user_id), "none")}
-              className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
+              className="notch-md border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
             >
               {busy ? "…" : "Cancel"}
             </button>
           )}
 
           {status === "friend" && (
-            <span className="rounded-lg border border-ok/50 px-3 py-1.5 text-xs font-semibold text-ok">
+            <span className="notch-md border border-ok/50 px-3 py-1.5 text-xs font-semibold text-ok">
               Friends
             </span>
           )}
@@ -288,7 +288,7 @@ function ResultRow({ row }: { row: SearchResult }) {
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-muted">
+    <p className="notch border border-dashed border-line p-8 text-center text-sm text-muted">
       {children}
     </p>
   );

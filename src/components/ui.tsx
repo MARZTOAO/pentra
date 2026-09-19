@@ -14,14 +14,18 @@ export function AuthCard({
     <div className="flex min-h-full items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mb-3 text-3xl font-bold tracking-tight">
-            <span className="text-accent">▲</span> Gamer Social
+          <div className="display mb-3 text-4xl">
+            <span className="text-accent">//</span> PENTRA
           </div>
           <h1 className="text-xl font-semibold">{title}</h1>
           {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
         </div>
-        <div className="rounded-xl border border-line bg-surface p-6 shadow-xl">
-          {children}
+        {/* Shadow on the wrapper: clip-path discards one set on the
+            notched element itself. */}
+        <div className="float-shadow">
+          <div className="notch border border-line bg-surface p-6">
+            {children}
+          </div>
         </div>
       </div>
     </div>
@@ -51,7 +55,7 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={
-        "w-full rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm " +
+        "notch-sm w-full border border-line bg-surface-2 px-3 py-2.5 text-sm " +
         "text-ink placeholder:text-muted outline-none transition " +
         "focus:border-accent focus:ring-2 focus:ring-accent/30 " +
         "disabled:opacity-50 " +
@@ -68,7 +72,7 @@ export function Button({
   variant?: "primary" | "ghost";
 }) {
   const base =
-    "w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition " +
+    "notch-md label-wide w-full px-4 py-3 transition " +
     "disabled:cursor-not-allowed disabled:opacity-50";
   const styles =
     variant === "primary"
@@ -93,7 +97,7 @@ export function Alert({
       : "border-ok/40 bg-ok/10 text-ok";
 
   return (
-    <div className={`mb-4 rounded-lg border px-3 py-2.5 text-sm ${styles}`}>
+    <div className={`notch-sm mb-4 border px-3 py-2.5 text-sm ${styles}`}>
       {children}
     </div>
   );

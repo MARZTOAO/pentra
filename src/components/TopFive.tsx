@@ -80,7 +80,7 @@ export function TopFive() {
 
   if (loading) {
     return (
-      <section className="mb-8 rounded-xl border border-line bg-surface p-5">
+      <section className="mb-8 notch border border-line bg-surface p-5">
         <p className="text-sm text-muted">Loading your Top 5…</p>
       </section>
     );
@@ -89,8 +89,8 @@ export function TopFive() {
   const emptySlots = 5 - entries.length;
 
   return (
-    <section className="mb-8 rounded-xl border border-line bg-surface p-5">
-      <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+    <section className="mb-8 notch border border-line bg-surface p-5">
+      <h2 className="mb-1 label-wide text-muted">
         Your Top 5
       </h2>
       <p className="mb-5 text-xs text-muted">
@@ -106,7 +106,7 @@ export function TopFive() {
         {entries.map((entry, index) => (
           <div
             key={entry.game.id}
-            className="flex gap-3 rounded-lg border border-line bg-surface-2 p-3"
+            className="flex gap-3 notch-md border border-line bg-surface-2 p-3"
           >
             {/* Rank + cover */}
             <div className="relative shrink-0">
@@ -185,7 +185,7 @@ export function TopFive() {
           <button
             key={`empty-${i}`}
             onClick={() => setPicking(true)}
-            className="flex w-full items-center gap-3 rounded-lg border border-dashed border-line p-3 text-left transition hover:border-accent hover:bg-surface-2"
+            className="flex w-full items-center gap-3 notch-md border border-dashed border-line p-3 text-left transition hover:border-accent hover:bg-surface-2"
           >
             <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded border border-dashed border-line text-2xl text-muted">
               +

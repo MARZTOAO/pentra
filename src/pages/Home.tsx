@@ -79,15 +79,15 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-2xl px-8 py-8">
       <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Home</h1>
+        <h1 className="display text-2xl">Home</h1>
 
-        <div className="flex rounded-lg border border-line p-0.5">
+        <div className="flex notch-md border border-line p-0.5">
           {(["everyone", "friends"] as FeedScope[]).map((s) => (
             <button
               key={s}
               onClick={() => setScope(s)}
               className={
-                "rounded-md px-3 py-1.5 text-xs font-medium capitalize transition " +
+                "notch-sm px-3 py-1.5 text-xs font-medium capitalize transition " +
                 (scope === s
                   ? "bg-accent text-onaccent"
                   : "text-muted hover:text-ink")
@@ -144,7 +144,7 @@ export default function Home() {
                 <img
                   src={game.cover_url}
                   alt=""
-                  className="h-5 w-3.5 rounded-sm object-cover"
+                  className="h-5 w-3.5 notch-sm object-cover"
                 />
               )}
               <span className="max-w-40 truncate">{game.name}</span>
@@ -290,7 +290,7 @@ function Composer({
   }
 
   return (
-    <section className="mb-5 rounded-xl border border-line bg-surface p-4">
+    <section className="mb-5 notch border border-line bg-surface p-4">
       {error && <Alert>{error}</Alert>}
 
       <div className="flex gap-3">
@@ -307,20 +307,20 @@ function Composer({
                 ? "What are you playing, and what are you after? \"Ranked, mics on, no rage.\""
                 : "Looking for a group? Just finished something good? Say it here."
             }
-            className="w-full resize-none rounded-lg border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className="w-full resize-none notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
           />
 
           {/* Session details. Hidden until asked for, so an ordinary
               post stays a single box. */}
           {isSession && (
-            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-accent/40 bg-accent/5 p-2.5">
+            <div className="mt-2 flex flex-wrap items-center gap-2 notch-md border border-accent/40 bg-accent/5 p-2.5">
               <label className="flex items-center gap-2 text-xs text-muted">
                 When
                 <input
                   type="datetime-local"
                   value={startsAt}
                   onChange={(e) => setStartsAt(e.target.value)}
-                  className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
+                  className="notch-md border border-line bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
                 />
               </label>
 
@@ -329,7 +329,7 @@ function Composer({
                 <select
                   value={slots}
                   onChange={(e) => setSlots(Number(e.target.value))}
-                  className="rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
+                  className="notch-md border border-line bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
                 >
                   {Array.from({ length: 19 }).map((_, i) => (
                     <option key={i + 2} value={i + 2}>
@@ -394,7 +394,7 @@ function Composer({
                   <img
                     src={game.cover_url}
                     alt=""
-                    className="h-5 w-3.5 rounded-sm object-cover"
+                    className="h-5 w-3.5 notch-sm object-cover"
                   />
                 )}
                 <span className="max-w-40 truncate">{game.name}</span>
@@ -427,7 +427,7 @@ function Composer({
             <button
               onClick={submit}
               disabled={!canPost || busy}
-              className="ml-auto rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+              className="ml-auto notch-md bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
             >
               {uploading > 0
                 ? `Uploading ${uploading}/${media.length}…`
@@ -487,7 +487,7 @@ function PostCard({
   }
 
   return (
-    <article className="rounded-xl border border-line bg-surface p-4">
+    <article className="notch border border-line bg-surface p-4">
       <div className="flex gap-3">
         <Link to={`/u/${post.username}`} className="shrink-0">
           <Avatar of={post} size={40} />
@@ -543,7 +543,7 @@ function PostCard({
                 <img
                   src={post.game_cover}
                   alt=""
-                  className="h-6 w-4 rounded-sm object-cover"
+                  className="h-6 w-4 notch-sm object-cover"
                 />
               )}
               <span className="text-xs">{post.game_name}</span>
@@ -599,7 +599,7 @@ function Empty({
   gameName: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-line p-12 text-center">
+    <div className="notch border border-dashed border-line p-12 text-center">
       <h2 className="mb-2 font-semibold">
         {gameName
           ? `Nothing about ${gameName} yet`
