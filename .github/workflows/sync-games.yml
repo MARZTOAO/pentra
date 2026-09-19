@@ -1,0 +1,65 @@
+# Keeps the games catalogue current without anyone doing anything.
+#
+# Runs on GitHub's machines, not yours, so it happens whether your PC is
+# on or not. It talks only to IGDB and your Supabase database — the app
+# itself is never involved, nothing is deployed, and nobody using the
+# app notices it happen.
+#
+# ---------------------------------------------------------------
+#  Before this can run, add four secrets to the repository:
+#
+#    Settings -> Secrets and variables -> Actions -> New repository secret
+#
+#      TWITCH_CLIENT_ID
+#      TWITCH_CLIENT_SECRET
+#      VITE_SUPABASE_URL
+#      SUPABASE_SERVICE_ROLE_KEY
+#
+#  These are the same four values as in your local .env file. The
+#  service role key bypasses row-level security, so it belongs in
+#  secrets and nowhere else — never in the repo, never in the app.
+# ---------------------------------------------------------------
+
+name: Sync games catalogue
+
+on:
+  schedule:
+    # 04:00 UTC daily — the small hours in the US, so a slow run never
+    # overlaps with people actually using the app. GitHub's scheduler
+    # can be a few minutes late under load; nothing here cares.
+    - cron: "0 4 * * *"
+
+  # Lets you run it by hand from the Actions tab, which is how you'll
+  # test it the first time rather than waiting until tomorrow.
+  workflow_dispatch:
+
+# Two runs writing the same rows at once would be harmless but pointless.
+concurrency:
+  group: sync-games
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      # The sync script only needs @supabase/supabase-js. Installing
+      # without the dev dependencies keeps the run short.
+      - name: Install dependencies
+        run: npm ci --omit=dev
+
+      - name: Sync
+        env:
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      run: npm run sync-games:ci
