@@ -4,6 +4,7 @@ import { getProfile, updateProfile, type Profile } from "../lib/profile";
 import { Alert, FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 import { getBlocked, unblockUser, type BlockedUser } from "../lib/safety";
+import { NotificationSettingsPanel } from "../components/NotificationSettingsPanel";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -54,6 +55,8 @@ export default function Settings() {
       </header>
 
       {error && <Alert>{error}</Alert>}
+
+      <NotificationSettingsPanel />
 
       <section className="mb-8 notch border border-line bg-surface p-5">
         <h2 className="mb-1 label-wide text-muted">

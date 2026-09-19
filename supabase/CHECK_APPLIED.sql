@@ -74,6 +74,25 @@ with checks(migration, feature, present) as (
        select 1 from pg_proc p
        join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'public' and p.proname = 'needs_welcome'
+     )),
+
+    ('32_presence',
+     'Online / away / invisible / offline',
+     to_regclass('public.presence_settings') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'set_presence'
+     )),
+
+    ('33_notifications',
+     'The notification bell and its settings',
+     to_regclass('public.notifications') is not null
+     and to_regclass('public.notification_settings') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'sync_session_reminders'
      ))
 )
 select

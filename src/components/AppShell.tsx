@@ -5,6 +5,7 @@ import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
 import { Welcome } from "./Welcome";
+import { NotificationBell } from "./NotificationBell";
 
 /** `short` is the bottom-tab label. Seven of them share a phone's
     width — about 53px each at 375px — so these have to stay tiny:
@@ -257,6 +258,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
           </form>
 
+          <div className="ml-auto md:ml-0">
+            <NotificationBell />
+          </div>
+
           {/* On mobile the box won't fit beside the wordmark, so search
               becomes a button that opens the screen built for it. */}
           <button
@@ -264,7 +269,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             onClick={() => navigate("/search")}
             aria-label="Find a player"
             title="Find a player"
-            className="ml-auto p-2 text-muted transition hover:text-ink md:hidden"
+            className="p-2 text-muted transition hover:text-ink md:hidden"
           >
             <svg
               className="h-5 w-5"
