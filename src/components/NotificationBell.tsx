@@ -12,6 +12,7 @@ import {
   syncSessionReminders,
   type AppNotification,
 } from "../lib/notifications";
+import { play } from "../lib/sound";
 
 /** How often to look for new ones while the app is open. */
 const POLL_MS = 60_000;
@@ -38,6 +39,12 @@ export function NotificationBell() {
   const [items, setItems] = useState<AppNotification[]>([]);
   const [open, setOpen] = useState(false);
 
+  // Ids already seen, so a poll only makes a sound for something that
+  // genuinely just arrived. Without this the first load would announce
+  // a week of unread notifications at once, and every poll would
+  // re-announce anything still unread.
+  const known = useRef<Set<number> | null>(null);
+
   const unread = items.filter((n) => !n.read_at).length;
 
   const load = useCallback(async () => {
@@ -46,7 +53,29 @@ export function NotificationBell() {
       return;
     }
     await syncSessionReminders();
-    setItems(await getNotifications());
+    const rows = await getNotifications();
+    setItems(rows);
+
+    // The first load only records what is already there. Announcing
+    // history is noise, not news.
+    if (known.current === null) {
+      known.current = new Set(rows.map((n) => n.id));
+      return;
+    }
+
+    const fresh = rows.filter((n) => !known.current!.has(n.id));
+    for (const n of rows) known.current.add(n.id);
+
+    if (fresh.length > 0) {
+      // A friend request gets its own sound; everything else shares
+      // one. One sound per poll, however many arrived — three beeps on
+      // top of each other is a noise, not three notifications.
+      play(
+        fresh.some((n) => n.kind === "friend_request")
+          ? "friendRequest"
+          : "notification",
+      );
+    }
   }, [user]);
 
   useEffect(() => {

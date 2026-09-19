@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
+import UserFriends from "./pages/UserFriends";
+import PostPage from "./pages/PostPage";
 import Discover from "./pages/Discover";
 import Friends from "./pages/Friends";
 import Settings from "./pages/Settings";
@@ -56,6 +58,25 @@ export default function App() {
             element={
               <Shell>
                 <PublicProfile />
+              </Shell>
+            }
+          />
+
+          {/* A single post, on its own page. Where notifications land. */}
+          <Route
+            path="/p/:id"
+            element={
+              <Shell>
+                <PostPage />
+              </Shell>
+            }
+          />
+
+          <Route
+            path="/u/:username/friends"
+            element={
+              <Shell>
+                <UserFriends />
               </Shell>
             }
           />

@@ -113,3 +113,33 @@ export function lastSeenLabel(iso: string | null): string | null {
 
   return "a while ago";
 }
+
+/** How many friends somebody has. Public to any signed-in player. */
+export async function getFriendCount(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("friend_count", {
+    target: userId,
+  });
+  if (error || data === null) return 0;
+  return Number(data);
+}
+
+/**
+ * Somebody's friends, scored against you.
+ *
+ * Deliberately the same shape as findPlayers(), because it is the same
+ * scoring — see supabase/35_friends_of.sql. That means the cards can
+ * be the identical component and a percentage means the same thing
+ * wherever you read it.
+ *
+ * Note this can include people you're already friends with: seeing
+ * which of someone's friends you already know is half the reason to
+ * open the list.
+ */
+export async function getFriendsOf(userId: string): Promise<Match[]> {
+  const { data, error } = await supabase.rpc("friends_of", {
+    target: userId,
+    max_results: 50,
+  });
+  if (error || !data) return [];
+  return data as Match[];
+}

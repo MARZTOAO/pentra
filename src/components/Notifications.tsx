@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
 import { getConversations, type Message } from "../lib/chat";
 import { Avatar } from "./Avatar";
+import { play } from "../lib/sound";
 
 type Toast = {
   id: number;
@@ -137,11 +138,12 @@ export function Notifications({ children }: { children: ReactNode }) {
             body: message.body,
           };
 
-          setToasts((current) =>
-            current.some((t) => t.id === toast.id)
-              ? current
-              : [...current.slice(-2), toast],
-          );
+          setToasts((current) => {
+            // Already showing it — a duplicate event, not a new message.
+            if (current.some((t) => t.id === toast.id)) return current;
+            play("message");
+            return [...current.slice(-2), toast];
+          });
 
           const timer = window.setTimeout(() => {
             setToasts((current) => current.filter((t) => t.id !== toast.id));

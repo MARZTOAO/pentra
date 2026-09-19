@@ -91,12 +91,14 @@ export function notificationLink(n: AppNotification): string {
       return "/friends";
     case "friend_accepted":
       return n.username ? `/u/${n.username}` : "/friends";
+    // Straight to the post, not the screen it lives on. Landing on the
+    // feed and being left to scroll for the thing you were told about
+    // is fine with three posts and useless with three hundred.
     case "session_day":
     case "session_hour":
-      return "/sessions";
     case "friend_lfg":
     case "post_mention":
-      return "/home";
+      return n.post_id ? `/p/${n.post_id}` : "/home";
   }
 }
 

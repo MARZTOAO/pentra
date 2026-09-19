@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { Alert } from "./ui";
+import { isMuted, setMuted, preview } from "../lib/sound";
 import {
   DEFAULT_SETTINGS,
   SETTING_LABELS,
@@ -22,6 +23,7 @@ export function NotificationSettingsPanel() {
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sound, setSound] = useState(!isMuted());
 
   useEffect(() => {
     getNotificationSettings().then((s) => {
@@ -80,6 +82,29 @@ export function NotificationSettingsPanel() {
           </label>
         ))}
       </div>
+
+      {/* Sound is kept on the device rather than the account: audible on
+          a desktop and silent on a phone is a reasonable thing to want,
+          and it would be odd for one to change the other. */}
+      <label className="mt-2 flex cursor-pointer items-start gap-3 notch-md border-t border-line px-3 py-3 transition hover:bg-surface-2">
+        <Switch
+          on={sound}
+          onChange={() => {
+            const next = !sound;
+            setSound(next);
+            setMuted(!next);
+            // Play it as they turn it on, so "sound" isn't an abstraction.
+            if (next) preview("notification");
+          }}
+          label="Play a sound"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">Play a sound</span>
+          <span className="block text-xs leading-snug text-muted">
+            A short beep when something arrives. This device only.
+          </span>
+        </span>
+      </label>
 
       <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
         These appear in the app. Session reminders are worked out when you

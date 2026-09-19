@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { getProfileByUsername, type Profile } from "../lib/profile";
 import { getTopFive, type TopFiveEntry } from "../lib/topFive";
+import { getFriendCount } from "../lib/matching";
 import { GameLibrary } from "../components/GameLibrary";
 import { formatLocation } from "../lib/constants";
 import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
@@ -20,6 +21,7 @@ export default function PublicProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [topFive, setTopFive] = useState<TopFiveEntry[]>([]);
   const [tags, setTags] = useState<GamerTag[]>([]);
+  const [friendCount, setFriendCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -43,6 +45,7 @@ export default function PublicProfile() {
       setProfile(row);
       setTopFive(await getTopFive(row.id));
       setTags(await getGamerTags(row.id));
+      setFriendCount(await getFriendCount(row.id));
       setLoading(false);
     });
 
@@ -140,6 +143,17 @@ export default function PublicProfile() {
                 .join(" · ")}
             </p>
           )}
+
+          {/* A count that goes somewhere. A number you can't act on is
+              decoration; this one opens the list, ranked by how well
+              each of them matches you. */}
+          <Link
+            to={`/u/${profile.username}/friends`}
+            className="on-art mt-2 inline-flex items-baseline gap-1.5 text-sm text-muted transition hover:text-accent"
+          >
+            <span className="numeric font-bold text-ink">{friendCount}</span>
+            {friendCount === 1 ? "friend" : "friends"}
+          </Link>
         </div>
 
         {!isSelf && (

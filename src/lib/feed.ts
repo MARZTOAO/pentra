@@ -248,3 +248,17 @@ export async function getMySessions(includePast = false): Promise<Post[]> {
   if (error || !data) return [];
   return data as Post[];
 }
+
+/**
+ * One post by id, for its own page.
+ *
+ * Returns exactly what getFeed returns for that row, so the page can
+ * render the same PostCard — see supabase/36_get_post.sql. Null means
+ * it's gone, or its author is blocked; both read the same to whoever
+ * followed the link, and neither is worth distinguishing.
+ */
+export async function getPost(id: number): Promise<Post | null> {
+  const { data, error } = await supabase.rpc("get_post", { want_id: id });
+  if (error || !data || (data as Post[]).length === 0) return null;
+  return (data as Post[])[0];
+}
