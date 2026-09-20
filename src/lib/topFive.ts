@@ -94,20 +94,28 @@ export async function saveTopFive(entries: TopFiveEntry[]) {
   return supabase.rpc("set_top_five", { items });
 }
 
-/** Search the local games catalogue. Fast, because it never leaves your database. */
+/**
+ * Search the local games catalogue. Fast, because it never leaves
+ * your database.
+ *
+ * This used to be `ilike('%term%')` on the title, which meant the
+ * letters had to appear in that exact order with that exact
+ * punctuation — so "pokemon", "assassins creed", "helldivers2",
+ * "final fantasy 7" and "gta" all found nothing at all.
+ *
+ * The matching now lives in the database, where it can be ranked
+ * rather than filtered: an exactly-typed title always sorts above a
+ * fuzzy guess, and the forgiving matches only fill in underneath.
+ * See supabase/56_game_search.sql for the tiers.
+ */
 export async function searchGames(query: string): Promise<Game[]> {
   const term = query.trim();
   if (term.length < 2) return [];
 
-  const { data, error } = await supabase
-    .from("games")
-    .select("id, name, cover_url, genres, platforms, release_date")
-    .ilike("name", `%${term}%`)
-    // `relevance` is rating count for released games and follower count
-    // for announced ones — see supabase/23_upcoming_games.sql. Sorting
-    // on popularity alone would bury every unreleased game.
-    .order("relevance", { ascending: false })
-    .limit(24);
+  const { data, error } = await supabase.rpc("search_games", {
+    q: term,
+    max_results: 24,
+  });
 
   if (error || !data) return [];
   return data as Game[];

@@ -311,6 +311,23 @@ with checks(migration, feature, present) as (
        select 1 from pg_proc p
        join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'public' and p.proname = 'match_with'
+     )),
+
+    -- The trigram index is checked as well as the function: without
+    -- it the search still returns the right answers, but reads the
+    -- whole catalogue to do it, and that is a difference worth
+    -- knowing about before somebody reports the app as slow.
+    ('56_game_search',
+     'Game search that forgives spelling and punctuation',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'search_games'
+     )
+     and exists (
+       select 1 from pg_indexes
+       where schemaname = 'public'
+         and indexname = 'games_search_text_trgm'
      ))
 )
 select
