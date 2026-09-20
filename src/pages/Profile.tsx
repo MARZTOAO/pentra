@@ -32,6 +32,12 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  /**
+   * Bumped whenever something on this page changes a number another
+   * panel is showing. The panels refetch on it rather than each
+   * subscribing to everything that might affect them.
+   */
+  const [dataVersion, setDataVersion] = useState(0);
 
   // Editable copies of the fields.
   const [displayName, setDisplayName] = useState("");
@@ -150,11 +156,24 @@ export default function Profile() {
 
       <TopFive />
 
-      {user && <GameLibrary userId={user.id} editable />}
+      {/* Adding a game moves two achievements and a stat tile that
+          live in the panels below. Siblings cannot see each other, so
+          the change is announced upwards and passed back down. */}
+      {user && (
+        <GameLibrary
+          userId={user.id}
+          editable
+          onChanged={() => setDataVersion((v) => v + 1)}
+        />
+      )}
 
-      {user && <ProfileStats userId={user.id} isSelf />}
+      {user && (
+        <ProfileStats userId={user.id} isSelf refreshKey={dataVersion} />
+      )}
 
-      {user && <Achievements userId={user.id} isSelf />}
+      {user && (
+        <Achievements userId={user.id} isSelf refreshKey={dataVersion} />
+      )}
 
       {/* Basics */}
       <section className="mb-8 notch border border-line bg-surface p-5">

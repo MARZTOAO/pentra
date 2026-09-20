@@ -25,10 +25,18 @@ export function GameLibrary({
   userId,
   editable,
   emptyNote,
+  onChanged,
 }: {
   userId: string;
   editable: boolean;
   emptyNote?: string;
+  /**
+   * Fired after a game is added or removed. The library feeds two
+   * achievements and a stat tile that live in sibling panels, and
+   * siblings cannot see each other — without this they keep showing
+   * the numbers they fetched when the page opened.
+   */
+  onChanged?: () => void;
 }) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,13 +71,14 @@ export function GameLibrary({
     setBusy(false);
 
     if (error) {
-      // The twenty-game cap is enforced by the database, so its message
-      // is the honest one to show.
+      // The cap is enforced by the database, so its message is the
+      // honest one to show.
       setError(error.message);
       return;
     }
 
     setGames((current) => [game, ...current]);
+    onChanged?.();
   }
 
   async function remove(game: Game) {
@@ -80,8 +89,12 @@ export function GameLibrary({
 
     setBusy(false);
 
-    if (error) setError(error.message);
-    else setGames((current) => current.filter((g) => g.id !== game.id));
+    if (error) {
+      setError(error.message);
+    } else {
+      setGames((current) => current.filter((g) => g.id !== game.id));
+      onChanged?.();
+    }
   }
 
   if (loading) return null;

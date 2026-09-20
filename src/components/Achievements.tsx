@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   earnedMonth,
   getAchievements,
@@ -136,29 +136,49 @@ function Badge({ item }: { item: Achievement }) {
 export function Achievements({
   userId,
   isSelf,
+  refreshKey = 0,
 }: {
   userId: string;
   isSelf: boolean;
+  /**
+   * Bumped by the parent when something elsewhere on the page changed
+   * a number this panel shows — adding a game, say. Refetching keeps
+   * whatever is on screen until the new data lands, so the panel does
+   * not blink back to "Loading…" for a change the person just made.
+   */
+  refreshKey?: number;
 }) {
   const [items, setItems] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const loadedOnce = useRef(false);
+
+  // Looking at somebody else resets everything; a refetch of the same
+  // person does not.
+  useEffect(() => {
+    loadedOnce.current = false;
+    setShowAll(false);
+  }, [userId]);
 
   useEffect(() => {
     let live = true;
 
-    setLoading(true);
-    setShowAll(false);
+    // The spinner is for the first load only. Swapping a full grid of
+    // badges for the word "Loading…" because somebody added a game is
+    // a worse answer than briefly showing a number one out of date.
+    if (!loadedOnce.current) setLoading(true);
+
     getAchievements(userId).then((rows) => {
       if (!live) return;
       setItems(rows);
       setLoading(false);
+      loadedOnce.current = true;
     });
 
     return () => {
       live = false;
     };
-  }, [userId]);
+  }, [userId, refreshKey]);
 
   const { earned, nearly, rest } = useMemo(() => {
     const got = items.filter(isEarned);

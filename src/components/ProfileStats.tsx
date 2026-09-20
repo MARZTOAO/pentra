@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getProfileStats,
   joinedMonth,
@@ -21,27 +21,44 @@ import {
 export function ProfileStats({
   userId,
   isSelf,
+  refreshKey = 0,
 }: {
   userId: string;
   isSelf: boolean;
+  /**
+   * Bumped by the parent when something elsewhere on the page changed
+   * a number this panel shows — adding a game, say. Refetching keeps
+   * whatever is on screen until the new data lands, so the panel does
+   * not blink back to "Loading…" for a change the person just made.
+   */
+  refreshKey?: number;
 }) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadedOnce = useRef(false);
+
+  useEffect(() => {
+    loadedOnce.current = false;
+  }, [userId]);
+
   useEffect(() => {
     let live = true;
 
-    setLoading(true);
+    // Spinner on the first load only — see the note in Achievements.
+    if (!loadedOnce.current) setLoading(true);
+
     getProfileStats(userId).then((row) => {
       if (!live) return;
       setStats(row);
       setLoading(false);
+      loadedOnce.current = true;
     });
 
     return () => {
       live = false;
     };
-  }, [userId]);
+  }, [userId, refreshKey]);
 
   if (loading || !stats) {
     return (
