@@ -20,6 +20,7 @@ import { BackgroundPicker } from "../components/BackgroundPicker";
 import { AvatarPicker } from "../components/AvatarPicker";
 import { FriendCode } from "../components/FriendCode";
 import { GameLibrary } from "../components/GameLibrary";
+import { ProfileStats } from "../components/ProfileStats";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -142,6 +143,8 @@ export default function Profile() {
       <TopFive />
 
       {user && <GameLibrary userId={user.id} editable />}
+
+      {user && <ProfileStats userId={user.id} isSelf />}
 
       {/* Basics */}
       <section className="mb-8 notch border border-line bg-surface p-5">

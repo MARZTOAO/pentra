@@ -5,6 +5,7 @@ import { getProfileByUsername, type Profile } from "../lib/profile";
 import { getTopFive, type TopFiveEntry } from "../lib/topFive";
 import { getFriendCount } from "../lib/matching";
 import { GameLibrary } from "../components/GameLibrary";
+import { ProfileStats } from "../components/ProfileStats";
 import { formatLocation } from "../lib/constants";
 import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
 import { bannerStyle } from "../lib/backgrounds";
@@ -227,6 +228,8 @@ export default function PublicProfile() {
       </section>
 
       <GameLibrary userId={profile.id} editable={false} />
+
+      <ProfileStats userId={profile.id} isSelf={isSelf} />
 
       {/* Details. One column on a phone — side by side these panels are
           164px wide, and a chip reading "PlayStation 5" does not fit in
