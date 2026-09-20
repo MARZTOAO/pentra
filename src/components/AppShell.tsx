@@ -5,6 +5,7 @@ import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
 import { Welcome } from "./Welcome";
+import { ChangelogDialog } from "./ChangelogDialog";
 import { NotificationBell } from "./NotificationBell";
 
 /** `short` is the bottom-tab label. Seven of them share a phone's
@@ -126,6 +127,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           player wherever they happen to land first. It decides for
           itself whether to appear. */}
       <Welcome />
+      {/* Suppressed in the database while the welcome is pending, so
+          these two can never stack on a first run. */}
+      <ChangelogDialog />
 
       {/* Sidebar — desktop only. On a phone 224px of permanent chrome is
           most of the screen, so below md this is replaced by the bottom
