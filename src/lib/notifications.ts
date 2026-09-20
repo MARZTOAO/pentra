@@ -3,12 +3,12 @@ import { supabase } from "./supabase";
 /**
  * The bell, and what feeds it.
  *
- * Nine kinds. Seven are written by database triggers the moment the
+ * Ten kinds. Eight are written by database triggers the moment the
  * thing happens; two are materialised by sync_session_reminders()
  * when the app asks, because nothing happens in the database an hour
  * before a session — the hour simply arrives. See
- * supabase/33_notifications.sql, 34_mentions.sql, 39_comments.sql and
- * 41_live_sessions_and_comments.sql.
+ * supabase/33_notifications.sql, 34_mentions.sql, 39_comments.sql,
+ * 41_live_sessions_and_comments.sql and 42_session_invites.sql.
  */
 
 export type NotificationKind =
@@ -20,7 +20,8 @@ export type NotificationKind =
   | "post_mention"
   | "post_comment"
   | "session_joined"
-  | "session_left";
+  | "session_left"
+  | "session_invite";
 
 export type AppNotification = {
   id: number;
@@ -47,6 +48,7 @@ export type NotificationSettings = {
   post_mentions: boolean;
   post_comments: boolean;
   session_players: boolean;
+  session_invites: boolean;
 };
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
@@ -57,6 +59,7 @@ export const DEFAULT_SETTINGS: NotificationSettings = {
   post_mentions: true,
   post_comments: true,
   session_players: true,
+  session_invites: true,
 };
 
 /** What each toggle says on the settings screen. */
@@ -100,6 +103,11 @@ export const SETTING_LABELS: {
     label: "Players joining and leaving",
     hint: "When somebody joins or drops out of a session you're hosting.",
   },
+  {
+    key: "session_invites",
+    label: "Session invites",
+    hint: "When a friend invites you into a session they're in.",
+  },
 ];
 
 /** Where clicking a notification should take you. */
@@ -119,6 +127,7 @@ export function notificationLink(n: AppNotification): string {
     case "post_comment":
     case "session_joined":
     case "session_left":
+    case "session_invite":
       return n.post_id ? `/p/${n.post_id}` : "/home";
   }
 }
@@ -155,6 +164,12 @@ export function notificationText(n: AppNotification): string {
       return `${who} joined ${sessionPhrase(n.game_name)}.`;
     case "session_left":
       return `${who} left ${sessionPhrase(n.game_name)}.`;
+    // "their" rather than "your" — the inviter is often a player in
+    // somebody else's session, not the host of one.
+    case "session_invite":
+      return n.game_name
+        ? `${who} invited you to a ${n.game_name} session.`
+        : `${who} invited you to a session.`;
   }
 }
 
@@ -220,7 +235,7 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
     // with `+` and the inferred type collapses to GenericStringError,
     // which fails the build at the cast below.
     .select(
-      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions, post_comments, session_players",
+      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions, post_comments, session_players, session_invites",
     )
     .maybeSingle();
 

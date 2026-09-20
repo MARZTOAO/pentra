@@ -22,7 +22,7 @@ let nextChannelId = 0;
 export type RowEvent = "INSERT" | "UPDATE" | "DELETE";
 
 export function useLiveRows(
-  table: "post_comments" | "session_players",
+  table: "post_comments" | "session_players" | "session_invites",
   postId: number,
   onChange: (event: RowEvent) => void,
   /** Pass false to stand the subscription down without unmounting. */
