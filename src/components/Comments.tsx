@@ -7,6 +7,7 @@ import {
   type Comment,
 } from "../lib/comments";
 import { postTime } from "../lib/feed";
+import { useLiveRows } from "../lib/live";
 import { Avatar } from "./Avatar";
 import { Linkify } from "./Linkify";
 import { MentionBox } from "./MentionBox";
@@ -38,6 +39,12 @@ export function Comments({
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * How far the feed's count has drifted since it was fetched. Only
+   * used while the thread is closed — once it is open, the list is
+   * the count.
+   */
+  const [delta, setDelta] = useState(0);
 
   const load = useCallback(async () => {
     setComments(await getComments(postId));
@@ -47,9 +54,37 @@ export function Comments({
     if (open && comments === null) load();
   }, [open, comments, load]);
 
-  // Once loaded the thread is the truth; before that, the count from
-  // the feed is all we have.
-  const total = comments?.length ?? count;
+  // Somebody else commented, or deleted one. Reload the thread if it
+  // is open; otherwise just move the number, so a closed thread still
+  // shows the right count without fetching the whole conversation.
+  //
+  // Subscribed whether or not the thread is open: the count is on
+  // screen either way, and a number that is only right after you
+  // click it is the thing being complained about.
+  useLiveRows("post_comments", postId, (event) => {
+    if (open) {
+      load();
+      return;
+    }
+    if (event === "INSERT") setDelta((d) => d + 1);
+    if (event === "DELETE") setDelta((d) => d - 1);
+    // An edit is neither. Comments can't be edited today, and if they
+    // ever can, an edit still isn't one more comment.
+  });
+
+  // The drift is only ever relative to one fetched count. Opening the
+  // thread replaces the estimate with the real list, and a fresh count
+  // from the feed already includes everything that has happened — so
+  // either one makes the drift wrong rather than stale, and it has to
+  // go back to zero.
+  useEffect(() => {
+    setDelta(0);
+  }, [open, count]);
+
+  // Once it's open the thread is the truth; before that, the count
+  // from the feed plus whatever has happened since.
+  const total =
+    open && comments ? comments.length : Math.max(0, count + delta);
 
   async function submit() {
     const text = body.trim();

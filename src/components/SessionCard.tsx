@@ -8,6 +8,7 @@ import {
   startsIn,
   type Post,
 } from "../lib/feed";
+import { useLiveRows } from "../lib/live";
 import { Avatar } from "./Avatar";
 
 /**
@@ -27,6 +28,18 @@ export function SessionCard({
 }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+
+  // Somebody joined or left. The roster, the slot count and the dashed
+  // gaps all come from the post, so the honest fix is to refetch it
+  // rather than patch three things by hand — and it keeps two people
+  // looking at the same session from seeing different numbers, which
+  // is how both of them end up taking the last slot.
+  //
+  // Not while busy: our own call is already in flight and about to
+  // call onChange itself.
+  useLiveRows("session_players", post.id, () => {
+    if (!busy) onChange();
+  });
 
   const slots = post.slots ?? 0;
   const taken = Number(post.taken ?? 0);

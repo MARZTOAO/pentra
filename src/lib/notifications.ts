@@ -3,11 +3,12 @@ import { supabase } from "./supabase";
 /**
  * The bell, and what feeds it.
  *
- * Seven kinds. Four are written by database triggers the moment the
+ * Nine kinds. Seven are written by database triggers the moment the
  * thing happens; two are materialised by sync_session_reminders()
  * when the app asks, because nothing happens in the database an hour
  * before a session — the hour simply arrives. See
- * supabase/33_notifications.sql and 34_mentions.sql.
+ * supabase/33_notifications.sql, 34_mentions.sql, 39_comments.sql and
+ * 41_live_sessions_and_comments.sql.
  */
 
 export type NotificationKind =
@@ -17,7 +18,9 @@ export type NotificationKind =
   | "session_hour"
   | "friend_lfg"
   | "post_mention"
-  | "post_comment";
+  | "post_comment"
+  | "session_joined"
+  | "session_left";
 
 export type AppNotification = {
   id: number;
@@ -43,6 +46,7 @@ export type NotificationSettings = {
   friend_lfg: boolean;
   post_mentions: boolean;
   post_comments: boolean;
+  session_players: boolean;
 };
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
@@ -52,6 +56,7 @@ export const DEFAULT_SETTINGS: NotificationSettings = {
   friend_lfg: true,
   post_mentions: true,
   post_comments: true,
+  session_players: true,
 };
 
 /** What each toggle says on the settings screen. */
@@ -90,6 +95,11 @@ export const SETTING_LABELS: {
     label: "Comments on your posts",
     hint: "When somebody replies to something you posted.",
   },
+  {
+    key: "session_players",
+    label: "Players joining and leaving",
+    hint: "When somebody joins or drops out of a session you're hosting.",
+  },
 ];
 
 /** Where clicking a notification should take you. */
@@ -107,6 +117,8 @@ export function notificationLink(n: AppNotification): string {
     case "friend_lfg":
     case "post_mention":
     case "post_comment":
+    case "session_joined":
+    case "session_left":
       return n.post_id ? `/p/${n.post_id}` : "/home";
   }
 }
@@ -136,7 +148,18 @@ export function notificationText(n: AppNotification): string {
       return `${who} tagged you in a post.`;
     case "post_comment":
       return `${who} commented on your post.`;
+    // "your Helldivers 2 session", or just "your session" when the
+    // post never named a game — "joined your a game session" is the
+    // sort of sentence a default like `game` writes for you.
+    case "session_joined":
+      return `${who} joined ${sessionPhrase(n.game_name)}.`;
+    case "session_left":
+      return `${who} left ${sessionPhrase(n.game_name)}.`;
   }
+}
+
+function sessionPhrase(gameName: string | null): string {
+  return gameName ? `your ${gameName} session` : "your session";
 }
 
 /** "tomorrow at 21:00", or "at 21:00" if it's still today. */
@@ -197,7 +220,7 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
     // with `+` and the inferred type collapses to GenericStringError,
     // which fails the build at the cast below.
     .select(
-      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions, post_comments",
+      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions, post_comments, session_players",
     )
     .maybeSingle();
 

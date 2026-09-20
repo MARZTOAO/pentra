@@ -44,20 +44,31 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const rows = await getFeed(scope, gameId, sessionsOnly);
-    setPosts(rows);
-    setCommentCounts(await getCommentCounts(rows.map((p) => p.id)));
-    setLoading(false);
-  }, [scope, gameId, sessionsOnly]);
+  /**
+   * @param showSpinner Only for a load that changes what the feed is
+   *   showing — a new scope or game filter. A refresh keeps the old
+   *   posts on screen until the new ones arrive, because refreshes now
+   *   happen on their own: somebody else joining a session or leaving
+   *   a comment refetches the feed, and swapping the whole page for a
+   *   spinner every time a stranger clicks Join would be unusable.
+   */
+  const load = useCallback(
+    async (showSpinner = false) => {
+      if (showSpinner) setLoading(true);
+      const rows = await getFeed(scope, gameId, sessionsOnly);
+      setPosts(rows);
+      setCommentCounts(await getCommentCounts(rows.map((p) => p.id)));
+      setLoading(false);
+    },
+    [scope, gameId, sessionsOnly],
+  );
 
   const loadGames = useCallback(async () => {
     setGames(await getFeedGames());
   }, []);
 
   useEffect(() => {
-    load();
+    load(true);
   }, [load]);
 
   useEffect(() => {
