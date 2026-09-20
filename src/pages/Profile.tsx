@@ -22,6 +22,7 @@ import { FriendCode } from "../components/FriendCode";
 import { GameLibrary } from "../components/GameLibrary";
 import { ProfileStats } from "../components/ProfileStats";
 import { Achievements } from "../components/Achievements";
+import { ReferralPanel } from "../components/ReferralPanel";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -132,6 +133,12 @@ export default function Profile() {
       {saved && <Alert kind="ok">Saved.</Alert>}
 
       <FriendCode code={profile?.friend_code} />
+
+      {/* Directly under the friend code, because it is the same kind of
+          thing: a code you give to somebody. It used to sit below the
+          achievements grid, which on a phone is a long way down a long
+          page — far enough that it read as missing. */}
+      <ReferralPanel />
 
       {profile && (
         <AvatarPicker profile={profile} onChange={setProfile} />
