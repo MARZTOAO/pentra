@@ -56,13 +56,39 @@ export async function touchLastSeen() {
 }
 
 /**
+ * The overlap, without the score or the profile around it.
+ *
+ * matchReason() and the profile header both work off this and nothing
+ * else, so a smaller answer from the database — match_with() returns
+ * one pair rather than a list — can use the same wording.
+ */
+export type SharedGround = Pick<
+  Match,
+  | "shared_games"
+  | "shared_top_games"
+  | "shared_platforms"
+  | "shared_availability"
+  | "shared_genres"
+>;
+
+/** Is there anything at all to say? */
+export function sharesAnything(m: SharedGround): boolean {
+  return (
+    (m.shared_games?.length ?? 0) > 0 ||
+    (m.shared_genres?.length ?? 0) > 0 ||
+    (m.shared_platforms?.length ?? 0) > 0 ||
+    (m.shared_availability?.length ?? 0) > 0
+  );
+}
+
+/**
  * Turns a match into the one line that explains itself.
  *
  * This matters more than the score's accuracy. A visible reason makes a
  * mediocre match feel considered; a hidden one makes a good match feel
  * random. Always lead with the strongest signal.
  */
-export function matchReason(match: Match): string {
+export function matchReason(match: SharedGround): string {
   const parts: string[] = [];
 
   // Claim a Top 5 match only when it IS one. Everything else is a real
@@ -143,3 +169,48 @@ export async function getFriendsOf(userId: string): Promise<Match[]> {
   if (error || !data) return [];
   return data as Match[];
 }
+
+/**
+ * How well you match one particular person.
+ *
+ * The same arithmetic as findPlayers() and getFriendsOf(), pointed at a
+ * single profile — see supabase/55_match_with.sql. Returns null when
+ * there is no score to show: yourself, somebody blocked, or nobody
+ * signed in.
+ *
+ * Nothing about this is stored or cached, here or in the database. The
+ * number is meant to move — it is built out of two Top 5s, two
+ * libraries and how recently you both played, and all of that changes.
+ * Somebody who matches you 90% now will not in two years, because the
+ * games it is counting will not be the games either of you is playing.
+ * So it is recomputed on every view, and there is deliberately no
+ * column anywhere holding yesterday's answer.
+ */
+export async function getMatchWith(
+  userId: string,
+): Promise<MatchWith | null> {
+  const { data, error } = await supabase.rpc("match_with", {
+    target: userId,
+  });
+
+  if (error || !data || (data as MatchWith[]).length === 0) return null;
+  return (data as MatchWith[])[0];
+}
+
+export type MatchWith = SharedGround & {
+  score: number;
+  max_score: number;
+  /**
+   * Whether YOUR profile has enough on it to compare.
+   *
+   * False means no games in your Top 5 or library, and the percentage
+   * has to be suppressed rather than shown. The denominator is the best
+   * anyone could score against you, so an empty profile makes that
+   * denominator 5 — the recency bonus alone — and every reasonably
+   * active stranger comes out at 100%. Arithmetically true, and a lie
+   * to anybody reading it.
+   */
+  you_ready: boolean;
+  /** Same, for theirs. A new account isn't a bad match, it's an unknown one. */
+  they_ready: boolean;
+};

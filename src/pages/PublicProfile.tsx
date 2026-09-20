@@ -7,6 +7,7 @@ import { getFriendCount } from "../lib/matching";
 import { GameLibrary } from "../components/GameLibrary";
 import { ProfileStats } from "../components/ProfileStats";
 import { Achievements } from "../components/Achievements";
+import { ProfileMatch } from "../components/ProfileMatch";
 import { formatLocation } from "../lib/constants";
 import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
 import { bannerStyle } from "../lib/backgrounds";
@@ -170,6 +171,10 @@ export default function PublicProfile() {
           </div>
         )}
       </header>
+
+      {/* How well you two match, worked out live. Not for your own
+          profile — a percentage against yourself is nonsense. */}
+      {!isSelf && <ProfileMatch userId={profile.id} />}
 
       {/* Top 5 */}
       <section className="mb-8">

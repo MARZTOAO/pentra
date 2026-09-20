@@ -93,6 +93,224 @@ with checks(migration, feature, present) as (
        select 1 from pg_proc p
        join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'public' and p.proname = 'sync_session_reminders'
+     )),
+    ('34_mentions',
+     '@mentions in posts and comments',
+     to_regclass('public.post_mentions') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'mentionable_friends'
+     )),
+
+    ('35_friends_of',
+     'Somebody''s friends, scored against you',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'friends_of'
+     )),
+
+    ('36_get_post',
+     'A single post on its own page',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'get_post'
+     )),
+
+    -- No new object: it repairs a trigger function from 33. The only
+    -- honest check is whether the repair is in the body.
+    ('37_fix_accept_trigger',
+     'FIX — friend requests can be accepted at all',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname = 'notify_friend_accepted'
+         and pg_get_functiondef(p.oid) ilike '%is distinct from%'
+     )),
+
+    ('38_realtime_notifications',
+     'The bell updates without a refresh',
+     exists (
+       select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime'
+         and schemaname = 'public'
+         and tablename = 'notifications'
+     )),
+
+    ('39_comments',
+     'Comments and replies',
+     to_regclass('public.post_comments') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'get_comments'
+     )),
+
+    -- Also replaced by 42, which keeps the advisory lock. Either way,
+    -- what must NOT be there is the `for update` that broke joining.
+    ('40_fix_join_session',
+     'FIX — joining somebody else''s session works',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname = 'join_session'
+         and pg_get_functiondef(p.oid) ilike '%pg_advisory_xact_lock%'
+     )),
+
+    ('41_live_sessions_and_comments',
+     'Sessions and comments update live',
+     exists (
+       select 1 from pg_indexes
+       where schemaname = 'public'
+         and indexname = 'notifications_once_per_post_actor'
+     )
+     and exists (
+       select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime'
+         and schemaname = 'public'
+         and tablename = 'post_comments'
+     )),
+
+    ('42_session_invites',
+     'Inviting a friend into a session',
+     to_regclass('public.session_invites') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'invite_to_session'
+     )),
+
+    ('43_profile_stats',
+     'The stats block on a profile',
+     to_regclass('public.profile_stats') is not null
+     and to_regclass('public.session_attendance') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'get_profile_stats'
+     )),
+
+    ('44_achievements',
+     'Achievements',
+     to_regclass('public.achievements') is not null
+     and to_regclass('public.profile_achievements') is not null),
+
+    -- Checked against the catalogue, not by counting rows in
+    -- `achievements`: a `select count(*)` from a table that does not
+    -- exist fails when Postgres PLANS this query, which would kill
+    -- the whole report on exactly the database it is meant to
+    -- diagnose. Every check in this file reads the catalogue only.
+    ('45_more_achievements',
+     'All 40 achievements, not just the first few',
+     to_regclass('public.session_full_houses') is not null
+     and exists (
+       select 1 from information_schema.columns
+       where table_schema = 'public'
+         and table_name   = 'profile_stats'
+         and column_name  = 'full_houses'
+     )),
+
+    ('46_referrals',
+     'Referral codes and invite rewards',
+     to_regclass('public.referral_codes') is not null
+     and to_regclass('public.referrals') is not null),
+
+    -- The bug was measuring the rate limit from when a code was
+    -- ISSUED. The fix measures from when one was RETIRED.
+    ('47_fix_roll_referral',
+     'FIX — the New link button actually issues a new link',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname = 'roll_referral_code'
+         and pg_get_functiondef(p.oid) ilike '%max(rc.retired_at)%'
+     )),
+
+    ('48_stats_performance',
+     'Achievements load in one pass instead of thirty-five',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'stat_snapshot'
+     )),
+
+    ('49_changelog',
+     'The what''s-new window',
+     to_regclass('public.changelog_entries') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'get_changelog'
+     )),
+
+    ('50_library_cap_28',
+     'Also plays holds 28 games, not 20',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname = 'cap_game_library'
+         and pg_get_functiondef(p.oid) like '%>= 28%'
+     )),
+
+    ('51_realtime_achievements',
+     'The achievement toast fires the moment one is earned',
+     exists (
+       select 1 from pg_publication_tables
+       where pubname = 'supabase_realtime'
+         and schemaname = 'public'
+         and tablename = 'profile_achievements'
+     )),
+
+    -- The one that mattered: achievements counting games owned, days
+    -- as a member or a weekly streak never fired, because none of
+    -- those touch profile_stats and time passing is not an event.
+    ('52_fix_derived_achievements',
+     'FIX — achievements on games owned, streaks and time fire at all',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'check_my_achievements'
+     )
+     and exists (
+       select 1 from pg_trigger
+       where tgname = 'game_library_award'
+     )),
+
+    ('53_delete_account',
+     'Deleting your own account',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'delete_my_account'
+     )),
+
+    ('54_session_platform_headset',
+     'System and headset on a session',
+     exists (
+       select 1 from information_schema.columns
+       where table_schema = 'public'
+         and table_name   = 'posts'
+         and column_name  = 'platform'
+     )
+     and exists (
+       select 1 from information_schema.columns
+       where table_schema = 'public'
+         and table_name   = 'posts'
+         and column_name  = 'headset'
+     )),
+
+    ('55_match_with',
+     'The match percentage on somebody''s profile',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'match_with'
      ))
 )
 select
@@ -100,4 +318,6 @@ select
   feature,
   case when present then 'ok' else '>>> MISSING — RUN IT' end as status
 from checks
+-- Text order. Every migration name starts with two digits, so this is
+-- also numeric order; it stops being true at 100.
 order by migration;
