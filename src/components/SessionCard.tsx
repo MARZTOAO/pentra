@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  headsetLabel,
   joinSession,
   leaveSession,
   removeSessionPlayer,
@@ -265,6 +266,34 @@ export function SessionCard({
           {invites.length > 0 && ` · ${invites.length} invited`}
         </span>
       </div>
+
+      {/* What it's played on, and whether anyone needs to talk.
+          Both are optional and both are newer than the sessions
+          already posted — a session with no answer says nothing
+          rather than guessing one. A required headset is the only
+          one drawn in colour, because it's the only one that can
+          stop somebody joining who otherwise would. */}
+      {(post.platform || post.headset) && (
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          {post.platform && (
+            <span className="notch-sm border border-line bg-surface-2 px-2 py-0.5 text-xs text-muted">
+              {post.platform}
+            </span>
+          )}
+          {post.headset && (
+            <span
+              className={
+                "notch-sm px-2 py-0.5 text-xs " +
+                (post.headset === "required"
+                  ? "border border-accent/50 bg-accent-dim font-semibold text-accent"
+                  : "border border-line bg-surface-2 text-muted")
+              }
+            >
+              {headsetLabel(post.headset)}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {post.players.map((player) => (

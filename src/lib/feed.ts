@@ -3,6 +3,31 @@ import { removeMedia, type UploadedMedia } from "./media";
 
 export type FeedScope = "everyone" | "friends";
 
+/**
+ * Whether you need a mic. Stored as the bare value — the wording
+ * lives in the app, so changing "Headsets required" to something
+ * friendlier is not a migration.
+ */
+export type HeadsetRule = "none" | "recommended" | "required";
+
+export const HEADSET_RULES: { value: HeadsetRule; label: string }[] = [
+  { value: "none", label: "Headsets not needed" },
+  { value: "recommended", label: "Headsets recommended" },
+  { value: "required", label: "Headsets required" },
+];
+
+/** The short version, for the session card. */
+export function headsetLabel(rule: HeadsetRule): string {
+  switch (rule) {
+    case "none":
+      return "No headset needed";
+    case "recommended":
+      return "Headset recommended";
+    case "required":
+      return "Headset required";
+  }
+}
+
 export type Post = {
   id: number;
   body: string;
@@ -26,6 +51,10 @@ export type Post = {
   taken: number;
   i_joined: boolean;
   players: SessionPlayer[];
+
+  /** Sessions only. Null on anything posted before these existed. */
+  platform: string | null;
+  headset: HeadsetRule | null;
 
   /** Photos and converted GIFs, in the order they were attached. */
   media: PostMedia[];
@@ -100,6 +129,9 @@ export async function createPost(
     slots: number;
     /** Friends who are already in. They take their slots at once. */
     guests?: string[];
+    /** Which system it's on. Null means they didn't say. */
+    platform?: string | null;
+    headset?: HeadsetRule | null;
   } | null,
   media: UploadedMedia[] = [],
 ) {
@@ -110,6 +142,8 @@ export async function createPost(
     starts_at: session?.startsAt ?? null,
     slots: session?.slots ?? null,
     guests: session?.guests ?? [],
+    platform: session?.platform ?? null,
+    headset: session?.headset ?? null,
     media: media.map((m) => ({
       kind: m.kind,
       url: m.url,

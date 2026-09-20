@@ -6,10 +6,13 @@ import {
   getFeed,
   getFeedGames,
   createPost,
+  HEADSET_RULES,
   type Post,
   type FeedScope,
   type FeedGame,
+  type HeadsetRule,
 } from "../lib/feed";
+import { PLATFORMS } from "../lib/constants";
 import { releaseLabel, isUnreleased, type Game } from "../lib/topFive";
 import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
@@ -232,6 +235,10 @@ function Composer({
   const [startsAt, setStartsAt] = useState(defaultStart());
   const [slots, setSlots] = useState(4);
   const [guests, setGuests] = useState<string[]>([]);
+  // Null means "didn't say", which is a real answer and the one every
+  // session posted before today gives.
+  const [platform, setPlatform] = useState<string | null>(null);
+  const [headset, setHeadset] = useState<HeadsetRule | null>(null);
   const [media, setMedia] = useState<PreparedMedia[]>([]);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(0);
@@ -279,7 +286,13 @@ function Composer({
       body.trim(),
       game?.id ?? null,
       isSession
-        ? { startsAt: new Date(startsAt).toISOString(), slots, guests }
+        ? {
+            startsAt: new Date(startsAt).toISOString(),
+            slots,
+            guests,
+            platform,
+            headset,
+          }
         : null,
       uploaded,
     );
@@ -300,6 +313,8 @@ function Composer({
     setStartsAt(defaultStart());
     setSlots(4);
     setGuests([]);
+    setPlatform(null);
+    setHeadset(null);
     onPosted();
   }
 
@@ -357,6 +372,40 @@ function Composer({
                 Including you — {slots - 1} {slots === 2 ? "slot" : "slots"} for
                 others.
               </span>
+
+              <label className="flex items-center gap-2 text-xs text-muted">
+                System
+                <select
+                  value={platform ?? ""}
+                  onChange={(e) => setPlatform(e.target.value || null)}
+                  className="notch-md border border-line bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
+                >
+                  <option value="">Any</option>
+                  {PLATFORMS.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex items-center gap-2 text-xs text-muted">
+                Voice
+                <select
+                  value={headset ?? ""}
+                  onChange={(e) =>
+                    setHeadset((e.target.value || null) as HeadsetRule | null)
+                  }
+                  className="notch-md border border-line bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
+                >
+                  <option value="">Didn't say</option>
+                  {HEADSET_RULES.map((rule) => (
+                    <option key={rule.value} value={rule.value}>
+                      {rule.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
               <SessionGuests
                 selected={guests}
