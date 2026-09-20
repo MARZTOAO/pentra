@@ -10,7 +10,14 @@ import type { Game } from "./topFive";
  * answer to "what can the two of us play tonight?".
  */
 
-export const MAX_LIBRARY = 20;
+/**
+ * Must match the cap enforced by cap_game_library() in the database —
+ * see supabase/50_library_cap_28.sql. This constant only decides what
+ * the counter reads and when the Add button stops offering; the
+ * trigger is what actually refuses. Change one without the other and
+ * the app invites you to add a game the database will reject.
+ */
+export const MAX_LIBRARY = 28;
 
 export async function getLibrary(userId: string): Promise<Game[]> {
   const { data, error } = await supabase
