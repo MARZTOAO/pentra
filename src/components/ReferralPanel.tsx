@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  getMyReferralCode,
-  getReferralSummary,
+  getReferralPanel,
   referralLink,
   rollReferralCode,
   type ReferralSummary,
@@ -23,10 +22,10 @@ export function ReferralPanel() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    // my_referral_code() makes one if there isn't one yet; the
-    // summary is read-only and would report null for ever.
-    await getMyReferralCode();
-    setSummary(await getReferralSummary());
+    // One call: it creates the code if there isn't one and reports on
+    // it in the same trip. It used to be two awaits back to back,
+    // which is two round trips to draw one panel.
+    setSummary(await getReferralPanel());
     setLoading(false);
   }, []);
 
