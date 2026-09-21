@@ -254,3 +254,89 @@ export async function dismissReports(username: string, note: string | null) {
   if (error) return error.message;
   return (data as string) ?? "failed";
 }
+
+/* ------------------------------------------------------------------
+ *  What's New
+ *
+ *  Entries used to need a migration, which is why the changelog
+ *  drifted out of date. They don't any more — see
+ *  supabase/62_changelog_tools.sql.
+ * ---------------------------------------------------------------- */
+
+export type ChangelogKind = "feature" | "improvement" | "fix";
+
+export type DevChangelogEntry = {
+  id: number;
+  title: string;
+  body: string;
+  kind: ChangelogKind;
+  weight: number;
+  shipped_at: string;
+};
+
+export type ChangelogStatus = {
+  entries: number;
+  newest_at: string | null;
+  newest_title: string | null;
+};
+
+export async function getChangelogStatus(): Promise<ChangelogStatus | null> {
+  const { data, error } = await supabase.rpc("dev_changelog_status");
+  if (error || !data) return null;
+  return data as ChangelogStatus;
+}
+
+export async function listChangelog(): Promise<DevChangelogEntry[]> {
+  const { data, error } = await supabase.rpc("dev_changelog_list", {
+    how_many: 20,
+  });
+  if (error || !data) return [];
+  return data as DevChangelogEntry[];
+}
+
+/** @returns "added", or a sentence explaining what's wrong with it. */
+export async function addChangelog(
+  title: string,
+  body: string,
+  kind: ChangelogKind,
+  weight: number,
+): Promise<string> {
+  const { data, error } = await supabase.rpc("dev_changelog_add", {
+    entry_title: title,
+    entry_body: body,
+    entry_kind: kind,
+    entry_weight: weight,
+  });
+  if (error) return error.message;
+  return (data as string) ?? "failed";
+}
+
+export async function deleteChangelog(id: number): Promise<string> {
+  const { data, error } = await supabase.rpc("dev_changelog_delete", {
+    which: id,
+  });
+  if (error) return error.message;
+  return (data as string) ?? "failed";
+}
+
+/**
+ * Has something shipped that nobody was told about?
+ *
+ * The app knows when it was built; the database knows when the last
+ * entry went up. If this build is newer, a release went out
+ * unannounced — which is exactly how the changelog went stale the
+ * first time.
+ *
+ * Only meaningful on a real deployment: a local build has no build
+ * date worth comparing, so it never nags.
+ */
+export function changelogIsStale(newestAt: string | null): boolean {
+  const built = buildInfo().builtAt;
+  if (built === "just now") return false;
+
+  const builtMs = Date.parse(built);
+  if (Number.isNaN(builtMs)) return false;
+  if (!newestAt) return true;
+
+  return builtMs > Date.parse(newestAt);
+}

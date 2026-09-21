@@ -400,6 +400,14 @@ with checks(migration, feature, present) as (
        where n.nspname = 'public'
          and p.proname = 'is_blocked'
          and pg_get_functiondef(p.oid) ilike '%banned_until%'
+     )),
+
+    ('62_changelog_tools',
+     'What''s New written from the app, not a migration',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'dev_changelog_add'
      ))
 )
 select

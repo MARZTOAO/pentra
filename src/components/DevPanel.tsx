@@ -18,6 +18,14 @@ import {
   dismissReports,
   type ReportBacklog,
   type ReportedUser,
+  getChangelogStatus,
+  listChangelog,
+  addChangelog,
+  deleteChangelog,
+  changelogIsStale,
+  type ChangelogKind,
+  type ChangelogStatus,
+  type DevChangelogEntry,
   type DevEnvironment,
   type DevFlag,
   type DevMetrics,
@@ -118,8 +126,8 @@ function Dialog({
           <header className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-4 py-3">
           <h2 className="label-wide text-accent">Developer</h2>
 
-          <nav className="order-last flex w-full gap-1 sm:order-none sm:ml-auto sm:w-auto">
-            {(["reports", "numbers", "flags", "build"] as const).map((t) => (
+          <nav className="order-last flex w-full flex-wrap gap-1 sm:order-none sm:ml-auto sm:w-auto">
+            {(["reports", "news", "numbers", "flags", "build"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -146,6 +154,7 @@ function Dialog({
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {tab === "reports" && <Reports />}
+          {tab === "news" && <News />}
           {tab === "numbers" && <Numbers />}
           {tab === "flags" && <Flags />}
           {tab === "build" && <Build />}
@@ -156,7 +165,7 @@ function Dialog({
   );
 }
 
-type Tab = "reports" | "numbers" | "flags" | "build";
+type Tab = "reports" | "news" | "numbers" | "flags" | "build";
 
 /* ------------------------------------------------------------------ */
 
@@ -385,6 +394,179 @@ function Case({ r, onDone }: { r: ReportedUser; onDone: () => void }) {
       )}
 
       {problem && <p className="mt-2 text-xs text-danger">{problem}</p>}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * What's New, written here instead of in a migration.
+ *
+ * Every entry used to need a SQL file, a deploy and somebody
+ * remembering, which is why the changelog quietly stopped being true.
+ * Now it's a box.
+ *
+ * It still needs a sentence from a person — nothing can work out that
+ * a function rewrite means "game search that forgives" — but writing
+ * one takes seconds, and the nudge at the top means a release can't
+ * go out unannounced without you being told.
+ */
+function News() {
+  const [entries, setEntries] = useState<DevChangelogEntry[]>([]);
+  const [status, setStatus] = useState<ChangelogStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [kind, setKind] = useState<ChangelogKind>("feature");
+  const [weight, setWeight] = useState(2);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    Promise.all([listChangelog(), getChangelogStatus()]).then(([e, s]) => {
+      setEntries(e);
+      setStatus(s);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(load, [load]);
+
+  async function add() {
+    if (busy) return;
+    setBusy(true);
+    setProblem(null);
+    const result = await addChangelog(title, body, kind, weight);
+    setBusy(false);
+
+    if (result !== "added") {
+      setProblem(result);
+      return;
+    }
+    setTitle("");
+    setBody("");
+    load();
+  }
+
+  if (loading) return <p className="text-sm text-muted">Loading…</p>;
+
+  const stale = changelogIsStale(status?.newest_at ?? null);
+
+  return (
+    <div className="space-y-4">
+      {stale && (
+        <p className="notch-md border border-accent/50 bg-accent-dim p-3 text-xs leading-relaxed text-accent">
+          This build is newer than the last thing you announced.
+          Something shipped that nobody has been told about.
+        </p>
+      )}
+
+      <div className="notch-md border border-line bg-surface-2 p-3">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="What changed"
+          maxLength={80}
+          className="mb-2 w-full notch-md border border-line bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+        />
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={3}
+          maxLength={300}
+          placeholder="Why it matters to somebody using Pentra. One or two sentences."
+          className="mb-2 w-full resize-none notch-md border border-line bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as ChangelogKind)}
+            className="notch-md border border-line bg-surface px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
+          >
+            <option value="feature">Feature</option>
+            <option value="improvement">Improvement</option>
+            <option value="fix">Fix</option>
+          </select>
+
+          {/* Weight is what the window ranks on, so somebody back
+              after a month gets the big things rather than the
+              most recent ones. */}
+          <select
+            value={weight}
+            onChange={(e) => setWeight(Number(e.target.value))}
+            className="notch-md border border-line bg-surface px-2 py-1.5 text-xs text-ink outline-none focus:border-accent"
+          >
+            <option value={1}>Headline</option>
+            <option value={2}>Worth mentioning</option>
+            <option value={3}>Footnote</option>
+          </select>
+
+          <span className="numeric text-[11px] text-muted">
+            {body.length}/300
+          </span>
+
+          <button
+            onClick={add}
+            disabled={busy || !title.trim() || !body.trim()}
+            className="ml-auto notch-md bg-accent px-3 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+          >
+            {busy ? "…" : "Publish"}
+          </button>
+        </div>
+
+        {problem && <p className="mt-2 text-xs text-danger">{problem}</p>}
+      </div>
+
+      {status && (
+        <p className="text-[11px] text-muted">
+          {status.entries} entries. Everyone who has been away since an
+          entry went up sees it next time they sign in.
+        </p>
+      )}
+
+      <div className="space-y-2">
+        {entries.map((e) => (
+          <div key={e.id} className="notch-md border border-line p-2.5">
+            <div className="mb-1 flex items-baseline gap-2">
+              <span
+                className={
+                  "notch-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide " +
+                  (e.kind === "fix"
+                    ? "border border-line text-muted"
+                    : e.weight === 1
+                      ? "bg-accent text-onaccent"
+                      : "border border-accent/50 text-accent")
+                }
+              >
+                {e.kind}
+              </span>
+              <p className="min-w-0 flex-1 truncate text-sm font-semibold">
+                {e.title}
+              </p>
+              <button
+                onClick={async () => {
+                  await deleteChangelog(e.id);
+                  load();
+                }}
+                title="Remove"
+                className="shrink-0 text-xs text-muted transition hover:text-danger"
+              >
+                ×
+              </button>
+            </div>
+            <p className="break-words text-xs leading-relaxed text-muted">
+              {e.body}
+            </p>
+            <p className="mt-1 text-[10px] text-muted">
+              {new Date(e.shipped_at).toLocaleDateString()}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
