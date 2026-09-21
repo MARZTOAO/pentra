@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
+import { captureReferralFromUrl } from "./lib/referrals";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
 import { Notifications } from "./components/Notifications";
@@ -25,6 +26,11 @@ function Shell({ children }: { children: React.ReactNode }) {
     </ProtectedRoute>
   );
 }
+
+// Before anything renders or routes: an invite link is a plain
+// `?ref=` on the root, and the router would otherwise throw the query
+// string away on the first navigation.
+captureReferralFromUrl();
 
 export default function App() {
   return (

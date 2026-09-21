@@ -10,11 +10,20 @@ import {
   getMetrics,
   removeTester,
   setFlag,
+  getReportQueue,
+  getReportBacklog,
+  warnUser,
+  banUser,
+  unbanUser,
+  dismissReports,
+  type ReportBacklog,
+  type ReportedUser,
   type DevEnvironment,
   type DevFlag,
   type DevMetrics,
 } from "../lib/dev";
 import { clearFlagCache } from "../lib/flags";
+import { Avatar } from "./Avatar";
 
 /**
  * The developer panel.
@@ -37,7 +46,7 @@ import { clearFlagCache } from "../lib/flags";
 export function DevPanel() {
   const [isDev, setIsDev] = useState(false);
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"numbers" | "flags" | "build">("numbers");
+  const [tab, setTab] = useState<Tab>("reports");
 
   useEffect(() => {
     amIDeveloper().then(setIsDev);
@@ -96,18 +105,21 @@ function Dialog({
   setTab,
   onClose,
 }: {
-  tab: "numbers" | "flags" | "build";
-  setTab: (t: "numbers" | "flags" | "build") => void;
+  tab: Tab;
+  setTab: (t: Tab) => void;
   onClose: () => void;
 }) {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-3 pt-10 sm:p-6 sm:pt-16">
       <div className="flex max-h-full w-full max-w-2xl flex-col notch border border-accent/40 bg-surface">
-        <header className="flex shrink-0 items-center gap-2 border-b border-line px-4 py-3">
+        {/* Wraps: a fourth tab pushes "build" off the right edge at
+              375px wide, so on a phone the tabs drop to their own
+              line rather than being clipped. */}
+          <header className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-4 py-3">
           <h2 className="label-wide text-accent">Developer</h2>
 
-          <nav className="ml-auto flex gap-1">
-            {(["numbers", "flags", "build"] as const).map((t) => (
+          <nav className="order-last flex w-full gap-1 sm:order-none sm:ml-auto sm:w-auto">
+            {(["reports", "numbers", "flags", "build"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -133,6 +145,7 @@ function Dialog({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          {tab === "reports" && <Reports />}
           {tab === "numbers" && <Numbers />}
           {tab === "flags" && <Flags />}
           {tab === "build" && <Build />}
@@ -140,6 +153,239 @@ function Dialog({
       </div>
     </div>,
     document.body,
+  );
+}
+
+type Tab = "reports" | "numbers" | "flags" | "build";
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * The moderation queue.
+ *
+ * Reports are grouped by person, not listed one by one, because you
+ * act on people. A person appears once three DIFFERENT people have
+ * reported them — or immediately, from a single report, if it alleges
+ * threats, sexual content, or a minor being targeted.
+ *
+ * Unlike the Numbers tab, this shows individual accounts and what was
+ * said about them. That isn't a contradiction: a metric answers "is
+ * Pentra working" and needs no names, while a report is a specific
+ * accusation about a specific person and is meaningless without them.
+ */
+function Reports() {
+  const [queue, setQueue] = useState<ReportedUser[]>([]);
+  const [backlog, setBacklog] = useState<ReportBacklog | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    Promise.all([getReportQueue(), getReportBacklog()]).then(([q, b]) => {
+      setQueue(q);
+      setBacklog(b);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(load, [load]);
+
+  if (loading) return <p className="text-sm text-muted">Loading…</p>;
+
+  return (
+    <div className="space-y-4">
+      {queue.length === 0 ? (
+        <p className="text-sm text-muted">Nothing needs you.</p>
+      ) : (
+        queue.map((r) => <Case key={r.user_id} r={r} onDone={load} />)
+      )}
+
+      {/* Counts, not names. Enough to tell a quiet week from a bar
+          set too high. */}
+      {backlog && backlog.below_threshold > 0 && (
+        <p className="border-t border-line pt-3 text-[11px] leading-relaxed text-muted">
+          {backlog.below_threshold} report
+          {backlog.below_threshold === 1 ? " is" : "s are"} below the
+          threshold and not shown. A person appears here once three
+          different people report them, or straight away for threats,
+          sexual content, or a minor being targeted.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Case({ r, onDone }: { r: ReportedUser; onDone: () => void }) {
+  const [note, setNote] = useState("");
+  const [days, setDays] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
+  const banned = r.banned_until !== null && new Date(r.banned_until) > new Date();
+
+  async function run(fn: () => Promise<string>) {
+    setBusy(true);
+    setProblem(null);
+    const result = await fn();
+    setBusy(false);
+    if (result === "warned" || result === "banned" ||
+        result === "unbanned" || result === "dismissed") {
+      onDone();
+    } else {
+      setProblem(result);
+    }
+  }
+
+  return (
+    <div
+      className={
+        "notch-md border p-3 " +
+        (r.severe ? "border-danger/50 bg-danger/5" : "border-line")
+      }
+    >
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <Avatar of={r} size={32} className="shrink-0" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">
+            {r.display_name || r.username}
+          </p>
+          <p className="truncate text-xs text-muted">@{r.username}</p>
+        </div>
+
+        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          {r.severe && (
+            <span className="notch-sm bg-danger px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              Severe
+            </span>
+          )}
+          {banned && (
+            <span className="notch-sm border border-danger/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-danger">
+              Banned
+            </span>
+          )}
+          {r.warn_count > 0 && (
+            <span className="notch-sm border border-accent/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+              {r.warn_count} warning{r.warn_count === 1 ? "" : "s"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <p className="mb-2 text-xs text-muted">
+        <span className="numeric font-bold text-ink">{r.reporters}</span>{" "}
+        {r.reporters === 1 ? "person" : "people"} ·{" "}
+        <span className="numeric font-bold text-ink">{r.reports}</span>{" "}
+        report{r.reports === 1 ? "" : "s"} · {r.reasons.join(", ")}
+      </p>
+
+      {r.details.length > 0 && (
+        <div className="mb-3 space-y-1">
+          {r.details.slice(0, 5).map((d, i) => (
+            <p
+              key={i}
+              className="break-words notch-sm border border-line bg-surface-2 px-2 py-1 text-xs leading-relaxed text-muted"
+            >
+              {d}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {r.last_action && (
+        <p className="mb-2 text-[11px] text-muted">
+          Last action: {r.last_action}
+          {r.last_action_at &&
+            ` · ${new Date(r.last_action_at).toLocaleDateString()}`}
+        </p>
+      )}
+
+      {banned ? (
+        <button
+          onClick={() => run(() => unbanUser(r.username))}
+          disabled={busy}
+          className="notch-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:text-ink disabled:opacity-40"
+        >
+          Unban — restores their account and everything they posted
+        </button>
+      ) : (
+        <>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            placeholder="What they need to stop doing. They'll see this."
+            className="mb-2 w-full resize-none notch-md border border-line bg-surface-2 px-2.5 py-1.5 text-xs outline-none focus:border-accent"
+          />
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => run(() => warnUser(r.username, note))}
+              disabled={busy || !note.trim()}
+              title={!note.trim() ? "Say what they need to stop doing" : ""}
+              className="notch-md border border-accent/50 px-3 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/10 disabled:opacity-40"
+            >
+              Warn
+            </button>
+
+            <label className="flex items-center gap-1.5 text-xs text-muted">
+              for
+              <select
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                className="notch-md border border-line bg-surface-2 px-2 py-1 text-xs text-ink outline-none focus:border-accent"
+              >
+                <option value="">ever</option>
+                <option value="1">1 day</option>
+                <option value="7">7 days</option>
+                <option value="30">30 days</option>
+              </select>
+            </label>
+
+            {/* Two presses. Banning has no undo the person can reach,
+                and the note becomes the record of why. */}
+            {!confirming ? (
+              <button
+                onClick={() => setConfirming(true)}
+                disabled={busy}
+                className="notch-md border border-danger/50 px-3 py-1.5 text-xs font-semibold text-danger transition hover:bg-danger/10 disabled:opacity-40"
+              >
+                Ban…
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() =>
+                    run(() =>
+                      banUser(r.username, note, days ? Number(days) : null),
+                    )
+                  }
+                  disabled={busy}
+                  className="notch-md bg-danger px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                >
+                  {busy ? "…" : `Confirm ban ${days ? `(${days}d)` : "(forever)"}`}
+                </button>
+                <button
+                  onClick={() => setConfirming(false)}
+                  className="text-xs text-muted transition hover:text-ink"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={() => run(() => dismissReports(r.username, note || null))}
+              disabled={busy}
+              className="ml-auto text-xs text-muted transition hover:text-ink disabled:opacity-40"
+            >
+              Dismiss
+            </button>
+          </div>
+        </>
+      )}
+
+      {problem && <p className="mt-2 text-xs text-danger">{problem}</p>}
+    </div>
   );
 }
 

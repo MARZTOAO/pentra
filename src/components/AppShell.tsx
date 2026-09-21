@@ -7,6 +7,7 @@ import { useNotifications } from "./Notifications";
 import { Welcome } from "./Welcome";
 import { ChangelogDialog } from "./ChangelogDialog";
 import { AchievementToast } from "./AchievementToast";
+import { WarningBanner } from "./WarningBanner";
 import { NotificationBell } from "./NotificationBell";
 
 /** `short` is the bottom-tab label. Seven of them share a phone's
@@ -132,6 +133,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           these two can never stack on a first run. */}
       <ChangelogDialog />
       <AchievementToast />
+      {/* Blocks the app until acknowledged. Draws nothing for anyone
+          who hasn't been warned, which is almost everyone. */}
+      <WarningBanner />
 
       {/* Sidebar — desktop only. On a phone 224px of permanent chrome is
           most of the screen, so below md this is replaced by the bottom

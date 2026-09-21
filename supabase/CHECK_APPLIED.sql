@@ -381,6 +381,25 @@ with checks(migration, feature, present) as (
      and exists (
        select 1 from pg_constraint
        where conname = 'profiles_username_shape'
+     )),
+
+    -- The ban check inside is_blocked() is checked too: without it
+    -- a banned account's posts stay visible everywhere, which is the
+    -- half of a ban people actually notice.
+    ('61_moderation',
+     'Report queue, warnings and bans',
+     to_regclass('public.moderation_actions') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'dev_report_queue'
+     )
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public'
+         and p.proname = 'is_blocked'
+         and pg_get_functiondef(p.oid) ilike '%banned_until%'
      ))
 )
 select

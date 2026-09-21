@@ -1,5 +1,5 @@
 /**
- * The app's three notification sounds.
+ * The app's notification sounds.
  *
  * Synthesised rather than loaded from files: three short beeps are a
  * few lines of maths, and shipping them as audio means three assets to
@@ -11,13 +11,22 @@
  * irritation on about the fifth hearing. Peak gain is 0.06 — clearly
  * audible, never startling.
  *
- * The three are related but distinguishable: same timbre, different
+ * They are related but distinguishable: same timbre, different
  * shapes. A message rises, a friend request is three warm notes, a
  * general notification is a single tap. You should be able to tell
  * which happened without looking.
+ *
+ * The achievement sound is the exception to the quiet rule. It is
+ * heard a handful of times ever rather than hundreds of times a week,
+ * so it is allowed to be brighter, longer and a little louder — the
+ * one moment in the app where a flourish is the point.
  */
 
-export type Tone = "message" | "friendRequest" | "notification";
+export type Tone =
+  | "message"
+  | "friendRequest"
+  | "notification"
+  | "achievement";
 
 /** Per-device, not per-account: sound on the desktop and silence on a
  *  phone in a meeting is a reasonable thing to want. */
@@ -46,9 +55,25 @@ const TONES: Record<Tone, Note[]> = {
   ],
   // A single tap. The default, and the one heard most often.
   notification: [{ hz: 880, at: 0, length: 0.14 }],
+  // Four notes climbing well past where the others stop, and the last
+  // one held. Deliberately far from friendRequest, which is also an
+  // ascending figure — that one tops out at G5, this one carries on up
+  // to E6 and stays there, so there is no mistaking the two.
+  achievement: [
+    { hz: 659.25, at: 0, length: 0.08 },
+    { hz: 880.0, at: 0.075, length: 0.08 },
+    { hz: 1174.66, at: 0.15, length: 0.09 },
+    { hz: 1318.51, at: 0.235, length: 0.36 },
+  ],
 };
 
 const PEAK = 0.06;
+
+/** Anything not listed here plays at PEAK. */
+const LOUDER: Partial<Record<Tone, number>> = {
+  // Rare enough to be an event rather than a nuisance.
+  achievement: 0.085,
+};
 
 let context: AudioContext | null = null;
 
@@ -120,6 +145,7 @@ export function play(tone: Tone) {
 
   try {
     const start = ctx.currentTime + 0.01;
+    const peak = LOUDER[tone] ?? PEAK;
 
     for (const note of TONES[tone]) {
       const osc = ctx.createOscillator();
@@ -143,8 +169,8 @@ export function play(tone: Tone) {
       // audible click.
       const release = Math.min(0.055, note.length * 0.45);
       gain.gain.setValueAtTime(0.0001, from);
-      gain.gain.exponentialRampToValueAtTime(PEAK, from + 0.012);
-      gain.gain.setValueAtTime(PEAK, to - release);
+      gain.gain.exponentialRampToValueAtTime(peak, from + 0.012);
+      gain.gain.setValueAtTime(peak, to - release);
       gain.gain.exponentialRampToValueAtTime(0.0001, to);
 
       osc.connect(gain);

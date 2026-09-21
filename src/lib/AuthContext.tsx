@@ -2,11 +2,13 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { claimStoredReferral } from "./referrals";
 
 type AuthState = {
   session: Session | null;
@@ -29,6 +31,9 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  // So a single session doesn't fire the referral claim on every auth
+  // event — token refreshes come through onAuthStateChange too.
+  const claimed = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -50,6 +55,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  /**
+   * Hand over the invite code, if they arrived on somebody's link.
+   *
+   * Here rather than in the signup form because with email
+   * confirmation on, the account exists some time after the form was
+   * submitted — often in a different tab. The database refuses
+   * anything that isn't a genuinely new account, so calling it when
+   * an existing user happens to sign in costs one no-op.
+   */
+  useEffect(() => {
+    if (!session || claimed.current) return;
+    claimed.current = true;
+    claimStoredReferral();
+  }, [session]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
