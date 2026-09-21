@@ -81,7 +81,7 @@ export default function Signup() {
       return;
     }
 
-    navigate("/", { replace: true });
+    navigate("/home", { replace: true });
   }
 
   if (pendingEmail) {

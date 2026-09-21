@@ -91,8 +91,13 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  /* Stops the desktop window feeling like a web page you can
-     select-drag. */
+}
+
+/* Stops the desktop window feeling like a web page you can
+   select-drag. Only there: in a browser this IS a web page, and the
+   public site has paragraphs people may want to copy. main.tsx sets
+   the attribute. */
+html[data-desktop] body {
   user-select: none;
 }
 

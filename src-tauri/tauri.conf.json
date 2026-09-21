@@ -12,9 +12,13 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Pentra",
-        "width": 800,
-        "height": 600
+        "width": 1200,
+        "height": 800,
+        "minWidth": 760,
+        "minHeight": 520,
+        "center": true
       }
     ],
     "security": {
@@ -24,12 +28,26 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEMyNUY0QzJBQTY5OUJDQjMKUldTenZKbW1La3hmd3JOZUJ2OHV2MU9peU1JZDhSY2RXVXRHL1RLNWZYZm5kRStEZS9QL1FNazIK",
+      "endpoints": [
+        "https://github.com/MARZTOAO/pentra/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

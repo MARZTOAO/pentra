@@ -4,6 +4,7 @@ import { captureReferralFromUrl } from "./lib/referrals";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
 import { Notifications } from "./components/Notifications";
+import { UpdateBanner } from "./components/UpdateBanner";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
@@ -17,6 +18,8 @@ import Messages from "./pages/Messages";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
 import MySessions from "./pages/MySessions";
+import Landing from "./pages/Landing";
+import { Privacy, Terms } from "./pages/Legal";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -38,6 +41,12 @@ export default function App() {
       <HashRouter>
         <Notifications>
           <Routes>
+          {/* The website. Signed-in people and the desktop app skip
+              straight past it — see Landing. */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
@@ -154,6 +163,10 @@ export default function App() {
               login if you aren't signed in. */}
           <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
+
+          {/* Desktop only; draws nothing in a browser. Outside the
+              routes so an update is offered on every screen. */}
+          <UpdateBanner />
         </Notifications>
       </HashRouter>
     </AuthProvider>

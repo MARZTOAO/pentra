@@ -1,8 +1,8 @@
 [package]
 name = "gamer-social"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Pentra — find your group, play tonight."
+authors = ["MARZ"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -22,6 +22,15 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# Self-update from GitHub Releases, and the restart that follows it.
+# See src/lib/updater.ts for the flow.
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+
+# Remembers where the window was and how big, so the app opens the
+# way it was closed instead of 1200x800 in the middle every time.
+tauri-plugin-window-state = "2"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

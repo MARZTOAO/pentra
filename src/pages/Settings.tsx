@@ -7,6 +7,7 @@ import { getBlocked, unblockUser, type BlockedUser } from "../lib/safety";
 import { NotificationSettingsPanel } from "../components/NotificationSettingsPanel";
 import { DeleteAccount } from "../components/DeleteAccount";
 import { DevPanel } from "../components/DevPanel";
+import { DesktopSection } from "../components/DesktopSection";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -59,6 +60,8 @@ export default function Settings() {
       {error && <Alert>{error}</Alert>}
 
       <NotificationSettingsPanel />
+
+      <DesktopSection />
 
       <section className="mb-8 notch border border-line bg-surface p-5">
         <h2 className="mb-1 label-wide text-muted">
