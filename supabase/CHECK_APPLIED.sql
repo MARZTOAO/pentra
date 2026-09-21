@@ -328,6 +328,59 @@ with checks(migration, feature, present) as (
        select 1 from pg_indexes
        where schemaname = 'public'
          and indexname = 'games_search_text_trgm'
+     )),
+
+    -- A data migration: it creates nothing, so the only evidence it
+    -- ran is one of the rows it adds.
+    --
+    -- And it cannot simply say `select count(*) from
+    -- changelog_entries`, guarded or not. Postgres resolves every
+    -- table in this query when it PLANS it, before a single guard
+    -- gets to run, so on a database missing 49 that one line takes
+    -- the whole report down — on exactly the database it exists to
+    -- diagnose. Naming the table inside a string keeps it away from
+    -- the planner, and CASE does short-circuit at run time, so the
+    -- string is never executed when the table is not there.
+    ('57_changelog_update_2',
+     'The second What''s New post',
+     case
+       when to_regclass('public.changelog_entries') is null then false
+       else (xpath('/row/c/text()', query_to_xml(
+               'select count(*) as c from public.changelog_entries '
+               || 'where title = ''Game search that forgives''',
+               false, true, '')))[1]::text::int > 0
+     end),
+
+    ('58_developer_mode',
+     'Developer tools and feature flags',
+     to_regclass('public.developers')    is not null
+     and to_regclass('public.feature_flags') is not null
+     and exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'am_i_developer'
+     )),
+
+    ('59_dev_metrics',
+     'The numbers, for developers only',
+     exists (
+       select 1 from pg_proc p
+       join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = 'dev_metrics'
+     )),
+
+    -- Both halves checked. The index without the constraint still
+    -- leaves the shape hole open, and vice versa.
+    ('60_username_integrity',
+     'Usernames unique regardless of case, and shape enforced',
+     exists (
+       select 1 from pg_indexes
+       where schemaname = 'public'
+         and indexname = 'profiles_username_lower_key'
+     )
+     and exists (
+       select 1 from pg_constraint
+       where conname = 'profiles_username_shape'
      ))
 )
 select
