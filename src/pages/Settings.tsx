@@ -5,6 +5,8 @@ import { Alert, FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 import { getBlocked, unblockUser, type BlockedUser } from "../lib/safety";
 import { NotificationSettingsPanel } from "../components/NotificationSettingsPanel";
+import { DeleteAccount } from "../components/DeleteAccount";
+import { DevPanel } from "../components/DevPanel";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -153,6 +155,14 @@ export default function Settings() {
           </div>
         )}
       </section>
+
+      {/* Draws nothing unless the database says you're a developer.
+          The check is server-side — this only decides whether to
+          render the section. */}
+      <DevPanel />
+
+      {/* Last on the page, on purpose. */}
+      <DeleteAccount username={profile?.username ?? null} />
     </div>
   );
 }
