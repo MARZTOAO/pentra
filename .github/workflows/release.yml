@@ -1,0 +1,122 @@
+# Builds and publishes the desktop app.
+#
+# Runs on every push to main — the same push Vercel deploys the
+# website from — so the installed app and the browser never drift.
+# Each run becomes a GitHub Release: the installer, its signature,
+# and latest.json, which every running copy of Pentra polls. See
+# src/lib/updater.ts.
+#
+# VERSIONS ARE AUTOMATIC. Nobody edits a version number. Each build is
+# 0.1.<run number>, which only ever goes up, which is all the updater
+# needs to know which one is newer.
+#
+# Lives at .github/workflows/release.yml. Needs these repository
+# secrets (Settings → Secrets and variables → Actions):
+#
+#   TAURI_SIGNING_PRIVATE_KEY           contents of ~/.tauri/pentra.key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  the password given when it was made
+#   VITE_SUPABASE_URL                   already there for sync-games
+#   VITE_SUPABASE_ANON_KEY              the anon key — public by design
+#
+# Nothing else. The service role key is NOT used here and must not be.
+
+name: Release desktop app
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "supabase/**"
+      - "scripts/**"
+      - "**.md"
+      - ".github/workflows/sync-games.yml"
+  workflow_dispatch:
+
+# A second push while one is building cancels the first: the newer
+# code is the one that should ship.
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ""
+          # Mac, when there is an Apple developer account to sign with.
+          # An unsigned Mac build refuses to open on anyone else's
+          # machine, so there is no point building one before then.
+          # - platform: macos-latest
+          #   args: "--target universal-apple-darwin"
+
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 45
+
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      # Compiling the shell from scratch is most of the build time.
+      # This keeps the compiled dependencies between runs.
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install
+        run: npm ci
+
+      - name: Version this build
+        shell: bash
+        run: |
+          V="0.1.${{ github.run_number }}"
+          node -e "
+            const fs = require('fs');
+            const f = 'src-tauri/tauri.conf.json';
+            const c = JSON.parse(fs.readFileSync(f, 'utf8'));
+            c.version = '$V';
+            fs.writeFileSync(f, JSON.stringify(c, null, 2));
+          "
+          echo "APP_VERSION=$V" >> "$GITHUB_ENV"
+          echo "Building Pentra $V"
+
+      - name: Build and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # What the build panel shows. Same names Vercel uses, so
+          # vite.config.ts needs no special case for the desktop.
+          VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+          VERCEL_GIT_COMMIT_REF: ${{ github.ref_name }}
+          VERCEL_ENV: desktop
+        with:
+          tagName: v${{ env.APP_VERSION }}
+          releaseName: Pentra ${{ env.APP_VERSION }}
+          releaseBody: |
+            Built from ${{ github.sha }}. What changed is under What's New inside the app.
+
+            Windows: download the `-setup.exe`. It updates itself from then on.
+          releaseDraft: false
+          prerelease: false
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: true
+          args: ${{ matrix.args }}
