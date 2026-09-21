@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../lib/AuthContext";
 import { RELEASES_PAGE } from "../lib/platform";
 
 /**
@@ -10,29 +11,54 @@ import { RELEASES_PAGE } from "../lib/platform";
  */
 
 export function SiteHeader() {
+  const { session } = useAuth();
+  const signedIn = Boolean(session);
+
   return (
     <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-5 sm:px-8">
       <Link to="/" className="display whitespace-nowrap text-lg">
         <span className="text-accent">//</span> PENTRA
       </Link>
       <nav className="flex items-center gap-1 sm:gap-3">
-        <Link
-          to="/login"
-          className="whitespace-nowrap px-2 py-2 text-sm font-medium text-muted transition hover:text-ink sm:px-3"
-        >
-          Sign in
-        </Link>
-        <Link
-          to="/signup"
-          className="notch-md whitespace-nowrap border border-accent/50 px-3 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10 sm:px-4"
-        >
-          {/* The short label is for 320px phones, where the long one
-              wraps the whole header. */}
-          <span className="sm:hidden">Sign up</span>
-          <span className="hidden sm:inline">Create account</span>
-        </Link>
+        {signedIn ? (
+          /* Offering "create account" to someone who has one is the
+             kind of detail that makes a site feel unattended. */
+          <Link
+            to="/home"
+            className="notch-md whitespace-nowrap border border-accent/50 px-3 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10 sm:px-4"
+          >
+            Open Pentra
+          </Link>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className="whitespace-nowrap px-2 py-2 text-sm font-medium text-muted transition hover:text-ink sm:px-3"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/signup"
+              className="notch-md whitespace-nowrap border border-accent/50 px-3 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10 sm:px-4"
+            >
+              {/* The short label is for 320px phones, where the long
+                  one wraps the whole header. */}
+              <span className="sm:hidden">Sign up</span>
+              <span className="hidden sm:inline">Create account</span>
+            </Link>
+          </>
+        )}
       </nav>
     </header>
+  );
+}
+
+function FooterAccountLink() {
+  const { session } = useAuth();
+  return session ? (
+    <Link to="/home" className="transition hover:text-ink">Open Pentra</Link>
+  ) : (
+    <Link to="/login" className="transition hover:text-ink">Sign in</Link>
   );
 }
 
@@ -46,7 +72,7 @@ export function SiteFooter() {
         <nav className="flex flex-wrap gap-x-5 gap-y-2">
           <Link to="/privacy" className="transition hover:text-ink">Privacy</Link>
           <Link to="/terms" className="transition hover:text-ink">Terms</Link>
-          <Link to="/login" className="transition hover:text-ink">Sign in</Link>
+          <FooterAccountLink />
           <a href={RELEASES_PAGE} target="_blank" rel="noreferrer" className="transition hover:text-ink">
             Releases
           </a>

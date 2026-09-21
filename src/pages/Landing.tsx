@@ -17,10 +17,9 @@ import { FullScreenLoader } from "../components/ui";
 /**
  * The front door.
  *
- * What a logged-out visitor sees at the root. Two people never see it
- * at all: anyone signed in, who goes straight to their feed, and the
- * desktop app, which has already been downloaded and does not need to
- * be sold to itself.
+ * What a visitor sees at the root, signed in or not. Only the desktop
+ * app never sees it — it has already been downloaded and does not
+ * need to be sold to itself.
  *
  * Deliberately restrained. One accent, a lot of space, and type doing
  * the work. Most of what makes this feel professional is what isn't
@@ -29,14 +28,17 @@ import { FullScreenLoader } from "../components/ui";
 export default function Landing() {
   const { session, loading } = useAuth();
 
+  // The desktop app never shows the page that sells the desktop app.
+  // Signed-in people in a browser DO see it — it is where the
+  // download lives, and hiding it from the people most likely to
+  // install was backwards.
   if (isDesktopApp()) return <Navigate to="/home" replace />;
   if (loading) return <FullScreenLoader />;
-  if (session) return <Navigate to="/home" replace />;
 
   return (
     <div className="min-h-full bg-bg text-ink">
       <SiteHeader />
-      <Hero />
+      <Hero signedIn={Boolean(session)} />
       <HowItWorks />
       <AdSlot slot={import.meta.env.VITE_ADSENSE_SLOT_HOME_MID} className="my-16" />
       <Features />
@@ -57,7 +59,7 @@ function downloadOS(): OS {
 
 /* ------------------------------------------------------------------ */
 
-function Hero() {
+function Hero({ signedIn }: { signedIn: boolean }) {
   const os = downloadOS();
 
   return (
@@ -81,10 +83,10 @@ function Hero() {
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
             <DownloadButton os={os} primary />
             <Link
-              to="/signup"
+              to={signedIn ? "/home" : "/signup"}
               className="notch-md border border-line px-5 py-3 text-center text-sm font-semibold transition hover:border-muted hover:bg-surface"
             >
-              Play in your browser
+              {signedIn ? "Open in your browser" : "Play in your browser"}
             </Link>
           </div>
 

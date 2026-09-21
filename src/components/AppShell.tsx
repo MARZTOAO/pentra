@@ -8,6 +8,7 @@ import { Welcome } from "./Welcome";
 import { ChangelogDialog } from "./ChangelogDialog";
 import { AchievementToast } from "./AchievementToast";
 import { WarningBanner } from "./WarningBanner";
+import { DesktopPrompt } from "./DesktopPrompt";
 import { NotificationBell } from "./NotificationBell";
 
 /** `short` is the bottom-tab label. Seven of them share a phone's
@@ -188,6 +189,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
 
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
+        {/* Draws nothing in the desktop app, nothing without a build
+            for this machine, and nothing for the first few visits. */}
+        <DesktopPrompt />
+
         {/* Top bar. Translucent so a profile background reads through it. */}
         <header className="flex h-12 shrink-0 items-center gap-1 border-b border-line bg-surface/70 px-3 backdrop-blur-sm">
           <button
