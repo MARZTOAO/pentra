@@ -10,6 +10,10 @@
     "opener:default",
     "updater:default",
     "process:default",
-    "window-state:default"
+    "window-state:default",
+    "notification:default",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
   ]
 }

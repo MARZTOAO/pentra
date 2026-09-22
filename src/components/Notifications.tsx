@@ -13,6 +13,7 @@ import { useAuth } from "../lib/AuthContext";
 import { getConversations, type Message } from "../lib/chat";
 import { Avatar } from "./Avatar";
 import { play } from "../lib/sound";
+import { notify, reportUnread } from "../lib/desktop";
 
 type Toast = {
   id: number;
@@ -62,6 +63,9 @@ export function Notifications({ children }: { children: ReactNode }) {
   const [unread, setUnread] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  /** Message ids already sent to Windows, so none goes twice. */
+  const notified = useRef<Set<number>>(new Set());
+
   const openId = openConversationId(location.pathname);
 
   // Kept current for the subscription callback to read.
@@ -87,6 +91,12 @@ export function Notifications({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh();
   }, [refresh, location.pathname]);
+
+  // Half of the tray tooltip's number; the bell reports the other half.
+  // Does nothing in a browser.
+  useEffect(() => {
+    reportUnread("messages", unread);
+  }, [unread]);
 
   // Opening a thread clears any toast for it, however you got there —
   // the toast itself, the sidebar, or a link from a profile.
@@ -137,6 +147,15 @@ export function Notifications({ children }: { children: ReactNode }) {
             avatarPreset: data.avatar_preset,
             body: message.body,
           };
+
+          // Guarded by its own set rather than by the toast list.
+          // React may run the updater below more than once for a single
+          // event, and Supabase can redeliver one on a reconnect —
+          // either would be a second toast for the same message.
+          if (!notified.current.has(message.id)) {
+            notified.current.add(message.id);
+            void notify(data.display_name || data.username, message.body);
+          }
 
           setToasts((current) => {
             // Already showing it — a duplicate event, not a new message.

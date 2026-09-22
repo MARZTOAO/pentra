@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { Alert } from "./ui";
 import { isMuted, setMuted, preview } from "../lib/sound";
+import { isDesktopApp } from "../lib/platform";
+import {
+  autostartEnabled,
+  closeToTray,
+  notificationsEnabled,
+  setAutostart,
+  setCloseToTray,
+  setNotificationsEnabled,
+} from "../lib/desktop";
 import {
   DEFAULT_SETTINGS,
   SETTING_LABELS,
@@ -24,6 +33,18 @@ export function NotificationSettingsPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sound, setSound] = useState(!isMuted());
+
+  // Desktop-only switches. Read straight from this machine, not the
+  // account — see the note on the sound toggle below, same reasoning.
+  const desktop = isDesktopApp();
+  const [toasts, setToasts] = useState(notificationsEnabled);
+  const [tray, setTray] = useState(closeToTray);
+  const [startup, setStartup] = useState(false);
+  const [startupError, setStartupError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (desktop) void autostartEnabled().then(setStartup);
+  }, [desktop]);
 
   useEffect(() => {
     getNotificationSettings().then((s) => {
@@ -106,12 +127,95 @@ export function NotificationSettingsPanel() {
         </span>
       </label>
 
+      {/* Desktop only. In a browser this whole block is absent rather
+          than disabled — a switch you cannot move is worse than no
+          switch, and the download prompt already covers the pitch. */}
+      {desktop && (
+        <div className="mt-2 border-t border-line pt-2">
+          <p className="mb-2 px-3 pt-1 label-wide text-muted">On this computer</p>
+
+          <DeviceToggle
+            on={toasts}
+            label="Windows notifications"
+            hint="The ones switched on above also appear on your desktop, so they reach you while you're in a game. Nothing pops up while Pentra is the window you're looking at."
+            onChange={() => {
+              const next = !toasts;
+              setToasts(next);
+              setNotificationsEnabled(next);
+            }}
+          />
+
+          <DeviceToggle
+            on={tray}
+            label="Keep running when I close the window"
+            hint="Closing Pentra tucks it into the tray by the clock instead of quitting, so notifications keep arriving. Quit properly from the tray icon."
+            onChange={() => {
+              const next = !tray;
+              setTray(next);
+              void setCloseToTray(next);
+            }}
+          />
+
+          <DeviceToggle
+            on={startup}
+            label="Start Pentra when I sign in to Windows"
+            hint="Starts quietly in the tray without opening a window."
+            onChange={async () => {
+              const next = !startup;
+              setStartup(next); // Optimistic, like the switches above.
+              setStartupError(null);
+              try {
+                await setAutostart(next);
+              } catch {
+                // Windows can refuse this — a locked-down machine, or
+                // security software guarding the startup list. Say so
+                // rather than leave a switch showing something untrue.
+                setStartup(!next);
+                setStartupError("Windows wouldn't let Pentra change that.");
+              }
+            }}
+          />
+
+          {startupError && (
+            <p className="px-3 pt-1 text-xs text-danger">{startupError}</p>
+          )}
+        </div>
+      )}
+
       <p className="mt-4 border-t border-line pt-3 text-xs text-muted">
-        These appear in the app. Session reminders are worked out when you
-        open it, so one that came due while the app was closed is waiting
-        the next time you look rather than arriving on your desktop.
+        {desktop
+          ? "Quit Pentra from the tray and nothing arrives until you open it again — a session reminder that came due meanwhile is waiting the next time you look."
+          : "These appear in the app while it's open. The desktop app can also put them on your desktop, and keeps receiving them while you're in a game."}
       </p>
     </section>
+  );
+}
+
+/**
+ * One of the per-machine switches.
+ *
+ * Same shape as the rows above, but these save to this computer rather
+ * than the account, so there is no user id and nothing to roll back.
+ */
+function DeviceToggle({
+  on,
+  label,
+  hint,
+  onChange,
+}: {
+  on: boolean;
+  label: string;
+  hint: string;
+  onChange: () => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 notch-md px-3 py-2.5 transition hover:bg-surface-2">
+      <Switch on={on} onChange={onChange} label={label} />
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-medium">{label}</span>
+        <span className="block text-xs leading-snug text-muted">{hint}</span>
+      </span>
+    </label>
   );
 }
 

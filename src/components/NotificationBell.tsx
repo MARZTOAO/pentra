@@ -10,13 +10,24 @@ import {
   notificationAge,
   notificationLink,
   notificationText,
+  notificationTitle,
   syncSessionReminders,
   type AppNotification,
 } from "../lib/notifications";
 import { play } from "../lib/sound";
+import { notify, reportUnread } from "../lib/desktop";
 
 /** How often to look for new ones while the app is open. */
 const POLL_MS = 60_000;
+
+/**
+ * At most this many Windows notifications from one batch.
+ *
+ * Coming back to the machine after a weekend can turn up a dozen at
+ * once, and a dozen toasts stacking up is something you dismiss rather
+ * than read. The rest are summarised in one.
+ */
+const MAX_TOASTS = 3;
 
 /**
  * The bell in the top bar.
@@ -78,6 +89,17 @@ export function NotificationBell() {
           ? "friendRequest"
           : "notification",
       );
+
+      // And out to Windows, if this is the desktop app and the window
+      // isn't already in front of them. `notify` decides that; calling
+      // it in a browser does nothing at all.
+      for (const n of fresh.slice(0, MAX_TOASTS)) {
+        void notify(notificationTitle(n), notificationText(n));
+      }
+      if (fresh.length > MAX_TOASTS) {
+        const rest = fresh.length - MAX_TOASTS;
+        void notify("Pentra", `and ${rest} more notification${rest === 1 ? "" : "s"}.`);
+      }
     }
   }, [user]);
 
@@ -86,6 +108,12 @@ export function NotificationBell() {
     const timer = setInterval(load, POLL_MS);
     return () => clearInterval(timer);
   }, [load]);
+
+  // The tray tooltip adds this to the unread message count. Desktop
+  // only; a no-op everywhere else.
+  useEffect(() => {
+    reportUnread("bell", unread);
+  }, [unread]);
 
   // Trigger-written notifications arrive the instant they are created.
   // Row-level security applies to realtime too, so this only ever

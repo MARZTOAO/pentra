@@ -173,6 +173,38 @@ export function notificationText(n: AppNotification): string {
   }
 }
 
+/**
+ * The bold first line of a desktop notification.
+ *
+ * Separate from the sentence because a Windows toast reads as a
+ * heading and a line under it, and "Barry sent you a friend request."
+ * as a heading with nothing under it wastes the shape. Lives here for
+ * the same reason notificationText does: the bell, the toast and
+ * anything added later say the same words.
+ */
+export function notificationTitle(n: AppNotification): string {
+  switch (n.kind) {
+    case "friend_request":
+      return "Friend request";
+    case "friend_accepted":
+      return "Friend request accepted";
+    case "session_hour":
+    case "session_day":
+      return "Session reminder";
+    case "friend_lfg":
+      return "Looking for players";
+    case "post_mention":
+      return "You were tagged";
+    case "post_comment":
+      return "New comment";
+    case "session_joined":
+    case "session_left":
+      return "Your session";
+    case "session_invite":
+      return "Session invite";
+  }
+}
+
 function sessionPhrase(gameName: string | null): string {
   return gameName ? `your ${gameName} session` : "your session";
 }
