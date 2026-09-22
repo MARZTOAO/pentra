@@ -113,3 +113,19 @@ export function getLatestRelease(): Promise<Release | null> {
 
 /** The page every installer lives on, for people who want to see the list. */
 export const RELEASES_PAGE = `https://github.com/${REPO}/releases`;
+
+/* ------------------------------------------------------------------
+ *  Where Pentra lives on the web.
+ *
+ *  Needed because `window.location.origin` is NOT a shareable address
+ *  everywhere the app runs. Inside the desktop app it is
+ *  `http://tauri.localhost`; on a Vercel preview it is a frozen
+ *  deployment URL that will never update. An invite link built from
+ *  either is a link that does nothing when a friend clicks it.
+ *
+ *  So anything meant to leave the app and be opened by somebody else
+ *  is built from this, never from the current location.
+ *
+ *  ONE PLACE TO CHANGE when the domain changes.
+ * ---------------------------------------------------------------- */
+export const SITE_URL = "https://gamer-social-five.vercel.app";

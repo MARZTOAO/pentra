@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { SITE_URL } from "./platform";
 
 /**
  * Invite links.
@@ -133,7 +134,14 @@ export async function getReferralPanel(): Promise<ReferralSummary | null> {
   return data as ReferralSummary;
 }
 
-/** The thing people actually paste. */
+/**
+ * The thing people actually paste.
+ *
+ * Built from SITE_URL rather than the current address. In the desktop
+ * app the current address is `tauri.localhost`, so this used to hand
+ * people a link that silently went nowhere — and the desktop app is
+ * exactly where a keen player who wants to invite friends is sitting.
+ */
 export function referralLink(code: string): string {
-  return `${window.location.origin}/?ref=${code}`;
+  return `${SITE_URL}/?ref=${code}`;
 }
