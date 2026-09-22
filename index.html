@@ -14,6 +14,37 @@
     <title>Pentra</title>
 
     <!--
+      The card people see when pentra.gg is pasted into Discord, a group
+      chat or a post. Without these a share renders as a bare blue link,
+      which for an app that spreads by word of mouth is the difference
+      between a click and a scroll-past.
+
+      og:image must be absolute — scrapers do not resolve relative paths.
+      The app uses hash routing, so every URL shares this one card; a
+      per-profile card would need server rendering.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Pentra" />
+    <meta property="og:url" content="https://pentra.gg/" />
+    <meta property="og:title" content="Pentra — find your group, play tonight" />
+    <meta
+      property="og:description"
+      content="Match with players who play what you play, on your system, at your hours. Post a session, fill the slots, go. Free."
+    />
+    <meta property="og:image" content="https://pentra.gg/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Pentra — find your group. Play tonight." />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Pentra — find your group, play tonight" />
+    <meta
+      name="twitter:description"
+      content="Match with players who play what you play, on your system, at your hours. Post a session, fill the slots, go. Free."
+    />
+    <meta name="twitter:image" content="https://pentra.gg/og.png" />
+
+    <!--
       A safety net, not the plan. `npm run fetch-fonts` puts these in
       public/fonts/ so the app carries its own lettering and renders the
       same offline; the @font-face rules in index.css prefer those files
