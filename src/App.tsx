@@ -20,6 +20,7 @@ import Search from "./pages/Search";
 import MySessions from "./pages/MySessions";
 import Landing from "./pages/Landing";
 import { Privacy, Terms } from "./pages/Legal";
+import Confirm from "./pages/Confirm";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,11 @@ export default function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+
+          {/* Where the link in a confirmation or password-reset email
+              lands. Outside ProtectedRoute on purpose: the whole point
+              is that you are not signed in yet when you arrive. */}
+          <Route path="/confirm" element={<Confirm />} />
 
           <Route
             path="/home"

@@ -35,3 +35,11 @@ Claude outputs/
 
 # Tauri build output
 src-tauri/target
+
+# Ad creative — marketing images and the source that renders them.
+# Not part of the app: nothing in src/ or index.html references it and
+# Vite only copies public/ into the build, so it could never reach the
+# site. Kept out of git because this repo is public and campaign
+# artwork has no reason to be. The logos in brand/ itself ARE tracked —
+# scripts/icons/build-ico.py and brand/ads/*.html read them.
+brand/ads/
