@@ -128,4 +128,4 @@ export const RELEASES_PAGE = `https://github.com/${REPO}/releases`;
  *
  *  ONE PLACE TO CHANGE when the domain changes.
  * ---------------------------------------------------------------- */
-export const SITE_URL = "https://gamer-social-five.vercel.app";
+export const SITE_URL = "https://pentra.gg";
