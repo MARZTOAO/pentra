@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "fetch-fonts": "node scripts/fetch-fonts.mjs",
+    "og-card": "node scripts/og-card/render.mjs",
     "import-games": "node --env-file=.env scripts/import-games.mjs",
     "add-game": "node --env-file=.env scripts/import-games.mjs",
     "backfill-games": "node --env-file=.env scripts/import-games.mjs --backfill",

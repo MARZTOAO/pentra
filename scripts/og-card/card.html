@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  The source for public/og.png — the card people see when pentra.gg is
+  pasted into Discord, iMessage or a post.
+
+  Edit this file, run `node scripts/og-card/render.mjs`, commit the PNG.
+  Do not edit public/og.png by hand; it is output.
+
+  Fonts and the mark are loaded from the repo, not from a CDN, so the
+  render is identical on any machine and works offline.
+-->
+<style>
+  /* The real files, straight out of public/fonts/. If these fail to load,
+     Arial silently stands in for Archivo Black, the headline wraps to
+     three lines and the card looks wrong in a way that is easy to miss.
+     render.mjs checks document.fonts and refuses to write the PNG. */
+  @font-face { font-family:"Archivo Black"; src:url("../../public/fonts/archivo-black.woff2") format("woff2"); }
+  @font-face { font-family:"Archivo"; src:url("../../public/fonts/archivo-700.woff2") format("woff2"); font-weight:700; }
+  @font-face { font-family:"Archivo"; src:url("../../public/fonts/archivo-400.woff2") format("woff2"); font-weight:400; }
+  @font-face { font-family:"Space Mono"; src:url("../../public/fonts/space-mono-700.woff2") format("woff2"); font-weight:700; }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  /* Designed at 1200x630 — the size every scraper expects and crops to.
+     Rendered at 2x (see render.mjs), so the shipped file is 2400x1260.
+     Nothing important goes within 60px of an edge; Twitter and Discord
+     both shave the frame. */
+  body { width:1200px; height:630px; overflow:hidden;
+         background:#0e0f11; color:#e9ebee;
+         font-family:"Archivo", system-ui, sans-serif; }
+
+  .card { position:relative; width:1200px; height:630px; padding:72px 80px;
+          display:flex; align-items:center; gap:56px; }
+
+  /* The glow. Two offset radials in the accent, the same treatment the
+     landing hero uses behind the mark — it's what stops a dark card
+     reading as a black rectangle in a chat feed. */
+  .glow { position:absolute; inset:0;
+          background:
+            radial-gradient(52% 78% at 76% 42%, rgb(255 122 47 / 0.30), transparent 68%),
+            radial-gradient(40% 60% at 96% 92%, rgb(255 122 47 / 0.16), transparent 70%); }
+
+  /* A hairline of accent down the left edge. Cheap, and it makes the
+     card feel designed rather than generated. */
+  .edge { position:absolute; left:0; top:0; bottom:0; width:10px; background:#ff7a2f; }
+
+  .left  { position:relative; flex:1; min-width:0; }
+  .right { position:relative; flex-shrink:0; }
+
+  .brand { display:flex; align-items:center; gap:14px; margin-bottom:34px; }
+  .brand .slashes { color:#ff7a2f; }
+  .brand .word { font-family:"Archivo Black"; font-size:38px; letter-spacing:-0.01em; }
+
+  /* Sized so "Find your group." holds one line. Three lines reads as a
+     paragraph; two reads as a statement. If the words change, check this
+     still fits rather than trusting it. */
+  h1 { font-family:"Archivo Black"; font-size:70px; line-height:1.02;
+       letter-spacing:-0.025em; white-space:nowrap; }
+
+  .sub { margin-top:26px; font-size:27px; line-height:1.4; color:#8d939c;
+         max-width:19ch; }
+
+  .foot { margin-top:40px; display:flex; align-items:center; gap:18px; }
+  .url  { font-family:"Space Mono"; font-weight:700; font-size:25px; color:#ff7a2f; }
+  .dot  { width:6px; height:6px; border-radius:50%; background:#2e3239; }
+  .free { font-size:22px; color:#8d939c; }
+
+  /* Drawn from the 1024px master, not public/icon-512.png — at 2x this
+     occupies 660 device pixels and a 512 source visibly softens. See the
+     script at the bottom for why it's a canvas and not an <img>. */
+  .mark { width:330px; height:330px; display:block;
+          filter: drop-shadow(0 22px 44px rgb(0 0 0 / 0.55)); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="glow"></div>
+    <div class="edge"></div>
+
+    <div class="left">
+      <div class="brand"><span class="slashes">//</span><span class="word">PENTRA</span></div>
+      <h1>Find your group.<br>Play tonight.</h1>
+      <p class="sub">Match with players who play what you play.</p>
+      <div class="foot">
+        <span class="url">pentra.gg</span>
+        <span class="dot"></span>
+        <span class="free">Free &middot; Windows &amp; browser</span>
+      </div>
+    </div>
+
+    <div class="right">
+      <canvas class="mark" width="1024" height="1024"></canvas>
+    </div>
+  </div>
+
+<script>
+/*
+ * The mark, cut out of the 1024px master.
+ *
+ * pentra-icon-v2.png is the icon SOURCE: a black rounded square on a solid
+ * WHITE canvas. Dropped straight onto the card it reads as a box inside a
+ * box. public/icon-512.png already has transparent corners, but it is 512px
+ * and this draws at 660 device pixels, so it upscales and softens — which
+ * is the whole thing this card was re-rendered to fix.
+ *
+ * So the corners are cut here instead, from the master, at render time.
+ * That way there is no second icon file to fall out of sync: redesign the
+ * icon, re-run the script, and the card follows.
+ *
+ * The rule: the only white in the source is the canvas behind the rounded
+ * square, plus the antialiased edge where the black meets it. Both are
+ * NEUTRAL (r=g=b). The artwork is black (neutral, but dark) and orange
+ * (heavily saturated). So a neutral pixel is background in proportion to
+ * how light it is, and everything else is opaque. The edge pixels are
+ * black-over-white, so they are pushed back to black and the coverage they
+ * were carrying moves into the alpha channel — otherwise the shape keeps a
+ * pale halo, which on a dark card is exactly what you notice.
+ *
+ * A plain CSS border-radius does NOT work here: it cuts the corners but
+ * leaves that pale halo along all four straight edges, and no radius
+ * removes it. Measured before settling on this.
+ */
+const MARK_SRC = "../../pentra-icon-v2.png";
+const NEUTRAL = 25; // max-min channel spread still counted as grey
+
+window.markReady = new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onerror = () => reject(new Error("could not load " + MARK_SRC));
+  img.onload = () => {
+   try {
+    const out = document.querySelector(".mark");
+    const w = out.width, h = out.height;
+
+    const src = document.createElement("canvas");
+    src.width = w; src.height = h;
+    const sctx = src.getContext("2d", { willReadFrequently: true });
+    sctx.drawImage(img, 0, 0, w, h);
+
+    const d = sctx.getImageData(0, 0, w, h);
+    const p = d.data;
+    for (let i = 0; i < p.length; i += 4) {
+      const r = p[i], g = p[i + 1], b = p[i + 2];
+      const spread = Math.max(r, g, b) - Math.min(r, g, b);
+      if (spread > NEUTRAL) continue;           // orange: leave it alone
+      const lum = (r + g + b) / 3;
+      p[i] = p[i + 1] = p[i + 2] = 0;           // it's black, not grey
+      p[i + 3] = 255 - lum;                     // white -> clear
+    }
+    sctx.putImageData(d, 0, 0);
+
+    out.getContext("2d").drawImage(src, 0, 0);
+    resolve(`${img.naturalWidth}x${img.naturalHeight}`);
+   } catch (err) {
+    /* Reading pixels back out of a canvas that drew a file:// image is a
+       cross-origin read, and Chromium blocks it unless it was started with
+       --allow-file-access-from-files. render.mjs passes that flag. Without
+       this catch the failure happens inside an event handler, the promise
+       above never settles, and the render hangs instead of saying why. */
+    reject(err);
+   }
+  };
+  img.src = MARK_SRC;
+});
+</script>
+</body>
+</html>
