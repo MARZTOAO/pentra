@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { MIN_PASSWORD_LENGTH } from "../lib/constants";
 import { AuthCard, Field, Input, Button, Alert } from "../components/ui";
 
 export default function Signup() {
@@ -30,8 +31,8 @@ export default function Signup() {
       );
       return;
     }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
       return;
     }
 
@@ -115,7 +116,7 @@ export default function Signup() {
           />
         </Field>
 
-        <Field label="Password" hint="At least 8 characters.">
+        <Field label="Password" hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}>
           <Input
             type="password"
             value={password}

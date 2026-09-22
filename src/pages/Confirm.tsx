@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { AuthCard, Alert, Button } from "../components/ui";
+import { MIN_PASSWORD_LENGTH } from "../lib/constants";
+import { AuthCard, Alert, Button, Field, Input } from "../components/ui";
 
 /**
  * Where the link in a Pentra email lands.
@@ -106,16 +107,7 @@ export default function Confirm() {
   }
 
   if (state.type === "recovery") {
-    return (
-      <AuthCard title="Choose a new password">
-        <p className="mb-5 text-sm text-muted">
-          You're signed in. Set a new password in Settings and you're done.
-        </p>
-        <Link to="/settings">
-          <Button>Go to settings</Button>
-        </Link>
-      </AuthCard>
-    );
+    return <NewPassword />;
   }
 
   return (
@@ -138,4 +130,101 @@ function describe(raw: string): string {
     return "That link has already been used, or isn't valid any more.";
   }
   return raw;
+}
+
+/**
+ * The second half of a password reset.
+ *
+ * By the time this renders, verifyOtp has already turned the emailed link
+ * into a real session, which is why updateUser can set a new password
+ * without asking for the old one - not knowing the old one is the entire
+ * reason somebody is here.
+ *
+ * This used to send people to Settings, which has no password field. It
+ * was a dead end.
+ */
+function NewPassword() {
+  const navigate = useNavigate();
+  const [password, setPassword] = useState("");
+  const [again, setAgain] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    if (password !== again) {
+      setError("Those two don't match.");
+      return;
+    }
+
+    setBusy(true);
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+
+    if (updateError) {
+      setError(
+        /different from the old/i.test(updateError.message)
+          ? "That's already your password. Pick a different one."
+          : updateError.message,
+      );
+      return;
+    }
+
+    setSaved(true);
+    window.setTimeout(() => navigate("/home", { replace: true }), 1200);
+  }
+
+  if (saved) {
+    return (
+      <AuthCard title="Password changed">
+        <Alert kind="ok">You're signed in with your new password.</Alert>
+        <p className="text-center text-sm text-muted">Taking you to Pentra…</p>
+      </AuthCard>
+    );
+  }
+
+  return (
+    <AuthCard title="Choose a new password">
+      {error && <Alert>{error}</Alert>}
+
+      <form onSubmit={handleSubmit}>
+        <Field
+          label="New password"
+          hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+        >
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            autoFocus
+            required
+          />
+        </Field>
+
+        <Field label="Again, to be sure">
+          <Input
+            type="password"
+            value={again}
+            onChange={(e) => setAgain(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            required
+          />
+        </Field>
+
+        <Button type="submit" disabled={busy}>
+          {busy ? "Saving…" : "Save new password"}
+        </Button>
+      </form>
+    </AuthCard>
+  );
 }

@@ -91,6 +91,12 @@ export default function Login() {
           />
         </Field>
 
+        <div className="-mt-2 mb-4 text-right">
+          <Link to="/forgot" className="text-xs text-muted hover:text-ink">
+            Forgot your password?
+          </Link>
+        </div>
+
         <Button type="submit" disabled={busy}>
           {busy ? "Logging in…" : "Log in"}
         </Button>

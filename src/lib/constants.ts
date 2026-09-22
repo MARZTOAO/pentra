@@ -79,3 +79,13 @@ export function formatLocation(p: {
   if (tail) return tail;
   return null;
 }
+
+/**
+ * The shortest password the app will accept.
+ *
+ * Keep this at or above Supabase's own minimum (Authentication -> Sign In /
+ * Providers -> Email -> Minimum password length). Supabase enforces its
+ * number server-side no matter what; this one exists so people find out
+ * before they submit instead of after.
+ */
+export const MIN_PASSWORD_LENGTH = 8;
