@@ -6,6 +6,7 @@ import { getTopFive, type TopFiveEntry } from "../lib/topFive";
 import { getFriendCount } from "../lib/matching";
 import { GameLibrary } from "../components/GameLibrary";
 import { ProfileStats } from "../components/ProfileStats";
+import { RatingBadge } from "../components/RatingBadge";
 import { Achievements } from "../components/Achievements";
 import { ProfileMatch } from "../components/ProfileMatch";
 import { formatLocation } from "../lib/constants";
@@ -132,6 +133,13 @@ export default function PublicProfile() {
             {profile.display_name || profile.username}
           </h1>
           <p className="on-art mb-3 truncate text-sm text-muted">@{profile.username}</p>
+
+          <RatingBadge
+            rating={profile.rating}
+            commendations={profile.commendation_count}
+            isSelf={isSelf}
+            className="mb-3"
+          />
 
           {profile.bio && (
             <p className="on-art mb-3 whitespace-pre-line break-words text-sm leading-relaxed">

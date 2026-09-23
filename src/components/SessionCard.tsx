@@ -19,6 +19,7 @@ import {
 import { useLiveRows } from "../lib/live";
 import { useAuth } from "../lib/AuthContext";
 import { Avatar } from "./Avatar";
+import { CommendPlayers } from "./CommendPlayers";
 import { InviteFriends } from "./InviteFriends";
 
 /**
@@ -294,6 +295,11 @@ export function SessionCard({
           )}
         </div>
       )}
+
+      {/* Only once it has started, and only for people who were in
+          it. The component draws nothing otherwise, and the database
+          refuses a commendation either way. */}
+      {started && inSession && <CommendPlayers postId={post.id} />}
 
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {post.players.map((player) => (

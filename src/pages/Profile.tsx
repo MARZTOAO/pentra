@@ -21,6 +21,7 @@ import { AvatarPicker } from "../components/AvatarPicker";
 import { FriendCode } from "../components/FriendCode";
 import { GameLibrary } from "../components/GameLibrary";
 import { ProfileStats } from "../components/ProfileStats";
+import { RatingBadge } from "../components/RatingBadge";
 import { Achievements } from "../components/Achievements";
 import { ReferralPanel } from "../components/ReferralPanel";
 
@@ -137,6 +138,19 @@ export default function Profile() {
 
       {error && <Alert>{error}</Alert>}
       {saved && <Alert kind="ok">Saved.</Alert>}
+
+      {/* Above the friend code rather than buried with the stats:
+          if this ever drops, it is the first thing you should see. */}
+      {profile && (
+        <section className="mb-4 notch border border-line bg-surface p-4 sm:p-5">
+          <h2 className="mb-2 label-wide text-muted">Standing</h2>
+          <RatingBadge
+            rating={profile.rating}
+            commendations={profile.commendation_count}
+            isSelf
+          />
+        </section>
+      )}
 
       <FriendCode code={profile?.friend_code} />
 

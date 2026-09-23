@@ -35,6 +35,14 @@ export type Profile = {
    * because the app has no reason to hand their code around.
    */
   friend_code: string | null;
+  /**
+   * Community standing, 0-100. Everybody starts at 100 and it only
+   * falls when a moderator upholds a report. Commendations earned
+   * afterwards repair it. See supabase/65_player_rating.sql.
+   */
+  rating: number;
+  /** How many DIFFERENT players have vouched for them. Never falls. */
+  commendation_count: number;
   availability: string[];
   /** Public presence — only ever online, away or offline. The real
    *  four-way choice lives in a private table; see lib/presence.ts. */
@@ -48,7 +56,7 @@ export type Profile = {
 
 /** What anyone may see when they open a profile. */
 const PUBLIC_COLUMNS =
-  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, presence, last_seen_at, created_at, tier, tier_expires_at";
+  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, presence, last_seen_at, created_at, tier, tier_expires_at, rating, commendation_count";
 
 /** Your own row, which also carries your friend code. */
 const COLUMNS = `${PUBLIC_COLUMNS}, friend_code`;
