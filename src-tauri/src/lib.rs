@@ -169,6 +169,21 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // FIRST, ahead of every other plugin — the docs are explicit
+        // that it has to be, so nothing else gets a chance to run in
+        // a process that is about to exit.
+        //
+        // This is what stops a second Pentra starting while one is
+        // already sitting in the tray. Close-to-tray made that easy to
+        // do by accident: the window is gone, the Start menu entry is
+        // right there, and every click stacked another copy. Now the
+        // new process hands its arguments to the running one and
+        // quits, and the running one brings its window back —
+        // show() before set_focus(), because focus alone does nothing
+        // to a hidden window.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main(app);
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notification::init())

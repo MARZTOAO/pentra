@@ -44,6 +44,11 @@ tauri-plugin-notification = "2"
 # unless somebody turns it on.
 tauri-plugin-autostart = "2"
 
+# One running copy at a time. A second launch hands off to the first
+# and exits. Rust-only — no npm package, no capabilities entry. See
+# the note where it is registered in src/lib.rs: it must go first.
+tauri-plugin-single-instance = "2"
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
