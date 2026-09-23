@@ -23,7 +23,7 @@ import {
   type PresenceState,
 } from "../lib/presence";
 import { StatusDot } from "../components/StatusDot";
-import { Confirm } from "../components/SafetyMenu";
+import { Confirm, ReportDialog } from "../components/SafetyMenu";
 import { Avatar } from "../components/Avatar";
 import { useNotifications } from "../components/Notifications";
 import { FullScreenLoader } from "../components/ui";
@@ -197,10 +197,25 @@ function Thread({
   const [members, setMembers] = useState<ConversationMember[]>([]);
   // Deleting is one click and can't be undone, so both ask first.
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  /** The message the report dialog is open for, if any. */
+  const [reporting, setReporting] = useState<Message | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
+
+  /**
+   * Who sent a message, for the report dialog's heading.
+   *
+   * A group chat has a roster; a DM doesn't load one, because the other
+   * person is already on the conversation. Falls back to a pronoun
+   * rather than rendering "@null" if somebody has left the session
+   * since the message was sent.
+   */
+  function senderName(message: Message): string {
+    const member = members.find((m) => m.id === message.sender_id);
+    return member?.username ?? conversation.username ?? "this person";
+  }
 
   // Only group chats need a roster; a DM's "members" are already on the
   // conversation. Refetched per conversation so leaving a session is
@@ -407,6 +422,34 @@ function Thread({
                   {messageTime(message.created_at)}
                 </p>
               </div>
+
+              {/* Report sits on the far side of somebody else's message,
+                  mirroring where delete sits on your own, and follows the
+                  same rule: visible at rest, because a phone has no hover.
+                  Deliberately quieter than delete — this is the rarer
+                  action and it should not read as a button you press by
+                  accident. */}
+              {!mine && !gone && (
+                <button
+                  type="button"
+                  onClick={() => setReporting(message)}
+                  aria-label="Report message"
+                  title="Report this message"
+                  className="shrink-0 p-1.5 text-muted opacity-40 transition hover:text-danger hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
+                >
+                  <svg
+                    className="h-3.5 w-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 21V4h11l-1 3h6l-1 3 1 3h-6l1 3H4" />
+                  </svg>
+                </button>
+              )}
             </div>
           );
         })}
@@ -430,6 +473,15 @@ function Thread({
             // go back to the list rather than sitting on a dead view.
             onLeft();
           }}
+        />
+      )}
+
+      {reporting && (
+        <ReportDialog
+          username={senderName(reporting)}
+          messageId={reporting.id}
+          messagePreview={reporting.body}
+          onClose={() => setReporting(null)}
         />
       )}
 

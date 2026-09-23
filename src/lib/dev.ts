@@ -186,6 +186,8 @@ export type ReportedUser = {
   reporters: number;
   reasons: string[];
   details: string[];
+  /** What they actually said, for reports that named a message. */
+  quotes: string[];
   first_at: string;
   last_at: string;
   /** Here for what was alleged, not how many alleged it. */

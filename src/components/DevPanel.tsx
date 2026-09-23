@@ -287,6 +287,30 @@ function Case({ r, onDone }: { r: ReportedUser; onDone: () => void }) {
         report{r.reports === 1 ? "" : "s"} · {r.reasons.join(", ")}
       </p>
 
+      {/* What was said, where a report named a message. Kept visually
+          distinct from reporter commentary below: one is evidence, the
+          other is somebody's description of it. */}
+      {r.quotes.length > 0 && (
+        <div className="mb-3 space-y-1">
+          {r.quotes.slice(0, 5).map((q, i) => (
+            <p
+              key={i}
+              className="break-words notch-sm border-l-2 border-danger bg-danger/5 px-2 py-1 text-xs leading-relaxed text-ink"
+            >
+              <span className="mr-1.5 text-[10px] uppercase tracking-wide text-danger">
+                said
+              </span>
+              {q}
+            </p>
+          ))}
+          {r.quotes.length > 5 && (
+            <p className="text-[11px] text-muted">
+              and {r.quotes.length - 5} more
+            </p>
+          )}
+        </div>
+      )}
+
       {r.details.length > 0 && (
         <div className="mb-3 space-y-1">
           {r.details.slice(0, 5).map((d, i) => (

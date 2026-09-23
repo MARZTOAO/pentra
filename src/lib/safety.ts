@@ -34,15 +34,30 @@ export const REPORT_REASONS = [
   { key: "other", label: "Something else" },
 ] as const;
 
+/**
+ * File a report about a person, a post, or a single message.
+ *
+ * Reporting a MESSAGE is the one that carries evidence: the database
+ * copies what was said into the report itself, so the moderation queue
+ * shows the text rather than just "someone complained". The snapshot is
+ * taken server-side on purpose — a body sent from here is a body the
+ * reporter could have typed themselves.
+ *
+ * `userId` is not needed alongside `messageId`; the database sets the
+ * subject to whoever sent the message, so it groups with anything else
+ * already filed about that person.
+ */
 export async function fileReport(args: {
   userId?: string | null;
   postId?: number | null;
+  messageId?: number | null;
   reason: string;
   detail?: string;
 }) {
   return supabase.rpc("file_report", {
     target_user_id: args.userId ?? null,
     target_post_id: args.postId ?? null,
+    target_message_id: args.messageId ?? null,
     reason: args.reason,
     detail: args.detail ?? null,
   });

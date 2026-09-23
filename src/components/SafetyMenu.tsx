@@ -123,11 +123,21 @@ export function ReportDialog({
   username,
   userId,
   postId,
+  messageId,
+  messagePreview,
   onClose,
 }: {
   username: string;
   userId?: string | null;
   postId?: number | null;
+  /**
+   * Reporting one message rather than the person. The database copies
+   * the text into the report itself, so this is the only kind of report
+   * that reaches moderation with evidence attached.
+   */
+  messageId?: number | null;
+  /** Shown back to the reporter so they can see what they're reporting. */
+  messagePreview?: string | null;
   onClose: () => void;
 }) {
   const [reason, setReason] = useState<string>(REPORT_REASONS[0].key);
@@ -140,7 +150,13 @@ export function ReportDialog({
     setBusy(true);
     setError(null);
 
-    const { error } = await fileReport({ userId, postId, reason, detail });
+    const { error } = await fileReport({
+      userId,
+      postId,
+      messageId,
+      reason,
+      detail,
+    });
 
     setBusy(false);
 
@@ -154,8 +170,11 @@ export function ReportDialog({
         <>
           <h2 className="mb-2 display text-lg">Report sent</h2>
           <p className="mb-5 text-sm text-muted">
-            Thanks — it'll be reviewed. If you'd rather not see this person
-            again, you can block them from their profile.
+            {messageId
+              ? "Thanks — a copy of the message went with it, so it can be reviewed without anyone having to ask you what was said."
+              : "Thanks — it'll be reviewed."}{" "}
+            If you'd rather not see this person again, you can block them from
+            their profile.
           </p>
           <button
             onClick={onClose}
@@ -167,12 +186,28 @@ export function ReportDialog({
       ) : (
         <>
           <h2 className="mb-1 display text-lg">
-            Report {postId ? "this post" : `@${username}`}
+            Report{" "}
+            {messageId
+              ? "this message"
+              : postId
+                ? "this post"
+                : `@${username}`}
           </h2>
           <p className="mb-4 text-sm text-muted">
             Reports are private. The person you're reporting won't be told who
             filed it.
           </p>
+
+          {/* Confirming what is being sent. Somebody reporting from a long
+              thread has usually scrolled since they tapped the flag, and a
+              report about the wrong message helps nobody. */}
+          {messageId && messagePreview && (
+            <p className="mb-4 break-words notch-sm border-l-2 border-accent bg-surface-2 px-3 py-2 text-xs leading-relaxed text-muted">
+              {messagePreview.length > 200
+                ? messagePreview.slice(0, 199) + "…"
+                : messagePreview}
+            </p>
+          )}
 
           {error && <Alert>{error}</Alert>}
 
