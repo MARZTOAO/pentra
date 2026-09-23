@@ -9,6 +9,17 @@ import { MIN_PASSWORD_LENGTH } from "../lib/constants";
  * The forgot-password flow covers being locked out. This covers the
  * other case: you know your password and want a different one.
  *
+ * IT SIGNS OUT EVERY OTHER DEVICE. Supabase does not do this on a
+ * password change - a session that was already stolen keeps working
+ * afterwards, which defeats the main reason anybody changes a password
+ * in a hurry. `scope: "others"` revokes the rest and leaves this one
+ * alone, and fires no SIGNED_OUT event, so the person is not thrown
+ * back to the login screen for doing the right thing.
+ *
+ * Revoking kills refresh tokens at once, but an access token already
+ * issued stays valid until it expires - one hour on the default
+ * setting. Hence "within the hour" rather than "immediately".
+ *
  * WHY IT ASKS FOR THE CURRENT PASSWORD. Supabase will happily accept
  * updateUser({ password }) from any live session without it, and the
  * dashboard's "Require current password when updating" switch is off.
@@ -27,7 +38,7 @@ export function ChangePassword() {
   const [again, setAgain] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<null | "ok" | "partial">(null);
 
   function reset() {
     setCurrent("");
@@ -92,22 +103,36 @@ export function ChangePassword() {
       return;
     }
 
+    // The password is changed by this point. Anything below can fail
+    // without that being untrue, so nothing here shows an error that
+    // would read as "it didn't work".
+    const { error: revokeError } = await supabase.auth.signOut({
+      scope: "others",
+    });
+
     reset();
     setOpen(false);
-    setDone(true);
+    setDone(revokeError ? "partial" : "ok");
   }
 
   return (
     <section className="mb-8 notch border border-line bg-surface p-5">
       <h2 className="mb-1 label-wide text-muted">Password</h2>
       <p className="mb-4 text-xs text-muted">
-        Changing it here doesn't sign you out anywhere — this app stays
-        signed in, and so does any other device you're logged in on.
+        Changing your password signs out every other device within the
+        hour. This one stays signed in.
       </p>
 
-      {done && !open && (
+      {done === "ok" && !open && (
         <p className="mb-4 notch-sm border border-ok/40 bg-ok/10 px-3 py-2.5 text-sm text-ok">
-          Password changed.
+          Password changed. Every other device has been signed out.
+        </p>
+      )}
+
+      {done === "partial" && !open && (
+        <p className="mb-4 notch-sm border border-ok/40 bg-ok/10 px-3 py-2.5 text-sm text-ok">
+          Password changed — but we couldn't sign out your other devices.
+          Change it again from a working connection if that matters.
         </p>
       )}
 
@@ -116,7 +141,7 @@ export function ChangePassword() {
           type="button"
           onClick={() => {
             setOpen(true);
-            setDone(false);
+            setDone(null);
           }}
           className="notch-md border border-line px-4 py-2 text-sm font-semibold text-muted transition hover:border-accent hover:text-accent"
         >
