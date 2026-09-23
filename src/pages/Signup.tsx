@@ -56,6 +56,27 @@ export default function Signup() {
       return;
     }
 
+    // Asked here rather than left to the database, because the profiles
+    // row is created by a trigger inside auth.signUp — a username the
+    // filter refuses comes back through the auth API as "Database error
+    // saving new user", which reads as the site being broken rather
+    // than the name being refused.
+    const { data: allowed, error: allowedError } = await supabase.rpc(
+      "username_allowed",
+      { candidate: cleanUsername },
+    );
+
+    if (allowedError) {
+      setBusy(false);
+      setError(`Could not check username: ${allowedError.message}`);
+      return;
+    }
+    if (allowed === false) {
+      setBusy(false);
+      setError("That username contains language we don't allow. Try another.");
+      return;
+    }
+
     // The username is passed through as metadata. The database trigger
     // reads it when creating the matching row in `profiles`.
     const { data, error: signUpError } = await supabase.auth.signUp({

@@ -43,3 +43,8 @@ src-tauri/target
 # artwork has no reason to be. The logos in brand/ itself ARE tracked —
 # scripts/icons/build-ico.py and brand/ads/*.html read them.
 brand/ads/
+
+# The slur list for text moderation (migration 64). Deliberately not
+# committed: this repo is public, and a blocklist anyone can read is a
+# blocklist anyone can work around. See supabase/local/README.md.
+supabase/local/
