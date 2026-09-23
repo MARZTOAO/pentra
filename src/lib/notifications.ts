@@ -11,6 +11,17 @@ import { supabase } from "./supabase";
  * 41_live_sessions_and_comments.sql and 42_session_invites.sql.
  */
 
+/**
+ * How often each watcher sweeps for what realtime may have missed.
+ *
+ * Used by the bell AND by the message watcher, from one place so they
+ * can't drift apart. Realtime is the fast path and almost always the
+ * one that delivers; this is the net underneath it, for the seconds
+ * after a WebSocket drops and before it reconnects, and for the two
+ * session reminders that no database write ever announces.
+ */
+export const POLL_MS = 60_000;
+
 export type NotificationKind =
   | "friend_request"
   | "friend_accepted"

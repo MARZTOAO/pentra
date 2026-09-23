@@ -10,10 +10,11 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
-import { getConversations, type Message } from "../lib/chat";
+import { conversationName, getConversations, type Message } from "../lib/chat";
 import { Avatar } from "./Avatar";
 import { play } from "../lib/sound";
-import { notify, reportUnread } from "../lib/desktop";
+import { notify, reportUnread, MAX_TOASTS } from "../lib/desktop";
+import { POLL_MS } from "../lib/notifications";
 
 type Toast = {
   id: number;
@@ -35,6 +36,11 @@ const Ctx = createContext<NotificationState>({ unread: 0, refresh: () => {} });
 
 export function useNotifications() {
   return useContext(Ctx);
+}
+
+/** A timestamp as a number, tolerant of nulls and of either format. */
+function stamp(iso: string | null | undefined): number {
+  return iso ? Date.parse(iso) || 0 : 0;
 }
 
 /** The conversation id in /messages/12, or null anywhere else. */
@@ -66,6 +72,14 @@ export function Notifications({ children }: { children: ReactNode }) {
   /** Message ids already sent to Windows, so none goes twice. */
   const notified = useRef<Set<number>>(new Set());
 
+  /**
+   * Conversation id -> when its newest already-announced message
+   * arrived. The sweep below compares against this, so the two paths
+   * can't both announce the same message.
+   */
+  const announced = useRef<Map<number, number>>(new Map());
+  const seeded = useRef(false);
+
   const openId = openConversationId(location.pathname);
 
   // Kept current for the subscription callback to read.
@@ -91,6 +105,76 @@ export function Notifications({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh();
   }, [refresh, location.pathname]);
+
+  /**
+   * The net under the realtime subscription.
+   *
+   * WHY THIS EXISTS. Messages arrive over a WebSocket and nothing else.
+   * If that socket drops — a few seconds of bad wifi, a laptop waking
+   * up, a Supabase reconnect — anything sent in the gap is simply never
+   * delivered to this tab. The count corrected itself on the next
+   * navigation, but the desktop app spends most of its life hidden in
+   * the tray with nobody navigating anywhere, so a message could sit
+   * unannounced indefinitely. The bell has had a poll for exactly this
+   * reason since it was written; messages did not.
+   *
+   * It announces to WINDOWS ONLY, never as an in-app toast. An in-app
+   * toast is for someone looking at the app, and someone looking at the
+   * app is someone whose socket problems fix themselves the moment they
+   * click anything. notify() suppresses itself while the window is in
+   * front, so this is silent in that case by design.
+   */
+  const sweep = useCallback(async () => {
+    if (!user) return;
+
+    const rows = await getConversations();
+    setUnread(rows.reduce((total, row) => total + Number(row.unread ?? 0), 0));
+
+    // The first pass records where things stand and announces none of
+    // it. Without this, opening the app after a weekend fires a toast
+    // for every conversation with anything unread in it.
+    if (!seeded.current) {
+      seeded.current = true;
+      for (const row of rows) {
+        announced.current.set(row.conversation_id, stamp(row.last_message_at));
+      }
+      return;
+    }
+
+    const missed = rows.filter(
+      (row) =>
+        Number(row.unread ?? 0) > 0 &&
+        !row.last_from_me &&
+        row.conversation_id !== openIdRef.current &&
+        stamp(row.last_message_at) >
+          (announced.current.get(row.conversation_id) ?? 0),
+    );
+
+    // Record everything before announcing anything, so a failure
+    // halfway through can't leave the same message to be found again
+    // on the next sweep.
+    for (const row of rows) {
+      announced.current.set(row.conversation_id, stamp(row.last_message_at));
+    }
+
+    for (const row of missed.slice(0, MAX_TOASTS)) {
+      void notify(conversationName(row), row.last_message ?? "New message");
+    }
+    if (missed.length > MAX_TOASTS) {
+      const rest = missed.length - MAX_TOASTS;
+      void notify(
+        "Pentra",
+        `and ${rest} more message${rest === 1 ? "" : "s"}.`,
+      );
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    void sweep();
+    const timer = setInterval(() => void sweep(), POLL_MS);
+    return () => clearInterval(timer);
+  }, [user, sweep]);
 
   // Half of the tray tooltip's number; the bell reports the other half.
   // Does nothing in a browser.
@@ -120,6 +204,18 @@ export function Notifications({ children }: { children: ReactNode }) {
 
           // Our own messages aren't news.
           if (message.sender_id === user.id) return;
+
+          // Claim it for this path before any of the early returns
+          // below, so the sweep never announces something realtime
+          // already handled — including the cases realtime decides to
+          // stay quiet about, like a thread that is already open.
+          announced.current.set(
+            message.conversation_id,
+            Math.max(
+              announced.current.get(message.conversation_id) ?? 0,
+              stamp(message.created_at),
+            ),
+          );
 
           refreshRef.current();
 

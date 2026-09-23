@@ -12,10 +12,22 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use tauri::{
+    image::Image,
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, WindowEvent,
 };
+
+// The two tray states, shipped as a matched pair at the same size so
+// switching between them changes the dot and nothing else. Built by
+// scripts/icons/build-tray.py from icons/icon.png; the only difference
+// between the two files is a 14x14 patch in the bottom-right corner.
+//
+// Embedded rather than loaded from disk: the tray has to work before
+// anything has had a chance to go missing, and an installed app has no
+// business reading its own icons back off the filesystem.
+const TRAY_PLAIN: &[u8] = include_bytes!("../icons/tray.png");
+const TRAY_UNREAD: &[u8] = include_bytes!("../icons/tray-unread.png");
 
 /// The two pieces of native state the window's close button depends on.
 struct Shell {
@@ -30,6 +42,11 @@ struct Shell {
     /// would hide instead of exiting and the menu item would look
     /// broken.
     quitting: AtomicBool,
+
+    /// Whether the tray icon is currently showing its dot. Tracked so
+    /// the icon is only swapped when that flips — the unread count
+    /// changes far more often than "is there anything at all".
+    badge: AtomicBool,
 }
 
 impl Default for Shell {
@@ -37,6 +54,7 @@ impl Default for Shell {
         Self {
             close_to_tray: AtomicBool::new(true),
             quitting: AtomicBool::new(false),
+            badge: AtomicBool::new(false),
         }
     }
 }
@@ -58,26 +76,51 @@ fn set_close_to_tray(state: tauri::State<'_, Shell>, enabled: bool) {
     state.close_to_tray.store(enabled, Ordering::Relaxed);
 }
 
-/// The unread count, shown as the tray tooltip.
+/// The unread state: a dot on the tray icon, the number in the tooltip.
 ///
-/// A count drawn onto the tray icon itself would be better, but that
-/// means shipping a second icon and swapping between them, and a badge
-/// that goes stale is worse than no badge. The tooltip is honest and
-/// cheap.
+/// THE DOT CARRIES NO NUMBER, deliberately. A Windows tray icon is 16
+/// physical pixels at 100% scaling, and a digit drawn into the corner
+/// of one is a smudge — rendered and looked at before deciding, along
+/// with 20, 24 and 32px. Two digits were worse. So the icon answers
+/// "is there anything", which is all it can legibly say, and the
+/// tooltip answers "how much", which is what hovering is for.
 #[tauri::command]
 fn set_unread(app: tauri::AppHandle, count: u32) {
-    if let Some(tray) = app.tray_by_id("tray") {
-        let text = match count {
-            0 => "Pentra".to_string(),
-            1 => "Pentra — 1 unread".to_string(),
-            n => format!("Pentra — {n} unread"),
-        };
-        let _ = tray.set_tooltip(Some(text));
+    let Some(tray) = app.tray_by_id("tray") else {
+        return;
+    };
+
+    let text = match count {
+        0 => "Pentra".to_string(),
+        1 => "Pentra — 1 unread".to_string(),
+        n => format!("Pentra — {n} unread"),
+    };
+    let _ = tray.set_tooltip(Some(text));
+
+    // Only touch the icon when the dot actually flips. Going from 3
+    // unread to 4 would otherwise decode a PNG and redraw the tray to
+    // produce exactly the same picture.
+    let wanted = count > 0;
+    if app.state::<Shell>().badge.swap(wanted, Ordering::Relaxed) != wanted {
+        let bytes = if wanted { TRAY_UNREAD } else { TRAY_PLAIN };
+        if let Ok(icon) = Image::from_bytes(bytes) {
+            let _ = tray.set_icon(Some(icon));
+        }
     }
 }
 
-/// Bring the window back, for when somebody clicks through from a
-/// notification.
+/// Bring the window back to the front.
+///
+/// NOT reachable from a toast click, which is what this was originally
+/// for. tauri-plugin-notification cannot report toast clicks on
+/// Windows: its desktop path builds a notify-rust notification, calls
+/// show(), and registers no activation callback, so the
+/// `actionPerformed` event that `onAction()` listens for is only ever
+/// sent by the Android and iOS side. Doing it properly means going
+/// around the plugin with tauri-winrt-notification and matching the
+/// app's AppUserModelID to the installed shortcut; judged not worth
+/// the fragility. Kept because the tray menu and any future
+/// "jump to this" path want exactly this.
 #[tauri::command]
 fn focus_app(app: tauri::AppHandle) {
     show_main(&app);
@@ -90,7 +133,10 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
     let menu = Menu::with_items(app, &[&open, &quit])?;
 
     TrayIconBuilder::with_id("tray")
-        .icon(app.default_window_icon().unwrap().clone())
+        // Not default_window_icon(): that is the app icon at whatever
+        // size the bundler produced, so the first unread would visibly
+        // resize the tray icon as well as adding the dot.
+        .icon(Image::from_bytes(TRAY_PLAIN)?)
         .tooltip("Pentra")
         .menu(&menu)
         // Windows convention: left click opens the app, right click

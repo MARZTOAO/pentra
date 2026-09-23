@@ -12,22 +12,11 @@ import {
   notificationText,
   notificationTitle,
   syncSessionReminders,
+  POLL_MS,
   type AppNotification,
 } from "../lib/notifications";
 import { play } from "../lib/sound";
-import { notify, reportUnread } from "../lib/desktop";
-
-/** How often to look for new ones while the app is open. */
-const POLL_MS = 60_000;
-
-/**
- * At most this many Windows notifications from one batch.
- *
- * Coming back to the machine after a weekend can turn up a dozen at
- * once, and a dozen toasts stacking up is something you dismiss rather
- * than read. The rest are summarised in one.
- */
-const MAX_TOASTS = 3;
+import { notify, reportUnread, MAX_TOASTS } from "../lib/desktop";
 
 /**
  * The bell in the top bar.

@@ -99,6 +99,15 @@ export async function ensurePermission(): Promise<boolean> {
 /* ---------- sending ---------- */
 
 /**
+ * At most this many Windows notifications from one batch.
+ *
+ * Coming back to the machine after a weekend can turn up a dozen at
+ * once, and a dozen toasts stacking up is something you dismiss rather
+ * than read. Whoever is sending them summarises the rest in one.
+ */
+export const MAX_TOASTS = 3;
+
+/**
  * Raise a Windows notification, if this is the desktop app, if they're
  * switched on, and if the window isn't already in front of the person.
  *
@@ -175,7 +184,16 @@ async function setTrayUnread(count: number): Promise<void> {
   }
 }
 
-/** Bring the window back to the front. */
+/**
+ * Bring the window back to the front.
+ *
+ * Nothing calls this yet. It was meant for clicking a Windows toast,
+ * which turns out not to be possible with this notification plugin —
+ * the desktop side never emits the event `onAction()` waits for, so
+ * that listener would sit there forever. Left in place because it is
+ * two lines and the first "jump to this conversation" feature will
+ * want it.
+ */
 export async function focusApp(): Promise<void> {
   if (!isDesktopApp()) return;
   try {
