@@ -6,6 +6,7 @@ import { Avatar } from "../components/Avatar";
 import { getBlocked, unblockUser, type BlockedUser } from "../lib/safety";
 import { NotificationSettingsPanel } from "../components/NotificationSettingsPanel";
 import { DeleteAccount } from "../components/DeleteAccount";
+import { ChangePassword } from "../components/ChangePassword";
 import { DevPanel } from "../components/DevPanel";
 import { DesktopSection } from "../components/DesktopSection";
 
@@ -62,6 +63,8 @@ export default function Settings() {
       <NotificationSettingsPanel />
 
       <DesktopSection />
+
+      <ChangePassword />
 
       <section className="mb-8 notch border border-line bg-surface p-5">
         <h2 className="mb-1 label-wide text-muted">
