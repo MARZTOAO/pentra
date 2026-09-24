@@ -13,10 +13,18 @@ import { Prose, Section } from "../components/Site";
  * Not reviewed by a lawyer. Before this is relied on, it should be.
  */
 
-const UPDATED = "September 21, 2026";
+const UPDATED = "September 24, 2026";
 
-/** Where someone writes with a question. Empty until there's an inbox. */
-const CONTACT_EMAIL = "";
+/**
+ * Where someone writes with a question.
+ *
+ * A Porkbun forward, not a real mailbox — it lands in MARZ's own inbox
+ * without exposing that address. It matters most for the people the
+ * in-app tools can't reach: somebody banned or locked out, a parent
+ * whose under-age child signed up, a rights-holder, or anyone asking
+ * what data we hold on them.
+ */
+const CONTACT_EMAIL = "support@pentra.gg";
 
 const MIN_AGE = 13;
 
