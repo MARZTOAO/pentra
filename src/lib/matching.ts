@@ -33,7 +33,12 @@ export type Match = {
   shared_platforms: string[];
   shared_availability: string[];
   shared_genres: string[];
+  /** How many players match the filters altogether. Same on every row. */
+  total_count: number;
 };
+
+/** Find players shows this many per page. The database caps it at 100. */
+export const PAGE_SIZE = 30;
 
 export type MatchFilters = {
   gameId?: number | null;
@@ -41,12 +46,20 @@ export type MatchFilters = {
   region?: string | null;
 };
 
-export async function findPlayers(filters: MatchFilters = {}) {
+/**
+ * One page of Find players, best match first.
+ *
+ * `page` counts from 0. Everyone who matches the filters is reachable
+ * — the old version returned the top 30 and nobody below that could
+ * ever be found. See supabase/70_find_players_paging.sql.
+ */
+export async function findPlayers(filters: MatchFilters = {}, page = 0) {
   return supabase.rpc("find_players", {
     filter_game_id: filters.gameId ?? null,
     filter_platform: filters.platform ?? null,
     filter_region: filters.region ?? null,
-    max_results: 30,
+    max_results: PAGE_SIZE,
+    skip_results: Math.max(0, page) * PAGE_SIZE,
   });
 }
 
