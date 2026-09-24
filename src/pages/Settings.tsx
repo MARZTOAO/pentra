@@ -7,6 +7,7 @@ import { getBlocked, unblockUser, type BlockedUser } from "../lib/safety";
 import { NotificationSettingsPanel } from "../components/NotificationSettingsPanel";
 import { DeleteAccount } from "../components/DeleteAccount";
 import { ChangePassword } from "../components/ChangePassword";
+import { BirthDateSection } from "../components/BirthDateSection";
 import { DevPanel } from "../components/DevPanel";
 import { DesktopSection } from "../components/DesktopSection";
 
@@ -65,6 +66,8 @@ export default function Settings() {
       <DesktopSection />
 
       <ChangePassword />
+
+      <BirthDateSection />
 
       <section className="mb-8 notch border border-line bg-surface p-5">
         <h2 className="mb-1 label-wide text-muted">

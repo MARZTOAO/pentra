@@ -9,6 +9,7 @@ import {
   type ChangeKind,
   type ChangelogEntry,
 } from "../lib/changelog";
+import { DIALOG_ORDER, useDialogTurn, type DialogState } from "../lib/dialogQueue";
 
 /**
  * What changed since you were last shown this.
@@ -25,18 +26,27 @@ import {
 export function ChangelogDialog() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<ChangelogEntry[]>([]);
-  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<DialogState>("pending");
+
+  // Last in line, behind the welcome, the date-of-birth question and
+  // any birthday — see lib/dialogQueue.ts.
+  const open = useDialogTurn("changelog", DIALOG_ORDER.changelog, status);
 
   useEffect(() => {
     if (!user) return;
 
     let active = true;
 
-    getChangelog().then((rows) => {
-      if (!active || rows.length === 0) return;
-      setEntries(rows);
-      setOpen(true);
-    });
+    getChangelog().then(
+      (rows) => {
+        if (!active) return;
+        setEntries(rows);
+        setStatus(rows.length > 0 ? "wants" : "done");
+      },
+      () => {
+        if (active) setStatus("done");
+      },
+    );
 
     return () => {
       active = false;
@@ -47,7 +57,7 @@ export function ChangelogDialog() {
   // fails they see it once more next time, which is a much better
   // failure than a dialog sitting there while the network sulks.
   function close() {
-    setOpen(false);
+    setStatus("done");
     markChangelogSeen();
   }
 

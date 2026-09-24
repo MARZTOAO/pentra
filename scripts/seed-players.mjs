@@ -149,6 +149,9 @@ async function seed() {
         user_metadata: {
           username: player.username,
           display_name: player.username,
+          // Required since 69: the signup check refuses an account
+          // without one. Any adult date will do for a fake.
+          birth_date: "1995-06-15",
         },
       });
 

@@ -1,7 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { MIN_PASSWORD_LENGTH } from "../lib/constants";
+import { MIN_PASSWORD_LENGTH, SUPPORT_EMAIL } from "../lib/constants";
+import {
+  checkBirthDate,
+  pauseSignup,
+  signupPaused,
+  todayIso,
+} from "../lib/birthday";
 import { AuthCard, Field, Input, Button, Alert } from "../components/ui";
 
 export default function Signup() {
@@ -10,8 +16,13 @@ export default function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Set after an under-age answer, and on load if one was given on
+  // this device in the last day. See pauseSignup() in lib/birthday.ts.
+  const [paused, setPaused] = useState(() => signupPaused());
 
   // When Supabase has email confirmation switched on, signUp succeeds but
   // returns no session - the account isn't usable until the link is clicked.
@@ -33,6 +44,21 @@ export default function Signup() {
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+
+    // The database makes the same check and is the one that counts.
+    // Asking here means an under-age answer sends nothing at all — no
+    // email, no username, no date — rather than a request that gets
+    // refused.
+    const age = checkBirthDate(birthDate);
+    if (age === "invalid") {
+      setError("Enter your date of birth.");
+      return;
+    }
+    if (age === "too_young") {
+      pauseSignup();
+      setPaused(true);
       return;
     }
 
@@ -86,6 +112,10 @@ export default function Signup() {
         data: {
           username: cleanUsername,
           display_name: cleanUsername,
+          // Moved out of the metadata by the database on the way in
+          // and stored somewhere nothing else can read. See
+          // supabase/69_birthdays.sql.
+          birth_date: birthDate,
         },
       },
     });
@@ -93,7 +123,14 @@ export default function Signup() {
     setBusy(false);
 
     if (signUpError) {
-      setError(signUpError.message);
+      // Every check the database makes has already been made above, so
+      // this is rare — but it's what a refusal from inside the signup
+      // looks like, and it reads as the site being broken.
+      setError(
+        /database error/i.test(signUpError.message)
+          ? "We couldn't create your account. Check your details and try again."
+          : signUpError.message,
+      );
       return;
     }
 
@@ -108,6 +145,30 @@ export default function Signup() {
 
   if (pendingEmail) {
     return <CheckYourEmail email={pendingEmail} />;
+  }
+
+  // Deliberately says nothing about age or when to come back: a
+  // neutral gate doesn't tell you which answer would have worked.
+  if (paused) {
+    return (
+      <AuthCard title="Create your account">
+        <p className="mb-5 text-center text-sm text-muted">
+          Sorry — we can't create an account for you right now.
+        </p>
+        <p className="mb-6 text-center text-xs text-muted">
+          If you think this is a mistake, contact{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent hover:underline">
+            {SUPPORT_EMAIL}
+          </a>
+          .
+        </p>
+        <p className="text-center text-sm text-muted">
+          <Link to="/" className="font-medium text-accent hover:underline">
+            Back to Pentra
+          </Link>
+        </p>
+      </AuthCard>
+    );
   }
 
   return (
@@ -134,6 +195,22 @@ export default function Signup() {
             placeholder="you@example.com"
             autoComplete="email"
             required
+          />
+        </Field>
+
+        <Field
+          label="Date of birth"
+          hint="Private. Never shown on your profile."
+        >
+          <Input
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+            min="1900-01-01"
+            max={todayIso()}
+            autoComplete="bday"
+            required
+            className="[color-scheme:dark]"
           />
         </Field>
 

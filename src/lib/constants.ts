@@ -89,3 +89,19 @@ export function formatLocation(p: {
  * before they submit instead of after.
  */
 export const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * The youngest anyone can be to hold an account.
+ *
+ * The database enforces its own copy — `minimum_age()` in
+ * supabase/69_birthdays.sql — and that one is the rule. This one drives
+ * the Privacy and Terms pages and lets signup refuse before anything is
+ * sent. Change both together.
+ *
+ * Never shown on the signup form itself: a neutral age question doesn't
+ * tell you the answer it's looking for.
+ */
+export const MIN_AGE = 16;
+
+/** Where people write for anything the app can't do for them. */
+export const SUPPORT_EMAIL = "support@pentra.gg";

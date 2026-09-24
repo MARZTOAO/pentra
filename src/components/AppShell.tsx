@@ -6,6 +6,7 @@ import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
 import { Welcome } from "./Welcome";
 import { ChangelogDialog } from "./ChangelogDialog";
+import { Celebrations } from "./Celebrations";
 import { AchievementToast } from "./AchievementToast";
 import { WarningBanner } from "./WarningBanner";
 import { DesktopPrompt } from "./DesktopPrompt";
@@ -130,8 +131,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           player wherever they happen to land first. It decides for
           itself whether to appear. */}
       <Welcome />
-      {/* Suppressed in the database while the welcome is pending, so
-          these two can never stack on a first run. */}
+      {/* The date-of-birth question for older accounts, and birthday /
+          anniversary greetings on the day. These four take turns —
+          welcome, birthday question, greeting, What's New — through
+          lib/dialogQueue.ts, so they never stack. */}
+      <Celebrations />
       <ChangelogDialog />
       <AchievementToast />
       {/* Blocks the app until acknowledged. Draws nothing for anyone

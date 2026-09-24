@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Prose, Section } from "../components/Site";
+import { MIN_AGE, SUPPORT_EMAIL } from "../lib/constants";
 
 /**
  * Privacy and Terms.
@@ -24,9 +25,7 @@ const UPDATED = "September 24, 2026";
  * whose under-age child signed up, a rights-holder, or anyone asking
  * what data we hold on them.
  */
-const CONTACT_EMAIL = "support@pentra.gg";
-
-const MIN_AGE = 13;
+const CONTACT_EMAIL = SUPPORT_EMAIL;
 
 function Contact() {
   if (!CONTACT_EMAIL) {
@@ -77,6 +76,14 @@ export function Privacy() {
           free, and an optional city or country. Some of this is shown to
           other people; that's what a profile is for. Your email address
           never is.
+        </p>
+        <p>
+          <strong>Your date of birth.</strong> Asked when you sign up, to
+          check you're old enough to use Pentra, and used for one other
+          thing: a happy-birthday message on the day. It's kept apart
+          from your profile and never shown to anyone else; you can see
+          it in Settings. It can't be changed from inside the app — if
+          it's wrong, email us and we'll correct it.
         </p>
         <p>
           <strong>Your games.</strong> Your Top 5 and your library. This is
@@ -155,8 +162,13 @@ export function Privacy() {
 
       <Section title="Age">
         <p>
-          You need to be at least {MIN_AGE} to use Pentra. If we learn
-          that someone younger has an account, we remove it.
+          You need to be at least {MIN_AGE} to use Pentra. We ask for
+          your date of birth when you sign up and don't create an
+          account for anyone younger — and when we refuse one, we don't
+          keep the details that were entered. If we learn that someone
+          younger has an account anyway, we remove it. Parents who think
+          their child has signed up can write to us at the address
+          below.
         </p>
       </Section>
 

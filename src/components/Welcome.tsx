@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { needsWelcome, markWelcomed } from "../lib/profile";
+import { DIALOG_ORDER, useDialogTurn, type DialogState } from "../lib/dialogQueue";
 
 /**
  * Shown once, the first time someone opens the app after signing up.
@@ -22,15 +23,24 @@ import { needsWelcome, markWelcomed } from "../lib/profile";
 export function Welcome() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<DialogState>("pending");
+
+  // First in line — see lib/dialogQueue.ts. Everything else that pops
+  // up on open waits until this has answered.
+  const open = useDialogTurn("welcome", DIALOG_ORDER.welcome, status);
 
   useEffect(() => {
     if (!user) return;
 
     let active = true;
-    needsWelcome().then((needed) => {
-      if (active && needed) setOpen(true);
-    });
+    needsWelcome().then(
+      (needed) => {
+        if (active) setStatus(needed ? "wants" : "done");
+      },
+      () => {
+        if (active) setStatus("done");
+      },
+    );
 
     return () => {
       active = false;
@@ -41,7 +51,7 @@ export function Welcome() {
   // call fails they'd see this once more next session, which is a far
   // better failure than a dialog that sits there while the network sulks.
   function close(then?: string) {
-    setOpen(false);
+    setStatus("done");
     markWelcomed();
     if (then) navigate(then);
   }
