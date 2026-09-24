@@ -35,7 +35,13 @@ export type UpdateState =
   | { kind: "idle" }
   | { kind: "checking" }
   | { kind: "current"; version: string }
-  | { kind: "available"; version: string; notes: string | null }
+  | {
+      kind: "available";
+      version: string;
+      notes: string | null;
+      /** When that release was published, if the updater says. */
+      date: string | null;
+    }
   | { kind: "downloading"; version: string; percent: number | null }
   | { kind: "installing"; version: string }
   | { kind: "error"; message: string };
@@ -89,6 +95,7 @@ export async function checkForUpdate(): Promise<string | null> {
       kind: "available",
       version: update.version,
       notes: update.body?.trim() || null,
+      date: update.date ?? null,
     });
     return update.version;
   } catch (e) {
