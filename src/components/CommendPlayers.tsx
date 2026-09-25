@@ -3,6 +3,7 @@ import { Avatar } from "./Avatar";
 import {
   commend,
   commendableIn,
+  COMMEND_COOLDOWN_DAYS,
   sessionCommendables,
   type Commendable,
 } from "../lib/ratings";
@@ -15,10 +16,10 @@ import {
  * each other on a schedule. The database refuses it as well — this is
  * the polite half of that rule.
  *
- * ONE PER PERSON PER WEEK, not per session. A group that plays every
- * Thursday can keep vouching for each other; two accounts running
- * sessions back to back cannot farm it. The cooldown is the database's
- * rule — this just shows when it lifts.
+ * ONE PER PERSON PER 30 DAYS, not per session — and shared with the
+ * Commend button on profiles, so a commendation from either place
+ * starts the same clock. The cooldown is the database's rule; this
+ * just shows when it lifts.
  *
  * Nothing here says whether anyone commended YOU. That list is private
  * — published, it would be a popularity scoreboard with names on it.
@@ -56,7 +57,9 @@ export function CommendPlayers({ postId }: { postId: number }) {
     // cooldown was still running. Either way the honest thing to show
     // is that it counts as given.
     if (result) {
-      const again = new Date(Date.now() + 7 * 86_400_000).toISOString();
+      const again = new Date(
+        Date.now() + COMMEND_COOLDOWN_DAYS * 86_400_000,
+      ).toISOString();
       setPlayers((current) =>
         (current ?? []).map((p) =>
           p.user_id === player.user_id

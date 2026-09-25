@@ -14,6 +14,7 @@ import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
 import { bannerStyle } from "../lib/backgrounds";
 import { FriendButton } from "../components/FriendButton";
 import { MessageButton } from "../components/MessageButton";
+import { CommendButton } from "../components/CommendButton";
 import { SafetyMenu } from "../components/SafetyMenu";
 import { FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
@@ -168,13 +169,31 @@ export default function PublicProfile() {
         </div>
 
         {!isSelf && (
-          <div className="flex gap-2 sm:shrink-0 sm:items-start sm:pb-1">
+          <div className="flex flex-wrap gap-2 sm:shrink-0 sm:flex-nowrap sm:items-start sm:pb-1">
             <FriendButton
               targetId={profile.id}
               // Becoming friends unlocks their gamer tags, so refetch.
               onChange={() => getGamerTags(profile.id).then(setTags)}
             />
             <MessageButton targetId={profile.id} />
+            <CommendButton
+              targetId={profile.id}
+              name={profile.display_name || profile.username}
+              // Show the new count straight away rather than refetching
+              // the whole profile. Standing mirrors the database's
+              // +5, capped at 100.
+              onCommended={() =>
+                setProfile((p) =>
+                  p
+                    ? {
+                        ...p,
+                        commendation_count: p.commendation_count + 1,
+                        rating: Math.min(100, p.rating + 5),
+                      }
+                    : p,
+                )
+              }
+            />
             <SafetyMenu targetId={profile.id} username={profile.username} />
           </div>
         )}

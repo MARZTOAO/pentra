@@ -7,9 +7,10 @@ import { supabase } from "./supabase";
  * supabase/65_player_rating.sql for the reasoning:
  *
  *   commendation_count  how many times players have vouched for you.
- *                       Cumulative, never drops. One per person per
- *                       WEEK, so regulars can keep saying so without
- *                       two accounts being able to farm it.
+ *                       Cumulative, never drops. Given from a session
+ *                       you shared or straight from a profile, but one
+ *                       per person per 30 DAYS whichever way — see
+ *                       supabase/73_commend_from_profile.sql.
  *   rating              starts at 100 and only falls when a moderator
  *                       actions a report. Commendations earned after
  *                       that repair it, back up to 100.
@@ -19,13 +20,17 @@ import { supabase } from "./supabase";
  * somebody in a minute.
  */
 
+/** How long before you can commend the same player again. The
+    database's commend_cooldown() is the rule; this is for display. */
+export const COMMEND_COOLDOWN_DAYS = 30;
+
 export type Commendable = {
   user_id: string;
   username: string;
   display_name: string | null;
   avatar_url: string | null;
   avatar_preset: string | null;
-  /** True while your weekly cooldown for this person is still running. */
+  /** True while your 30-day cooldown for this person is still running. */
   commended: boolean;
   /** When you could vouch for them again. Null means you can right now. */
   available_at: string | null;
@@ -97,7 +102,7 @@ export async function sessionCommendables(
 /**
  * Vouch for somebody you played with.
  *
- * Returns 'commended', or 'already' if the weekly cooldown for this
+ * Returns 'commended', or 'already' if the 30-day cooldown for this
  * person is still running. The database enforces it and serialises the
  * pair, so the button is safe to press twice.
  */
@@ -112,4 +117,41 @@ export async function commend(
 
   if (error) return { result: null, error: error.message };
   return { result: data as "commended" | "already", error: null };
+}
+
+/**
+ * Vouch for somebody from their profile. No shared session needed.
+ *
+ * Same 30-day cooldown as the session route — the two share it, so
+ * one can't be used to get round the other. Returns 'commended', or
+ * 'already' if you've commended them in the last 30 days.
+ */
+export async function commendPlayer(
+  otherId: string,
+): Promise<{ result: "commended" | "already" | null; error: string | null }> {
+  const { data, error } = await supabase.rpc("commend_player", {
+    other: otherId,
+  });
+
+  if (error) return { result: null, error: error.message };
+  return { result: data as "commended" | "already", error: null };
+}
+
+export type CommendStatus = {
+  /** Whether the button should be live right now. */
+  can_commend: boolean;
+  /** When the cooldown lifts. Null when it isn't running. */
+  available_at: string | null;
+};
+
+/** Whether you can commend this player now, and if not, when. */
+export async function commendStatus(
+  otherId: string,
+): Promise<CommendStatus | null> {
+  const { data, error } = await supabase.rpc("commend_status", {
+    other: otherId,
+  });
+  if (error || !data) return null;
+  const row = (Array.isArray(data) ? data[0] : data) as CommendStatus | undefined;
+  return row ?? null;
 }
