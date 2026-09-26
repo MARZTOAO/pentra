@@ -138,6 +138,7 @@ export default function PublicProfile() {
           <RatingBadge
             rating={profile.rating}
             commendations={profile.commendation_count}
+            ogNumber={profile.og_number}
             isSelf={isSelf}
             className="mb-3"
           />

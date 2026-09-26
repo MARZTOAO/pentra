@@ -43,6 +43,12 @@ export type Profile = {
   rating: number;
   /** How many DIFFERENT players have vouched for them. Never falls. */
   commendation_count: number;
+  /**
+   * Their place among the first 1,000 real players (1-1000), or null.
+   * Given by the database when the email is confirmed, never changes.
+   * See supabase/76_pentra_og.sql.
+   */
+  og_number: number | null;
   availability: string[];
   /** Public presence — only ever online, away or offline. The real
    *  four-way choice lives in a private table; see lib/presence.ts. */
@@ -56,7 +62,7 @@ export type Profile = {
 
 /** What anyone may see when they open a profile. */
 const PUBLIC_COLUMNS =
-  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, presence, last_seen_at, created_at, tier, tier_expires_at, rating, commendation_count";
+  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, presence, last_seen_at, created_at, tier, tier_expires_at, rating, commendation_count, og_number";
 
 /** Your own row, which also carries your friend code. */
 const COLUMNS = `${PUBLIC_COLUMNS}, friend_code`;

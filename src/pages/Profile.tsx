@@ -147,6 +147,7 @@ export default function Profile() {
           <RatingBadge
             rating={profile.rating}
             commendations={profile.commendation_count}
+            ogNumber={profile.og_number}
             isSelf
           />
         </section>

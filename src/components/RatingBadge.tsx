@@ -1,4 +1,5 @@
 import { ratingHint, ratingLabel, ratingTier } from "../lib/ratings";
+import { OgBadge } from "./OgBadge";
 
 /**
  * Standing and commendations, side by side on a profile.
@@ -16,11 +17,14 @@ export function RatingBadge({
   rating,
   commendations,
   isSelf = false,
+  ogNumber = null,
   className = "",
 }: {
   rating: number;
   commendations: number;
   isSelf?: boolean;
+  /** Pentra OG number, when they have one. Profiles only. */
+  ogNumber?: number | null;
   className?: string;
 }) {
   const tier = ratingTier(rating);
@@ -67,6 +71,8 @@ export function RatingBadge({
           commendation{commendations === 1 ? "" : "s"}
         </span>
       </span>
+
+      {ogNumber != null && <OgBadge number={ogNumber} />}
     </div>
   );
 }

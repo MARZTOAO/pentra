@@ -13,7 +13,7 @@
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
 --
---  Covers 02 through 75. schema.sql (the baseline) isn't listed: if
+--  Covers 02 through 76. schema.sql (the baseline) isn't listed: if
 --  it hadn't run, nothing else would work either. When a new
 --  migration is added, add a line for it here.
 -- ============================================================
@@ -592,7 +592,12 @@ checks(migration, feature, present) as (
     ('75_changelog_mobile_post_fix',
      'What''s New line for the phone Post button fix',
      case when to_regclass('public.changelog_entries') is null then false
-          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Posting on phones''', false, true, '')))[1]::text::int > 0 end)
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Posting on phones''', false, true, '')))[1]::text::int > 0 end),
+
+    ('76_pentra_og',
+     'Pentra OG badge for the first 1,000 players',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'og_number')
+     and exists (select 1 from pg_trigger where tgname = 'on_auth_user_og'))
 )
 select
   migration,
