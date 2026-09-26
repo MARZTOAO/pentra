@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import {
   getProfile,
+  hasPlus,
   updateProfile,
   type Profile as ProfileRow,
 } from "../lib/profile";
@@ -148,6 +149,7 @@ export default function Profile() {
             rating={profile.rating}
             commendations={profile.commendation_count}
             ogNumber={profile.og_number}
+            pro={hasPlus(profile)}
             isSelf
           />
         </section>

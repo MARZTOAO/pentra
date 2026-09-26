@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
-import { getProfileByUsername, type Profile } from "../lib/profile";
+import { getProfileByUsername, hasPlus, type Profile } from "../lib/profile";
 import { getTopFive, type TopFiveEntry } from "../lib/topFive";
 import { getFriendCount } from "../lib/matching";
 import { GameLibrary } from "../components/GameLibrary";
@@ -139,6 +139,7 @@ export default function PublicProfile() {
             rating={profile.rating}
             commendations={profile.commendation_count}
             ogNumber={profile.og_number}
+            pro={hasPlus(profile)}
             isSelf={isSelf}
             className="mb-3"
           />

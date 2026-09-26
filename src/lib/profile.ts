@@ -196,9 +196,10 @@ async function uploadTo(
 }
 
 /**
- * Whether this profile currently has paid features.
+ * Whether this profile currently has paid features — a Pentra Pro member.
  *
- * Checks expiry as well as the tier itself - a row can say 'plus' while
+ * 'plus' is the tier's name in the database (10); "Pro" is what it's
+ * called everywhere a player can see. Checks expiry as well as the tier itself - a row can say 'plus' while
  * the paid period has already lapsed. Mirrors the has_plus() function in
  * supabase/10_tiers.sql; the database one is what actually enforces
  * anything, this is just for showing and hiding interface.
