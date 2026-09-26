@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { IgdbCredit } from "./IgdbCredit";
 import {
   searchGames,
   releaseLabel,
@@ -178,6 +179,8 @@ export function GameSearchModal({
             </button>
           ))}
         </div>
+
+        <IgdbCredit className="border-t border-line px-4 py-2 text-right" />
       </div>
       </div>
     </div>,

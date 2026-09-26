@@ -11,6 +11,7 @@ import { AchievementToast } from "./AchievementToast";
 import { WarningBanner } from "./WarningBanner";
 import { DesktopPrompt } from "./DesktopPrompt";
 import { NotificationBell } from "./NotificationBell";
+import { IgdbCredit } from "./IgdbCredit";
 
 /** `short` is the bottom-tab label. Seven of them share a phone's
     width — about 53px each at 375px — so these have to stay tiny:
@@ -313,6 +314,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="rise flex-1 overflow-y-auto pb-[4.5rem] md:pb-0"
         >
           {children}
+
+          {/* IGDB's credit, at the foot of every screen that can show
+              its data. Not on Messages: that screen is a full-height
+              chat, and a line under it would make the whole
+              conversation scroll by a few pixels. It shows no game
+              data anyway. */}
+          {!location.pathname.startsWith("/messages") && (
+            <IgdbCredit className="px-4 pb-6 pt-10 text-center" />
+          )}
         </main>
       </div>
 
