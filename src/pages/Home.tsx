@@ -434,12 +434,17 @@ function Composer({
 
           <AttachmentThumbs attach={attach} />
 
-          <div className="mt-2 flex items-center gap-2">
+          {/* Wraps on a phone. Without flex-wrap a long game title
+              pushed Photo and Post off the right edge, so there was no
+              way to post a session with a game tagged. Post keeps
+              ml-auto, so when it drops to its own line it stays on the
+              right where a thumb expects it. */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
               onClick={() => setIsSession((v) => !v)}
               title="Post a session others can join"
               className={
-                "rounded-full border px-3 py-1 text-xs font-semibold transition " +
+                "whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold transition " +
                 (isSession
                   ? "border-accent bg-accent text-onaccent"
                   : "border-line text-muted hover:border-accent hover:text-accent")
@@ -452,24 +457,30 @@ function Composer({
                 looking for that game, rather than only by whoever
                 happens to scroll past it. */}
             {game ? (
-              <span className="flex items-center gap-1.5 rounded-full border border-accent/50 bg-accent/10 py-1 pl-1 pr-2 text-xs text-accent">
+              <span
+                // min-w-0 + max-w-full let the chip shrink to the row
+                // instead of forcing the row wider than the screen; the
+                // title then truncates inside it.
+                className="flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-accent/50 bg-accent/10 py-1 pl-1 pr-2 text-xs text-accent"
+                title={game.name}
+              >
                 {game.cover_url && (
                   <img
                     src={game.cover_url}
                     alt=""
-                    className="h-5 w-3.5 notch-sm object-cover"
+                    className="h-5 w-3.5 shrink-0 notch-sm object-cover"
                   />
                 )}
-                <span className="max-w-40 truncate">{game.name}</span>
+                <span className="min-w-0 max-w-40 truncate">{game.name}</span>
                 {releaseLabel(game) && (
-                  <span className="rounded-full bg-accent/20 px-1.5 text-[10px] font-semibold">
+                  <span className="shrink-0 whitespace-nowrap rounded-full bg-accent/20 px-1.5 text-[10px] font-semibold">
                     {releaseLabel(game)}
                   </span>
                 )}
                 <button
                   onClick={() => setGame(null)}
                   aria-label="Remove game"
-                  className="opacity-70 hover:opacity-100"
+                  className="shrink-0 opacity-70 hover:opacity-100"
                 >
                   ×
                 </button>
@@ -477,7 +488,7 @@ function Composer({
             ) : (
               <button
                 onClick={() => setPicking(true)}
-                className="rounded-full border border-line px-3 py-1 text-xs text-muted transition hover:border-accent hover:text-accent"
+                className="whitespace-nowrap rounded-full border border-line px-3 py-1 text-xs text-muted transition hover:border-accent hover:text-accent"
               >
                 + Tag a game
               </button>
@@ -485,12 +496,14 @@ function Composer({
 
             <AttachButton attach={attach} disabled={busy} />
 
-            <span className="text-xs text-muted">{body.length}/500</span>
+            <span className="whitespace-nowrap text-xs text-muted">
+              {body.length}/500
+            </span>
 
             <button
               onClick={submit}
               disabled={!canPost || busy}
-              className="ml-auto notch-md bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+              className="ml-auto shrink-0 whitespace-nowrap notch-md bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
             >
               {uploading > 0
                 ? `Uploading ${uploading}/${media.length}…`

@@ -12,10 +12,134 @@
 --  Anything showing MISSING means that migration has not been run
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
+--
+--  Covers 02 through 75. schema.sql (the baseline) isn't listed: if
+--  it hadn't run, nothing else would work either. When a new
+--  migration is added, add a line for it here.
 -- ============================================================
 
-with checks(migration, feature, present) as (
+-- Two lookups the newer checks share, so each check is one line.
+with fn as (
+  select p.proname as name,
+         p.proargnames as args,
+         pg_get_functiondef(p.oid) as def
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.prokind = 'f'
+),
+cols as (
+  select table_name as t, column_name as c
+  from information_schema.columns
+  where table_schema = 'public'
+),
+checks(migration, feature, present) as (
   values
+    ('02_username_check',
+     'Signup checks if a username is free',
+     exists (select 1 from fn where fn.name = 'username_available')),
+
+    ('03_avatars_storage',
+     'Avatar uploads',
+     exists (select 1 from storage.buckets b where b.id = 'avatars')),
+
+    ('04_top_five',
+     'Saving your Top 5',
+     exists (select 1 from fn where fn.name = 'set_top_five')),
+
+    ('05_location',
+     'City / state / country on profiles',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'location_city')),
+
+    ('06_matching',
+     'Find players (first version) and last-seen',
+     exists (select 1 from fn where fn.name = 'touch_last_seen')),
+
+    ('07_gamer_tags',
+     'Gamer tags',
+     to_regclass('public.gamer_tags') is not null
+     and exists (select 1 from fn where fn.name = 'set_gamer_tags')),
+
+    ('08_primary_platform',
+     'Primary platform',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'primary_platform')),
+
+    ('09_profile_background',
+     'Profile backgrounds and banners',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'background')
+     and exists (select 1 from storage.buckets b where b.id = 'banners')),
+
+    ('10_tiers',
+     'Account tiers (free / plus)',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'tier')
+     and exists (select 1 from fn where fn.name = 'has_plus')),
+
+    ('11_friends',
+     'Friend requests',
+     exists (select 1 from fn where fn.name = 'send_friend_request')),
+
+    ('12_customization',
+     'App theme setting',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'app_theme')),
+
+    ('13_avatars',
+     'Built-in avatars',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'avatar_preset')),
+
+    ('14_chat',
+     'Direct messages list',
+     exists (select 1 from fn where fn.name = 'get_conversations')),
+
+    ('15_feed',
+     'The feed and likes',
+     to_regclass('public.post_likes') is not null),
+
+    ('16_feed_by_game',
+     'Feed filtered by game',
+     exists (select 1 from fn where fn.name = 'get_feed_games')),
+
+    ('17_sessions',
+     'Sessions (looking for group)',
+     to_regclass('public.session_players') is not null
+     and exists (select 1 from cols where cols.t = 'posts' and cols.c = 'starts_at')),
+
+    ('18_safety',
+     'Block and report',
+     exists (select 1 from fn where fn.name = 'block_user')
+     and to_regclass('public.reports') is not null),
+
+    ('19_message_privacy',
+     'Who can message you',
+     exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'message_privacy')
+     and exists (select 1 from fn where fn.name = 'can_message')),
+
+    ('20_friend_codes',
+     'Friend codes',
+     to_regclass('public.friend_code_registry') is not null
+     and exists (select 1 from fn where fn.name = 'claim_friend_code')),
+
+    ('21_post_media',
+     'Images on posts',
+     to_regclass('public.post_media') is not null
+     and exists (select 1 from storage.buckets b where b.id = 'post-media')),
+
+    ('22_session_guests',
+     'Adding players to a session',
+     exists (select 1 from fn where fn.name = 'add_session_players')),
+
+    ('23_upcoming_games',
+     'Upcoming games',
+     exists (select 1 from fn where fn.name = 'upcoming_games')
+     and exists (select 1 from cols where cols.t = 'games' and cols.c = 'release_date')),
+
+    ('24_game_library',
+     'Game library',
+     to_regclass('public.game_library') is not null),
+
+    ('25_game_requests',
+     'Request a missing game',
+     to_regclass('public.game_requests') is not null),
+
     ('26_match_reason',
      'Find says "in your Top 5" only when true',
      exists (
@@ -408,7 +532,67 @@ with checks(migration, feature, present) as (
        select 1 from pg_proc p
        join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'public' and p.proname = 'dev_changelog_add'
-     ))
+     )),
+
+    ('63_report_message',
+     'Report a single message',
+     exists (select 1 from cols where cols.t = 'reports' and cols.c = 'message_body')),
+
+    ('64_text_moderation',
+     'Word filter on profiles and posts',
+     to_regclass('public.banned_terms') is not null
+     and exists (select 1 from fn where fn.name = 'username_allowed')),
+
+    ('65_player_rating',
+     'Commendations and standing',
+     to_regclass('public.commendations') is not null
+     and exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'rating')),
+
+    ('66_commendation_achievements',
+     'Commendation badges',
+     case when to_regclass('public.achievements') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.achievements where code = ''commended_1''', false, true, '')))[1]::text::int > 0 end),
+
+    ('67_penalty_tuning',
+     'Warning -20, ban -60',
+     exists (select 1 from fn where fn.name = 'apply_moderation_penalty' and fn.def like '%ban_cost  int := 60%')),
+
+    ('68_changelog_update_3',
+     'What''s New for 22-23 September',
+     case when to_regclass('public.changelog_entries') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''One Pentra at a time''', false, true, '')))[1]::text::int > 0 end),
+
+    ('69_birthdays',
+     'Date of birth, age 16, birthday greetings',
+     to_regclass('public.account_private') is not null
+     and exists (select 1 from pg_trigger where tgname = 'on_auth_user_birth_date')),
+
+    ('70_find_players_paging',
+     'Find players: 30 per page, everyone reachable',
+     exists (select 1 from fn where fn.name = 'find_players' and 'skip_results' = any(fn.args))),
+
+    ('71_changelog_by_build',
+     'What''s New matches your app version',
+     exists (select 1 from fn where fn.name = 'get_changelog' and 'built_at' = any(fn.args))),
+
+    ('72_changelog_update_checks',
+     'What''s New line for faster update checks',
+     case when to_regclass('public.changelog_entries') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Updates show up sooner''', false, true, '')))[1]::text::int > 0 end),
+
+    ('73_commend_from_profile',
+     'Commend from a profile, once a month',
+     exists (select 1 from fn where fn.name = 'commend_player')
+     and exists (select 1 from fn where fn.name = 'commend_cooldown')),
+
+    ('74_fix_commendation_badges',
+     'Commendation badges actually unlock',
+     exists (select 1 from fn where fn.name = 'stat_snapshot' and fn.def like '%''commendations''%')),
+
+    ('75_changelog_mobile_post_fix',
+     'What''s New line for the phone Post button fix',
+     case when to_regclass('public.changelog_entries') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Posting on phones''', false, true, '')))[1]::text::int > 0 end)
 )
 select
   migration,
