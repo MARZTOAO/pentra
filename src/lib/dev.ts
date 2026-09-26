@@ -342,3 +342,48 @@ export function changelogIsStale(newestAt: string | null): boolean {
 
   return builtMs > Date.parse(newestAt);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Pentra Pro grants — supabase/77_pro_grants.sql                     */
+/* ------------------------------------------------------------------ */
+
+export type ProMember = {
+  username: string;
+  /** Null means permanent. */
+  expires_at: string | null;
+  /** True if any developer grant is on record (as opposed to paid). */
+  granted: boolean;
+};
+
+export async function listProMembers(): Promise<ProMember[]> {
+  const { data, error } = await supabase.rpc("dev_pro_members");
+  if (error || !data) return [];
+  return data as ProMember[];
+}
+
+/**
+ * Give someone Pro. `months` null = permanent; otherwise the months go
+ * on the end of whatever time they already have.
+ * @returns 'granted', 'no such player', or an error message.
+ */
+export async function grantPro(
+  username: string,
+  months: number | null,
+  note: string | null,
+): Promise<string> {
+  const { data, error } = await supabase.rpc("dev_grant_pro", {
+    who: username,
+    months,
+    note,
+  });
+  if (error) return error.message;
+  return (data as string) ?? "failed";
+}
+
+export async function revokePro(username: string): Promise<string> {
+  const { data, error } = await supabase.rpc("dev_revoke_pro", {
+    who: username,
+  });
+  if (error) return error.message;
+  return (data as string) ?? "failed";
+}

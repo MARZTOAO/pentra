@@ -29,6 +29,10 @@ import {
   type DevEnvironment,
   type DevFlag,
   type DevMetrics,
+  listProMembers,
+  grantPro,
+  revokePro,
+  type ProMember,
 } from "../lib/dev";
 import { clearFlagCache } from "../lib/flags";
 import { Avatar } from "./Avatar";
@@ -127,7 +131,7 @@ function Dialog({
           <h2 className="label-wide text-accent">Developer</h2>
 
           <nav className="order-last flex w-full flex-wrap gap-1 sm:order-none sm:ml-auto sm:w-auto">
-            {(["reports", "news", "numbers", "flags", "build"] as const).map((t) => (
+            {(["reports", "news", "numbers", "flags", "pro", "build"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -157,6 +161,7 @@ function Dialog({
           {tab === "news" && <News />}
           {tab === "numbers" && <Numbers />}
           {tab === "flags" && <Flags />}
+          {tab === "pro" && <Pro />}
           {tab === "build" && <Build />}
         </div>
       </div>
@@ -165,7 +170,7 @@ function Dialog({
   );
 }
 
-type Tab = "reports" | "news" | "numbers" | "flags" | "build";
+type Tab = "reports" | "news" | "numbers" | "flags" | "pro" | "build";
 
 /* ------------------------------------------------------------------ */
 
@@ -824,6 +829,147 @@ function Flags() {
         <p className="text-sm text-muted">No flags yet.</p>
       ) : (
         flags.map((f) => <FlagRow key={f.key} flag={f} onChanged={load} />)
+      )}
+    </div>
+  );
+}
+
+/**
+ * Pentra Pro, given by hand.
+ *
+ * Paid Pro will come through billing. This is the other door: a free
+ * month for a tester, a permanent membership for a developer, a
+ * make-good after a problem. Every grant is logged in the database.
+ */
+function Pro() {
+  const [members, setMembers] = useState<ProMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [who, setWho] = useState("");
+  const [months, setMonths] = useState<string>("1");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    listProMembers().then((rows) => {
+      setMembers(rows);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(load, [load]);
+
+  async function grant() {
+    const name = who.trim();
+    if (!name || busy) return;
+
+    setBusy(true);
+    const result = await grantPro(
+      name,
+      months === "forever" ? null : Number(months),
+      note.trim() || null,
+    );
+    setBusy(false);
+
+    setStatus(
+      result === "granted"
+        ? `${name} is Pro${months === "forever" ? " for good" : ` for ${months} more month${months === "1" ? "" : "s"}`}.`
+        : result,
+    );
+    if (result === "granted") {
+      setWho("");
+      setNote("");
+      load();
+    }
+  }
+
+  async function revoke(name: string) {
+    if (busy) return;
+    setBusy(true);
+    const result = await revokePro(name);
+    setBusy(false);
+    setStatus(result === "revoked" ? `${name} is back on free.` : result);
+    load();
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs leading-relaxed text-muted">
+        Give Pro without a payment. Months stack on whatever time they
+        already have; "forever" never expires and billing will never
+        shorten it. Every grant is recorded.
+      </p>
+
+      <div className="notch-md border border-line bg-surface-2 p-3">
+        <div className="flex flex-wrap gap-2">
+          <input
+            value={who}
+            onChange={(e) => setWho(e.target.value)}
+            placeholder="username"
+            spellCheck={false}
+            className="min-w-0 flex-1 notch-md border border-line bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+          />
+          <select
+            value={months}
+            onChange={(e) => setMonths(e.target.value)}
+            className="notch-md border border-line bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+          >
+            {["1", "3", "6", "12"].map((m) => (
+              <option key={m} value={m}>
+                {m} month{m === "1" ? "" : "s"}
+              </option>
+            ))}
+            <option value="forever">Forever</option>
+          </select>
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Why? (optional)"
+            className="min-w-0 flex-[2] notch-md border border-line bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+          />
+          <button
+            onClick={grant}
+            disabled={busy || !who.trim()}
+            className="notch-md bg-accent px-3 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+          >
+            Grant Pro
+          </button>
+        </div>
+        {status && <p className="mt-2 text-xs text-muted">{status}</p>}
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-muted">Loading…</p>
+      ) : members.length === 0 ? (
+        <p className="text-sm text-muted">Nobody has Pro yet.</p>
+      ) : (
+        <div className="divide-y divide-line notch-md border border-line">
+          {members.map((m) => (
+            <div key={m.username} className="flex items-center gap-3 px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {m.username}
+              </span>
+              <span className="numeric text-xs text-muted">
+                {m.expires_at
+                  ? `until ${new Date(m.expires_at).toLocaleDateString()}`
+                  : "forever"}
+              </span>
+              {m.granted && (
+                <span className="notch-sm border border-line px-1.5 text-[10px] text-muted">
+                  granted
+                </span>
+              )}
+              <button
+                onClick={() => revoke(m.username)}
+                disabled={busy}
+                className="text-[11px] text-muted transition hover:text-danger disabled:opacity-40"
+              >
+                Revoke
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

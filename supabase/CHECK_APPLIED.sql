@@ -13,7 +13,7 @@
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
 --
---  Covers 02 through 76. schema.sql (the baseline) isn't listed: if
+--  Covers 02 through 77. schema.sql (the baseline) isn't listed: if
 --  it hadn't run, nothing else would work either. When a new
 --  migration is added, add a line for it here.
 -- ============================================================
@@ -597,7 +597,12 @@ checks(migration, feature, present) as (
     ('76_pentra_og',
      'Pentra OG badge for the first 1,000 players',
      exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'og_number')
-     and exists (select 1 from pg_trigger where tgname = 'on_auth_user_og'))
+     and exists (select 1 from pg_trigger where tgname = 'on_auth_user_og')),
+
+    ('77_pro_grants',
+     'Developers can grant Pentra Pro',
+     to_regclass('public.pro_grants') is not null
+     and exists (select 1 from fn where fn.name = 'dev_grant_pro'))
 )
 select
   migration,
