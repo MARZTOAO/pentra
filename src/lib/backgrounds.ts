@@ -9,7 +9,7 @@
  * is what lets the tiled patterns work alongside the plain gradients.
  */
 
-export type BackgroundGroup = "Gradients" | "Neon" | "Muted" | "Patterns";
+export type BackgroundGroup = "Gradients" | "Neon" | "Muted" | "Patterns" | "Motion";
 
 export type Background = {
   key: string;
@@ -18,6 +18,13 @@ export type Background = {
   css: string;
   size?: string;
   color?: string;
+  /**
+   * Animated (components/MotionBackground.tsx draws it). Pentra Pro
+   * only — the key starts with "motion-", which is what the database
+   * checks (supabase/79). `css` is the still colour: the picker
+   * thumbnail, and what anyone whose Pro has lapsed sees.
+   */
+  motion?: boolean;
 };
 
 export const BACKGROUNDS: Background[] = [
@@ -215,6 +222,17 @@ export const BACKGROUNDS: Background[] = [
     css: "linear-gradient(rgba(140,120,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(140,120,255,0.3) 1px, transparent 1px)",
     size: "34px 34px",
   },
+
+  // ---- Motion (Pentra Pro) -------------------------------------------
+  // The still colour here is deliberately close to the animation's
+  // average, so the switch from still to moving isn't a jolt.
+  { key: "motion-drift", label: "Drift", group: "Motion", motion: true, css: "linear-gradient(135deg, #0b1220 0%, #1a1f3d 50%, #0e2a2a 100%)" },
+  { key: "motion-nebula", label: "Nebula", group: "Motion", motion: true, css: "linear-gradient(135deg, #12091f 0%, #3b1d6e 50%, #2a1a4a 100%)" },
+  { key: "motion-starfall", label: "Starfall", group: "Motion", motion: true, color: "#05070d", css: "radial-gradient(rgba(255,255,255,0.45) 1px, transparent 1.5px)", size: "58px 58px" },
+  { key: "motion-embers", label: "Embers", group: "Motion", motion: true, css: "radial-gradient(ellipse at 50% 120%, #7a2f2f 0%, #2b1414 45%, #140a06 80%)" },
+  { key: "motion-scan", label: "Scan", group: "Motion", motion: true, color: "#071a2b", css: "linear-gradient(rgba(53,192,232,0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(53,192,232,0.16) 1px, transparent 1px)", size: "34px 34px" },
+  { key: "motion-tide", label: "Tide", group: "Motion", motion: true, css: "repeating-linear-gradient(115deg, rgba(111,227,196,0.14) 0 22px, #0a1a1a 22px 80px)" },
+  { key: "motion-cipher", label: "Cipher", group: "Motion", motion: true, css: "linear-gradient(180deg, #1a0d06 0%, #0d0704 100%)" },
 ];
 
 export const GROUPS: BackgroundGroup[] = [
@@ -222,7 +240,13 @@ export const GROUPS: BackgroundGroup[] = [
   "Neon",
   "Muted",
   "Patterns",
+  "Motion",
 ];
+
+/** Is this key one of the Pro-only moving backgrounds? Mirrors 79. */
+export function isMotionBackground(key: string | null | undefined) {
+  return !!key && key.startsWith("motion-");
+}
 
 export function findBackground(key: string | null | undefined) {
   return BACKGROUNDS.find((b) => b.key === key) ?? null;

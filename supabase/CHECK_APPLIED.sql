@@ -13,7 +13,7 @@
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
 --
---  Covers 02 through 78. schema.sql (the baseline) isn't listed: if
+--  Covers 02 through 79. schema.sql (the baseline) isn't listed: if
 --  it hadn't run, nothing else would work either. When a new
 --  migration is added, add a line for it here.
 -- ============================================================
@@ -607,7 +607,11 @@ checks(migration, feature, present) as (
     ('78_avatar_frames',
      'Avatar frames for Pentra Pro members',
      exists (select 1 from cols where cols.t = 'profiles' and cols.c = 'avatar_frame')
-     and exists (select 1 from pg_trigger where tgname = 'profiles_guard_pro_perks'))
+     and exists (select 1 from pg_trigger where tgname = 'profiles_guard_pro_perks')),
+
+    ('79_moving_backgrounds',
+     'Moving backgrounds for Pentra Pro members',
+     exists (select 1 from fn where fn.name = 'guard_pro_perks' and fn.def like '%motion-%'))
 )
 select
   migration,

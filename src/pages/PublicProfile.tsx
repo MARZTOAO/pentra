@@ -19,6 +19,7 @@ import { SafetyMenu } from "../components/SafetyMenu";
 import { FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 import { frameOf } from "../lib/frames";
+import { MotionBackground } from "../components/MotionBackground";
 
 export default function PublicProfile() {
   const { username } = useParams<{ username: string }>();
@@ -102,7 +103,10 @@ export default function PublicProfile() {
       <div
         className="pointer-events-none fixed inset-0 -z-20"
         style={bannerStyle(profile)}
-      />
+      >
+        {/* Pro only: the moving layer, over the still colour. */}
+        {hasPlus(profile) && <MotionBackground preset={profile.background} />}
+      </div>
       {/* A scrim over it. Without one, text sits on whatever someone
           picked and readability becomes a coin flip.
 

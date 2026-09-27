@@ -7,7 +7,10 @@ import {
   bannerStyle,
   findBackground,
 } from "../lib/backgrounds";
+import { hasPlus } from "../lib/profile";
 import { Anchored } from "./Anchored";
+import { MotionBackground } from "./MotionBackground";
+import { ProBadge } from "./ProBadge";
 import { Alert } from "./ui";
 
 export function BackgroundPicker({
@@ -25,6 +28,11 @@ export function BackgroundPicker({
   const [error, setError] = useState<string | null>(null);
 
   const current = profile.banner_url ? null : findBackground(profile.background);
+  // The Motion group is Pentra Pro. Hidden for everyone else until
+  // there's something to buy; the database refuses it regardless (79).
+  const pro = hasPlus(profile);
+  const groups = GROUPS.filter((g) => g !== "Motion" || pro);
+  const choices = BACKGROUNDS.filter((bg) => !bg.motion || pro);
 
   // Dismissal lives in <Anchored>: the panel is portalled to <body>, so a
   // contains() check against this trigger would close it on its own clicks.
@@ -65,9 +73,11 @@ export function BackgroundPicker({
       <div className="flex items-center gap-4">
         {/* Preview stays visible - it's the thing you're actually choosing. */}
         <div
-          className="h-16 w-28 shrink-0 notch-md border border-line"
+          className="relative h-16 w-28 shrink-0 overflow-hidden notch-md border border-line"
           style={bannerStyle(profile)}
-        />
+        >
+          {pro && <MotionBackground preset={profile.background} />}
+        </div>
 
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="relative" ref={dropdown}>
@@ -104,13 +114,14 @@ export function BackgroundPicker({
                 width={416}
               >
               <div className="max-h-80 overflow-y-auto overflow-x-hidden notch border border-line bg-surface p-3">
-                {GROUPS.map((group) => (
+                {groups.map((group) => (
                   <div key={group} className="mb-3 last:mb-0">
-                    <p className="label-wide mb-1.5 text-muted">
+                    <p className="label-wide mb-1.5 flex items-center gap-2 text-muted">
                       {group}
+                      {group === "Motion" && <ProBadge />}
                     </p>
                     <div className="grid grid-cols-8 gap-1.5">
-                      {BACKGROUNDS.filter((bg) => bg.group === group).map((bg) => {
+                      {choices.filter((bg) => bg.group === group).map((bg) => {
                         const active =
                           !profile.banner_url && profile.background === bg.key;
                         return (
@@ -120,13 +131,16 @@ export function BackgroundPicker({
                             title={bg.label}
                             onClick={() => choosePreset(bg.key)}
                             className={
-                              "h-9 notch-sm border-2 transition " +
+                              "relative h-9 overflow-hidden notch-sm border-2 transition " +
                               (active
                                 ? "border-accent ring-2 ring-accent/30"
                                 : "border-transparent hover:border-muted")
                             }
                             style={bannerStyle({ background: bg.key })}
                           >
+                            {/* Motion thumbnails move too - it's the
+                                thing being chosen. */}
+                            {bg.motion && <MotionBackground preset={bg.key} />}
                             <span className="sr-only">{bg.label}</span>
                           </button>
                         );
@@ -140,7 +154,7 @@ export function BackgroundPicker({
           </div>
 
           <p className="numeric text-xs text-muted">
-            {BACKGROUNDS.length} to choose from.
+            {choices.length} to choose from.
           </p>
         </div>
       </div>

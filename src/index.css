@@ -245,3 +245,79 @@ textarea {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+
+/* ------------------------------------------------------------
+   Moving backgrounds — Pentra Pro (components/MotionBackground.tsx).
+
+   Each preset is a few oversized layers (<i>) moved with transforms,
+   inside a .mb that fills the banner element. The still colour from
+   lib/backgrounds.ts sits underneath. The reduced-motion rule above
+   stops all of these, leaving that still colour.
+   ------------------------------------------------------------ */
+.mb {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.mb>i{position:absolute;display:block;will-change:transform}
+
+/* Drift: three soft colour clouds wandering over a deep blue. */
+.mb-drift{background:#0b1220}
+.mb-drift>i{inset:-40%;filter:blur(2px)}
+.mb-drift>i:nth-child(1){background:radial-gradient(closest-side at 35% 40%,rgba(109,94,252,.55),transparent 70%);animation:mb-drift-a 26s ease-in-out infinite alternate}
+.mb-drift>i:nth-child(2){background:radial-gradient(closest-side at 65% 55%,rgba(61,220,151,.45),transparent 70%);animation:mb-drift-b 31s ease-in-out infinite alternate}
+.mb-drift>i:nth-child(3){background:radial-gradient(closest-side at 50% 75%,rgba(224,101,122,.45),transparent 70%);animation:mb-drift-c 37s ease-in-out infinite alternate}
+@keyframes mb-drift-a{from{transform:translate(-8%,-4%) scale(1)}to{transform:translate(8%,6%) scale(1.15)}}
+@keyframes mb-drift-b{from{transform:translate(7%,5%) scale(1.1)}to{transform:translate(-7%,-6%) scale(.95)}}
+@keyframes mb-drift-c{from{transform:translate(3%,8%) scale(1)}to{transform:translate(-5%,-8%) scale(1.2)}}
+
+/* Nebula: a slow-turning wheel of violet, pink and blue, softened. */
+.mb-nebula{background:#12091f}
+.mb-nebula>i:nth-child(1){left:50%;top:50%;width:300%;aspect-ratio:1;background:conic-gradient(from 0deg,#3b1d6e,#6d5efc,#e0657a,#35c0e8,#3b1d6e);filter:blur(48px);opacity:.95;animation:mb-spin 80s linear infinite}
+.mb-nebula>i:nth-child(2){inset:0;background:radial-gradient(circle at 50% 50%,transparent 30%,rgba(18,9,31,.7) 90%)}
+@keyframes mb-spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* Starfall: two layers of stars falling at different speeds. */
+.mb-starfall{background:#05070d}
+.mb-starfall>i{left:0;right:0;top:-58px;bottom:0}
+.mb-starfall>i:nth-child(1){background:radial-gradient(rgba(255,255,255,.55) 1px,transparent 1.5px);background-size:58px 58px;animation:mb-fall-58 9s linear infinite}
+.mb-starfall>i:nth-child(2){top:-31px;background:radial-gradient(rgba(255,255,255,.28) 1px,transparent 1.5px);background-size:31px 31px;animation:mb-fall-31 14s linear infinite}
+@keyframes mb-fall-58{to{transform:translateY(58px)}}
+@keyframes mb-fall-31{to{transform:translateY(31px)}}
+
+/* Embers: sparks rising off a warm glow at the bottom. */
+.mb-embers{background:radial-gradient(ellipse at 50% 120%,#7a2f2f 0%,#2b1414 45%,#140a06 80%)}
+.mb-embers>i{left:0;right:0;top:0;bottom:-64px}
+.mb-embers>i:nth-child(1){background:radial-gradient(rgba(255,160,80,.85) 1.2px,transparent 2px);background-size:64px 64px;animation:mb-rise-64 7s linear infinite}
+.mb-embers>i:nth-child(2){bottom:-40px;background:radial-gradient(rgba(255,210,120,.55) 1px,transparent 1.6px);background-size:40px 40px;background-position:17px 9px;animation:mb-rise-40 11s linear infinite}
+.mb-embers>i:nth-child(3){inset:0;background:radial-gradient(ellipse at 50% 110%,rgba(255,122,47,.35),transparent 60%);animation:mb-breathe 4s ease-in-out infinite alternate}
+@keyframes mb-rise-64{to{transform:translateY(-64px)}}
+@keyframes mb-rise-40{to{transform:translateY(-40px)}}
+@keyframes mb-breathe{from{opacity:.6}to{opacity:1}}
+
+/* Scan: a light band sweeps down a dark grid, like an old monitor. */
+.mb-scan{background:#071a2b}
+.mb-scan>i:nth-child(1){inset:0;background:linear-gradient(rgba(53,192,232,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(53,192,232,.16) 1px,transparent 1px);background-size:34px 34px}
+.mb-scan>i:nth-child(2){left:0;right:0;top:-40%;height:40%;background:linear-gradient(180deg,transparent,rgba(53,192,232,.28) 60%,rgba(53,192,232,.5) 98%,transparent);animation:mb-sweep 7s linear infinite}
+.mb-scan>i:nth-child(3){inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 4px)}
+@keyframes mb-sweep{to{transform:translateY(350%)}}
+
+/* Tide: two sets of soft diagonal bands sliding past each other. */
+.mb-tide{background:#0a1a1a}
+.mb-tide>i{top:0;bottom:0;left:-160px;right:0}
+.mb-tide>i:nth-child(1){background:repeating-linear-gradient(115deg,rgba(111,227,196,.14) 0 22px,transparent 22px 80px);animation:mb-slide-80 6s linear infinite}
+.mb-tide>i:nth-child(2){background:repeating-linear-gradient(115deg,transparent 0 50px,rgba(53,192,232,.12) 50px 70px,transparent 70px 120px);animation:mb-slide-120 9s linear infinite reverse}
+@keyframes mb-slide-80{to{transform:translateX(88.3px)}}
+@keyframes mb-slide-120{to{transform:translateX(132.4px)}}
+
+
+/* Cipher: columns of digits raining down in Pentra orange. The columns
+   are generated (see script / MotionBackground.tsx); this is their look. */
+.mb-cipher{background:#0d0704}
+.mb-cipher>b{position:absolute;top:-460px;font-family:"Space Mono",ui-monospace,monospace;font-weight:400;line-height:1.12;color:#ff7a2f;white-space:pre;text-align:center;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,#000 80%);mask-image:linear-gradient(to bottom,transparent,#000 80%);
+  animation:mb-rain var(--d,8s) linear infinite;animation-delay:var(--s,0s);will-change:top}
+.mb-cipher>b>i{font-style:normal;color:#ffe0c2;text-shadow:0 0 10px #ff9354,0 0 2px #fff}
+.mb-cipher>u{position:absolute;inset:0;text-decoration:none;background:radial-gradient(ellipse at 50% 0%,rgba(255,122,47,.12),transparent 60%)}
+@keyframes mb-rain{to{top:100%}}
+
