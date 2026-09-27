@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { findBackground } from "../lib/backgrounds";
 
 /**
@@ -23,14 +23,7 @@ export function MotionBackground({ preset }: { preset: string | null | undefined
 
   const name = bg.key.slice("motion-".length);
 
-  if (name === "cipher") {
-    return (
-      <div className="mb mb-cipher" aria-hidden="true">
-        <u />
-        {cipherColumns()}
-      </div>
-    );
-  }
+  if (name === "cipher") return <Cipher />;
 
   const layers = LAYERS[name] ?? 0;
   if (!layers) return null;
@@ -54,9 +47,49 @@ const LAYERS: Record<string, number> = {
   tide: 2,
 };
 
-const CIPHER_COLUMNS = 40;
+/** Pixels between columns. Fixed, so the rain is as dense on a wide
+ *  monitor as in a small window — spreading a set number of columns
+ *  across the width stretched it. */
+const CIPHER_SPACING = 22;
 
-function cipherColumns() {
+/**
+ * Measures its own box and lays columns across it, one every
+ * CIPHER_SPACING px; a wide window simply gets more of them. The height
+ * goes into --mb-h so the fall animation ends just below the box
+ * (translateY of the box's height), whatever size the box is: a full
+ * page, the picker's preview, or a thumbnail.
+ */
+function Cipher() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () =>
+      setSize({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const count = size.w ? Math.ceil(size.w / CIPHER_SPACING) + 1 : 0;
+
+  return (
+    <div
+      ref={ref}
+      className="mb mb-cipher"
+      aria-hidden="true"
+      style={{ "--mb-h": `${size.h}px` } as CSSProperties}
+    >
+      <u />
+      {count > 0 && cipherColumns(count)}
+    </div>
+  );
+}
+
+function cipherColumns(count: number) {
   // A tiny deterministic generator (LCG). Not for anything that
   // matters — just so the rain looks the same every time.
   let seed = 7;
@@ -66,13 +99,13 @@ function cipherColumns() {
   };
 
   const out = [];
-  for (let i = 0; i < CIPHER_COLUMNS; i++) {
+  for (let i = 0; i < count; i++) {
     const count = 14 + Math.floor(rnd() * 14);
     let body = "";
     for (let j = 0; j < count - 1; j++) body += Math.floor(rnd() * 10) + "\n";
     const head = Math.floor(rnd() * 10);
     const style = {
-      left: `${(i / CIPHER_COLUMNS) * 100}%`,
+      left: i * CIPHER_SPACING,
       fontSize: 12 + Math.floor(rnd() * 5),
       opacity: Number((0.45 + rnd() * 0.55).toFixed(2)),
       "--d": `${(5 + rnd() * 8).toFixed(1)}s`,

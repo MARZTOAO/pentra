@@ -20,6 +20,8 @@ import { GamerTags } from "../components/GamerTags";
 import { BackgroundPicker } from "../components/BackgroundPicker";
 import { AvatarPicker } from "../components/AvatarPicker";
 import { FramePicker } from "../components/FramePicker";
+import { MotionBackground } from "../components/MotionBackground";
+import { bannerStyle } from "../lib/backgrounds";
 import { FriendCode } from "../components/FriendCode";
 import { GameLibrary } from "../components/GameLibrary";
 import { ProfileStats } from "../components/ProfileStats";
@@ -116,13 +118,28 @@ export default function Profile() {
   const isUS = country.trim().toUpperCase() === "USA";
 
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
+    <div className="relative mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
+      {/* Your background, behind this page too — the same fixed layer
+          and scrim as the public profile — so choosing one shows the
+          result right here instead of after a trip to "View as others
+          see it". Every panel on this page has its own surface, so only
+          the heading needs to sit on the art. */}
+      {profile && (
+        <div
+          className="pointer-events-none fixed inset-0 -z-20"
+          style={bannerStyle(profile)}
+        >
+          {hasPlus(profile) && <MotionBackground preset={profile.background} />}
+        </div>
+      )}
+      {profile && <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/45" />}
+
       {/* Stacks on a phone — the heading and a "View as others see it"
           button side by side leaves neither enough room. */}
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="display text-2xl">Your profile</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h1 className="display on-art text-2xl">Your profile</h1>
+          <p className="on-art mt-1 text-sm text-muted">
             This is what other players see. The more you fill in, the better your
             matches.
           </p>
@@ -131,7 +148,7 @@ export default function Profile() {
         {profile?.username && (
           <Link
             to={`/u/${profile.username}`}
-            className="notch-md border border-line px-4 py-2 text-center text-sm font-medium text-muted transition hover:border-accent hover:text-accent sm:shrink-0 sm:text-left"
+            className="notch-md border border-line bg-surface/85 px-4 py-2 text-center text-sm font-medium text-muted backdrop-blur-sm transition hover:border-accent hover:text-accent sm:shrink-0 sm:text-left"
           >
             View as others see it
           </Link>

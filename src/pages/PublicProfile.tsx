@@ -120,68 +120,73 @@ export default function PublicProfile() {
 
       {/* Header.
 
-          Desktop is a single row: avatar, then name and bio, then the
-          action buttons on the right. That is unchanged.
+          Two rows. Row one: avatar, then name, handle, badges, bio and
+          location, using the full width of the column. Row two: the
+          action buttons, on their own line under the text.
 
-          A phone cannot hold that row. A 96px avatar plus Friends,
-          Message and the safety menu leaves the middle column zero
-          pixels wide at 375px — the bio drops to one word per line and
-          the buttons run off the edge. Measured, not guessed.
+          It used to be one row with the buttons on the right. Inside
+          the page's 3xl column, Friends + Message + Commend + the menu
+          took ~360px, which left the middle ~230px: a fifteen-letter
+          username broke onto two lines and the four badges stacked one
+          per line. Buttons underneath cost one row of height and give
+          the name the whole width back.
 
-          So below `sm` it becomes a column, which puts the name, bio and
-          location across the full width and drops the buttons onto their
-          own row underneath. */}
-      <header className="relative mb-8 flex flex-col gap-4 pt-6 sm:flex-row sm:items-end sm:gap-5 sm:pt-20">
-        <Avatar
-          of={profile}
-          size={96}
-          className="shrink-0 border-4 border-bg"
-          frame={frameOf(profile)}
-        />
-
-        <div className="min-w-0 flex-1 sm:pb-1">
-          <h1 className="display on-art break-words text-2xl">
-            {profile.display_name || profile.username}
-          </h1>
-          <p className="on-art mb-3 truncate text-sm text-muted">@{profile.username}</p>
-
-          <RatingBadge
-            rating={profile.rating}
-            commendations={profile.commendation_count}
-            ogNumber={profile.og_number}
-            pro={hasPlus(profile)}
-            isSelf={isSelf}
-            className="mb-3"
+          Below `sm` the avatar goes above the text instead of beside
+          it, for the same reason the buttons went underneath. */}
+      <header className="relative mb-8 pt-6 sm:pt-20">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+          <Avatar
+            of={profile}
+            size={96}
+            className="shrink-0 border-4 border-bg"
+            frame={frameOf(profile)}
           />
 
-          {profile.bio && (
-            <p className="on-art mb-3 whitespace-pre-line break-words text-sm leading-relaxed">
-              {profile.bio}
-            </p>
-          )}
+          <div className="min-w-0 flex-1 sm:pt-1">
+            <h1 className="display on-art break-words text-2xl leading-tight">
+              {profile.display_name || profile.username}
+            </h1>
+            <p className="on-art mb-3 truncate text-sm text-muted">@{profile.username}</p>
 
-          {(formatLocation(profile) || profile.region) && (
-            <p className="on-art text-xs text-muted">
-              {[formatLocation(profile), profile.region]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          )}
+            <RatingBadge
+              rating={profile.rating}
+              commendations={profile.commendation_count}
+              ogNumber={profile.og_number}
+              pro={hasPlus(profile)}
+              isSelf={isSelf}
+              className="mb-3"
+            />
 
-          {/* A count that goes somewhere. A number you can't act on is
-              decoration; this one opens the list, ranked by how well
-              each of them matches you. */}
-          <Link
-            to={`/u/${profile.username}/friends`}
-            className="on-art mt-2 inline-flex items-baseline gap-1.5 text-sm text-muted transition hover:text-accent"
-          >
-            <span className="numeric font-bold text-ink">{friendCount}</span>
-            {friendCount === 1 ? "friend" : "friends"}
-          </Link>
+            {profile.bio && (
+              <p className="on-art mb-2 whitespace-pre-line break-words text-sm leading-relaxed">
+                {profile.bio}
+              </p>
+            )}
+
+            {/* Location, region and the friend count on one line. The
+                count goes somewhere: it opens the list, ranked by how
+                well each of them matches you. */}
+            <p className="on-art flex flex-wrap items-baseline gap-x-2 text-xs text-muted">
+              {(formatLocation(profile) || profile.region) && (
+                <span>
+                  {[formatLocation(profile), profile.region]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              )}
+              <Link
+                to={`/u/${profile.username}/friends`}
+                className="inline-flex items-baseline gap-1 transition hover:text-accent"
+              >
+                <span className="numeric text-sm font-bold text-ink">{friendCount}</span>
+                {friendCount === 1 ? "friend" : "friends"}
+              </Link>
+            </p>
+          </div>
         </div>
 
         {!isSelf && (
-          <div className="flex flex-wrap gap-2 sm:shrink-0 sm:flex-nowrap sm:items-start sm:pb-1">
+          <div className="mt-4 flex flex-wrap items-start gap-2 sm:pl-[116px]">
             <FriendButton
               targetId={profile.id}
               // Becoming friends unlocks their gamer tags, so refetch.

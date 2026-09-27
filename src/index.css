@@ -264,9 +264,9 @@ textarea {
 /* Drift: three soft colour clouds wandering over a deep blue. */
 .mb-drift{background:#0b1220}
 .mb-drift>i{inset:-40%;filter:blur(2px)}
-.mb-drift>i:nth-child(1){background:radial-gradient(closest-side at 35% 40%,rgba(109,94,252,.55),transparent 70%);animation:mb-drift-a 26s ease-in-out infinite alternate}
-.mb-drift>i:nth-child(2){background:radial-gradient(closest-side at 65% 55%,rgba(61,220,151,.45),transparent 70%);animation:mb-drift-b 31s ease-in-out infinite alternate}
-.mb-drift>i:nth-child(3){background:radial-gradient(closest-side at 50% 75%,rgba(224,101,122,.45),transparent 70%);animation:mb-drift-c 37s ease-in-out infinite alternate}
+.mb-drift>i:nth-child(1){background:radial-gradient(circle closest-side at 35% 40%,rgba(109,94,252,.55),transparent 70%);animation:mb-drift-a 26s ease-in-out infinite alternate}
+.mb-drift>i:nth-child(2){background:radial-gradient(circle closest-side at 65% 55%,rgba(61,220,151,.45),transparent 70%);animation:mb-drift-b 31s ease-in-out infinite alternate}
+.mb-drift>i:nth-child(3){background:radial-gradient(circle closest-side at 50% 75%,rgba(224,101,122,.45),transparent 70%);animation:mb-drift-c 37s ease-in-out infinite alternate}
 @keyframes mb-drift-a{from{transform:translate(-8%,-4%) scale(1)}to{transform:translate(8%,6%) scale(1.15)}}
 @keyframes mb-drift-b{from{transform:translate(7%,5%) scale(1.1)}to{transform:translate(-7%,-6%) scale(.95)}}
 @keyframes mb-drift-c{from{transform:translate(3%,8%) scale(1)}to{transform:translate(-5%,-8%) scale(1.2)}}
@@ -314,10 +314,10 @@ textarea {
 /* Cipher: columns of digits raining down in Pentra orange. The columns
    are generated (see script / MotionBackground.tsx); this is their look. */
 .mb-cipher{background:#0d0704}
-.mb-cipher>b{position:absolute;top:-460px;font-family:"Space Mono",ui-monospace,monospace;font-weight:400;line-height:1.12;color:#ff7a2f;white-space:pre;text-align:center;
+.mb-cipher>b{position:absolute;top:0;font-family:"Space Mono",ui-monospace,monospace;font-weight:400;line-height:1.12;color:#ff7a2f;white-space:pre;text-align:center;
   -webkit-mask-image:linear-gradient(to bottom,transparent,#000 80%);mask-image:linear-gradient(to bottom,transparent,#000 80%);
-  animation:mb-rain var(--d,8s) linear infinite;animation-delay:var(--s,0s);will-change:top}
+  transform:translateY(-100%);animation:mb-rain var(--d,8s) linear infinite;animation-delay:var(--s,0s);will-change:transform}
 .mb-cipher>b>i{font-style:normal;color:#ffe0c2;text-shadow:0 0 10px #ff9354,0 0 2px #fff}
 .mb-cipher>u{position:absolute;inset:0;text-decoration:none;background:radial-gradient(ellipse at 50% 0%,rgba(255,122,47,.12),transparent 60%)}
-@keyframes mb-rain{to{top:100%}}
+@keyframes mb-rain{from{transform:translateY(-100%)}to{transform:translateY(var(--mb-h,100vh))}}
 
