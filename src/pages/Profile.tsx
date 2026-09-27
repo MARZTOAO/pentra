@@ -19,6 +19,7 @@ import { TopFive } from "../components/TopFive";
 import { GamerTags } from "../components/GamerTags";
 import { BackgroundPicker } from "../components/BackgroundPicker";
 import { AvatarPicker } from "../components/AvatarPicker";
+import { FramePicker } from "../components/FramePicker";
 import { FriendCode } from "../components/FriendCode";
 import { GameLibrary } from "../components/GameLibrary";
 import { ProfileStats } from "../components/ProfileStats";
@@ -165,6 +166,11 @@ export default function Profile() {
 
       {profile && (
         <AvatarPicker profile={profile} onChange={setProfile} />
+      )}
+
+      {/* Pro only; renders nothing otherwise. */}
+      {profile && (
+        <FramePicker profile={profile} onChange={setProfile} />
       )}
 
       {profile && (

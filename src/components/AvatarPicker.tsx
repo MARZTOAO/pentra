@@ -9,6 +9,7 @@ import {
   makePreset,
 } from "../lib/avatars";
 import { Avatar } from "./Avatar";
+import { frameOf } from "../lib/frames";
 import { Anchored } from "./Anchored";
 import { Alert } from "./ui";
 import { PresencePicker } from "./PresencePicker";
@@ -110,7 +111,7 @@ export function AvatarPicker({
   return (
     <section className="mb-8 notch border border-line bg-surface p-5">
       <div className="flex items-center gap-5">
-        <Avatar of={profile} size={80} />
+        <Avatar of={profile} size={80} frame={frameOf(profile)} />
 
         <div className="flex-1">
           {/* Name and status on one line — the status is about you, so

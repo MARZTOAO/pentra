@@ -58,11 +58,17 @@ export type Profile = {
   /** 'free' or 'plus'. Read-only from the app - only billing can change it. */
   tier: "free" | "plus";
   tier_expires_at: string | null;
+  /**
+   * Key of an avatar frame (lib/frames.ts), a Pentra Pro perk. The
+   * database refuses it without Pro and clears it when Pro lapses; the
+   * app only draws it while Pro - see frameOf(). supabase/78.
+   */
+  avatar_frame: string | null;
 };
 
 /** What anyone may see when they open a profile. */
 const PUBLIC_COLUMNS =
-  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, presence, last_seen_at, created_at, tier, tier_expires_at, rating, commendation_count, og_number";
+  "id, username, display_name, avatar_url, avatar_preset, bio, region, location_city, location_state, location_country, timezone, platforms, primary_platform, background, banner_url, app_theme, message_privacy, availability, presence, last_seen_at, created_at, tier, tier_expires_at, rating, commendation_count, og_number, avatar_frame";
 
 /** Your own row, which also carries your friend code. */
 const COLUMNS = `${PUBLIC_COLUMNS}, friend_code`;
@@ -98,6 +104,7 @@ export type ProfileUpdate = Partial<
     | "availability"
     | "avatar_url"
     | "avatar_preset"
+    | "avatar_frame"
   >
 >;
 

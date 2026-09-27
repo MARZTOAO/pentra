@@ -18,6 +18,7 @@ import { CommendButton } from "../components/CommendButton";
 import { SafetyMenu } from "../components/SafetyMenu";
 import { FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
+import { frameOf } from "../lib/frames";
 
 export default function PublicProfile() {
   const { username } = useParams<{ username: string }>();
@@ -127,7 +128,12 @@ export default function PublicProfile() {
           location across the full width and drops the buttons onto their
           own row underneath. */}
       <header className="relative mb-8 flex flex-col gap-4 pt-6 sm:flex-row sm:items-end sm:gap-5 sm:pt-20">
-        <Avatar of={profile} size={96} className="shrink-0 border-4 border-bg" />
+        <Avatar
+          of={profile}
+          size={96}
+          className="shrink-0 border-4 border-bg"
+          frame={frameOf(profile)}
+        />
 
         <div className="min-w-0 flex-1 sm:pb-1">
           <h1 className="display on-art break-words text-2xl">
