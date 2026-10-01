@@ -13,7 +13,7 @@
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
 --
---  Covers 02 through 85. schema.sql (the baseline) isn't listed: if
+--  Covers 02 through 86. schema.sql (the baseline) isn't listed: if
 --  it hadn't run, nothing else would work either. When a new
 --  migration is added, add a line for it here.
 -- ============================================================
@@ -638,7 +638,11 @@ checks(migration, feature, present) as (
     ('85_feed_ads',
      'Ads in the feed (DevPanel -> Ads)',
      to_regclass('public.ads') is not null
-     and exists (select 1 from fn where fn.name = 'get_live_ads'))
+     and exists (select 1 from fn where fn.name = 'get_live_ads')),
+
+    ('86_ad_spacing',
+     'Posts between ads, set in DevPanel -> Ads',
+     exists (select 1 from fn where fn.name = 'ad_posts_between'))
 )
 select
   migration,

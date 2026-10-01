@@ -5,10 +5,10 @@ import type { Post } from "./feed";
 /**
  * Ads in the feed — supabase/85_feed_ads.sql.
  *
- * The database says which ads are live; this file decides where they
- * go: every AD_EVERY-th item in the feed is an ad (four posts, an ad,
- * four posts, an ad …), and the ad slots take turns through the live
- * ads in order, so with three ads running each gets a third of the
+ * The database says which ads are live and how many posts go between
+ * them (DevPanel → Ads, supabase/86 — 4 unless changed: four posts, an
+ * ad, four posts, an ad …). This file places them: the ad slots take
+ * turns through the live ads in order, so with three ads running each gets a third of the
  * slots. The starting ad is picked at random each time the feed opens,
  * so the first slot isn't always the same ad — over many visits every
  * ad is shown equally often.
@@ -16,8 +16,11 @@ import type { Post } from "./feed";
  * No live ads, no ad slots: the feed is just posts.
  */
 
-/** An ad is every 5th item in the feed. */
-export const AD_EVERY = 5;
+/** Posts between ads when the setting can't be read (86 not run yet). */
+export const DEFAULT_POSTS_BETWEEN = 4;
+
+/** The most the ads manager allows; the database enforces the same. */
+export const MAX_POSTS_BETWEEN = 50;
 
 export type Ad = {
   id: number;
@@ -46,25 +49,39 @@ export async function getLiveAds(): Promise<Ad[]> {
   return data as Ad[];
 }
 
+/** How many posts go between ads, as set in the ads manager. */
+export async function getPostsBetweenAds(): Promise<number> {
+  const { data, error } = await supabase.rpc("ad_posts_between");
+  if (error || typeof data !== "number" || data < 1) return DEFAULT_POSTS_BETWEEN;
+  return data;
+}
+
 /** Where the rotation starts for this visit to the feed. */
 export function adRotationStart(): number {
   return Math.floor(Math.random() * 1_000_000);
 }
 
 /**
- * The feed with ads slotted in. Slot k gets ads[(start + k) % n], so
- * consecutive slots step through every live ad before repeating.
+ * The feed with ads slotted in: `between` posts, an ad, `between`
+ * posts, an ad … Slot k gets ads[(start + k) % n], so consecutive
+ * slots step through every live ad before repeating.
  */
-export function withAds(posts: Post[], ads: Ad[], start: number): FeedItem[] {
+export function withAds(
+  posts: Post[],
+  ads: Ad[],
+  start: number,
+  between: number = DEFAULT_POSTS_BETWEEN,
+): FeedItem[] {
+  const gap = Math.max(1, Math.floor(between));
   const items: FeedItem[] = [];
   let slot = 0;
-  for (const post of posts) {
+  posts.forEach((post, i) => {
     items.push({ kind: "post", post });
-    if (ads.length > 0 && (items.length + 1) % AD_EVERY === 0) {
+    if (ads.length > 0 && (i + 1) % gap === 0) {
       items.push({ kind: "ad", ad: ads[(start + slot) % ads.length], slot });
       slot += 1;
     }
-  }
+  });
   return items;
 }
 
@@ -95,6 +112,13 @@ export type DevAd = Ad & {
   views_today: number;
   clicks_today: number;
 };
+
+/** @returns null when saved, or a sentence saying what's wrong. */
+export async function setPostsBetweenAds(posts: number): Promise<string | null> {
+  const { data, error } = await supabase.rpc("dev_set_ad_spacing", { posts });
+  if (error) return error.message;
+  return data === "saved" ? null : (data as string) || "Couldn't save.";
+}
 
 export async function listAds(): Promise<DevAd[] | null> {
   const { data, error } = await supabase.rpc("dev_ads");

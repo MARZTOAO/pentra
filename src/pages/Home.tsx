@@ -21,7 +21,14 @@ import { GameSearchModal } from "../components/GameSearchModal";
 import { SessionGuests } from "../components/SessionGuests";
 import { PostCard } from "../components/PostCard";
 import { AdCard } from "../components/AdCard";
-import { getLiveAds, withAds, adRotationStart, type Ad } from "../lib/ads";
+import {
+  getLiveAds,
+  getPostsBetweenAds,
+  withAds,
+  adRotationStart,
+  DEFAULT_POSTS_BETWEEN,
+  type Ad,
+} from "../lib/ads";
 import { getCommentCounts } from "../lib/comments";
 import { MentionBox } from "../components/MentionBox";
 import {
@@ -50,10 +57,12 @@ export default function Home() {
   const [games, setGames] = useState<FeedGame[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  // Ads (85): every 5th item in the feed when any are running. Which ad
-  // starts the rotation is picked once per visit, so a refresh doesn't
-  // reshuffle the ads under someone's thumb. See lib/ads.ts.
+  // Ads (85, 86): an ad after every `adGap` posts when any are running
+  // — the gap is set in DevPanel → Ads. Which ad starts the rotation is
+  // picked once per visit, so a refresh doesn't reshuffle the ads under
+  // someone's thumb. See lib/ads.ts.
   const [ads, setAds] = useState<Ad[]>([]);
+  const [adGap, setAdGap] = useState(DEFAULT_POSTS_BETWEEN);
   const [adStart] = useState(adRotationStart);
 
   /**
@@ -67,12 +76,14 @@ export default function Home() {
   const load = useCallback(
     async (showSpinner = false) => {
       if (showSpinner) setLoading(true);
-      const [rows, liveAds] = await Promise.all([
+      const [rows, liveAds, gap] = await Promise.all([
         getFeed(scope, gameId, sessionsOnly),
         getLiveAds(),
+        getPostsBetweenAds(),
       ]);
       setPosts(rows);
       setAds(liveAds);
+      setAdGap(gap);
       setCommentCounts(await getCommentCounts(rows.map((p) => p.id)));
       setLoading(false);
     },
@@ -211,7 +222,7 @@ export default function Home() {
         <Empty scope={scope} gameName={activeGame?.name ?? null} />
       ) : (
         <div className="space-y-3">
-          {withAds(posts, ads, adStart).map((item) =>
+          {withAds(posts, ads, adStart, adGap).map((item) =>
             item.kind === "ad" ? (
               <AdCard key={`ad-${item.slot}-${item.ad.id}`} ad={item.ad} />
             ) : (

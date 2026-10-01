@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  AD_EVERY,
   AD_UNITS,
+  DEFAULT_POSTS_BETWEEN,
+  MAX_POSTS_BETWEEN,
+  getPostsBetweenAds,
+  setPostsBetweenAds,
   adMediaUrl,
   createAd,
   deleteAd,
@@ -17,13 +20,20 @@ import { MediaError } from "../lib/media";
 import { openExternal } from "../lib/platform";
 
 /**
- * DevPanel → Ads. Make ads, watch their numbers, stop or delete them.
- * Developers only: the database refuses every call here to anyone else
- * (supabase/85_feed_ads.sql).
+ * DevPanel → Ads. Make ads, set how far apart they are in the feed,
+ * watch their numbers, stop or delete them. Developers only: the
+ * database refuses every call here to anyone else (supabase/85, 86).
  */
 export function DevAds() {
   const [ads, setAds] = useState<DevAd[] | null>(null);
   const [loading, setLoading] = useState(true);
+  // Posts between ads, as saved (86). Shown in the spacing box and in
+  // the "Running now" line.
+  const [gap, setGap] = useState(DEFAULT_POSTS_BETWEEN);
+
+  useEffect(() => {
+    getPostsBetweenAds().then(setGap);
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -40,6 +50,8 @@ export function DevAds() {
 
   return (
     <div className="space-y-6">
+      <Spacing saved={gap} onSaved={setGap} liveCount={live.length} />
+
       <NewAdForm onCreated={load} />
 
       <section>
@@ -56,8 +68,8 @@ export function DevAds() {
           {live.length === 0
             ? "No ads running, so the feed shows none."
             : live.length === 1
-              ? `Every ${ordinal(AD_EVERY)} item in the feed is this ad.`
-              : `Every ${ordinal(AD_EVERY)} item in the feed is an ad; these ${live.length} take turns, each getting an equal share.`}
+              ? `After every ${postsLabel(gap)} in the feed, this ad.`
+              : `After every ${postsLabel(gap)} in the feed, an ad; these ${live.length} take turns, each getting an equal share.`}
         </p>
 
         {loading && !ads ? (
@@ -93,6 +105,124 @@ export function DevAds() {
       </p>
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ */
+
+/** The feed loads up to this many posts at once (lib/feed.ts → get_feed). */
+const FEED_PAGE = 50;
+
+/**
+ * How many posts go between ads. One number for the whole app; every
+ * feed picks it up on its next refresh. Fewer advertisers → a bigger
+ * number, so the same ad isn't in front of people every few posts.
+ */
+function Spacing({
+  saved,
+  onSaved,
+  liveCount,
+}: {
+  saved: number;
+  onSaved: (n: number) => void;
+  liveCount: number;
+}) {
+  const [value, setValue] = useState(String(saved));
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Follow the saved number when it arrives from the database.
+  useEffect(() => setValue(String(saved)), [saved]);
+
+  const n = Number(value);
+  const valid = Number.isInteger(n) && n >= 1 && n <= MAX_POSTS_BETWEEN;
+  const changed = valid && n !== saved;
+
+  // What that means for someone scrolling a full feed.
+  const slots = valid ? Math.floor(FEED_PAGE / n) : 0;
+  const perAd = liveCount > 0 ? Math.ceil(slots / liveCount) : 0;
+
+  async function save() {
+    if (!changed) return;
+    setBusy(true);
+    setNote(null);
+    const error = await setPostsBetweenAds(n);
+    setBusy(false);
+    if (error) {
+      setNote({ ok: false, text: error });
+      return;
+    }
+    onSaved(n);
+    setNote({ ok: true, text: "Saved. Feeds pick it up on their next refresh." });
+  }
+
+  return (
+    <section className="notch-md border border-line p-4">
+      <h3 className="label-wide mb-1 text-accent">Feed spacing</h3>
+      <p className="mb-3 text-[11px] text-muted">
+        How many posts people scroll past between ads.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="number"
+          min={1}
+          max={MAX_POSTS_BETWEEN}
+          step={1}
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setNote(null);
+          }}
+          aria-label="Posts between ads"
+          className="numeric w-20 notch-sm border border-line bg-surface-2 px-3 py-2 text-sm text-ink outline-none transition focus:border-accent"
+        />
+        <span className="text-sm text-muted">posts between ads</span>
+
+        <div className="flex gap-1">
+          {[4, 9, 14, 24].map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => {
+                setValue(String(p));
+                setNote(null);
+              }}
+              className={
+                "numeric notch-sm px-2 py-1 text-[11px] font-semibold transition " +
+                (n === p ? "bg-accent/15 text-accent" : "text-muted hover:text-ink")
+              }
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={save}
+          disabled={!changed || busy}
+          className="ml-auto notch-md bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+        >
+          {busy ? "Saving…" : "Save"}
+        </button>
+      </div>
+
+      <p className="mt-2 text-[11px] text-muted">
+        {!valid
+          ? `Pick a number from 1 to ${MAX_POSTS_BETWEEN}.`
+          : liveCount === 0
+            ? `${postsLabel(n)}, then an ad — up to ${slots} ${slots === 1 ? "ad" : "ads"} in a full feed of ${FEED_PAGE} posts.`
+            : `${postsLabel(n)}, then an ad — up to ${slots} ${slots === 1 ? "ad" : "ads"} in a full feed of ${FEED_PAGE} posts, so with ${liveCount} running each one shows about ${perAd} ${perAd === 1 ? "time" : "times"}.`}
+      </p>
+      {note && (
+        <p className={"mt-1 text-[11px] " + (note.ok ? "text-ok" : "text-danger")}>{note.text}</p>
+      )}
+    </section>
+  );
+}
+
+function postsLabel(n: number): string {
+  return n === 1 ? "1 post" : `${n} posts`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -404,6 +534,3 @@ function timeLine(ad: DevAd): string {
   return `Ends ${date} · ${left}`;
 }
 
-function ordinal(n: number): string {
-  return n === 1 ? "1st" : n === 2 ? "2nd" : n === 3 ? "3rd" : `${n}th`;
-}
