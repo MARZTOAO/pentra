@@ -13,7 +13,7 @@
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
 --
---  Covers 02 through 81. schema.sql (the baseline) isn't listed: if
+--  Covers 02 through 82. schema.sql (the baseline) isn't listed: if
 --  it hadn't run, nothing else would work either. When a new
 --  migration is added, add a line for it here.
 -- ============================================================
@@ -619,7 +619,12 @@ checks(migration, feature, present) as (
 
     ('81_birth_date_one_change',
      'Correct your date of birth once in Settings',
-     exists (select 1 from fn where fn.name = 'change_birth_date'))
+     exists (select 1 from fn where fn.name = 'change_birth_date')),
+
+    ('82_free_session_limits',
+     'Free accounts: host 1 / join 3 sessions (behind a flag)',
+     exists (select 1 from fn where fn.name = 'my_session_limits')
+     and exists (select 1 from pg_trigger where tgname = 'session_players_enforce_join_limit'))
 )
 select
   migration,

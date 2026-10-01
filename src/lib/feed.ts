@@ -157,7 +157,10 @@ export async function createPost(
   return { error };
 }
 
-/** Returns what happened: joined, full, already, past, or an error. */
+/**
+ * Returns what happened: joined, full, already, past, unavailable,
+ * limit (a free account at its join limit, supabase/82), or an error.
+ */
 export async function joinSession(postId: number) {
   return supabase.rpc("join_session", { post: postId });
 }

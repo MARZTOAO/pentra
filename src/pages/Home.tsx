@@ -13,6 +13,7 @@ import {
   type HeadsetRule,
 } from "../lib/feed";
 import { PLATFORMS } from "../lib/constants";
+import { getSessionLimits, type SessionLimits } from "../lib/limits";
 import { releaseLabel, isUnreleased, type Game } from "../lib/topFive";
 import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
@@ -243,6 +244,24 @@ function Composer({
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // Free accounts' hosting limit (supabase/82). Fetched when the
+  // session toggle is switched on, so the limit is said before anyone
+  // types a paragraph — not after Post.
+  const [limits, setLimits] = useState<SessionLimits | null>(null);
+
+  useEffect(() => {
+    if (!isSession) return;
+    let active = true;
+    getSessionLimits().then((l) => {
+      if (active) setLimits(l);
+    });
+    return () => {
+      active = false;
+    };
+  }, [isSession]);
+
+  const atHostLimit =
+    isSession && !!limits?.limited && limits.hosting >= limits.hostLimit;
 
   const attach = useAttachments(media, setMedia);
 
@@ -250,7 +269,7 @@ function Composer({
   const canPost = body.trim().length > 0 || media.length > 0;
 
   async function submit() {
-    if (!canPost || busy) return;
+    if (!canPost || busy || atHostLimit) return;
 
     setBusy(true);
     setError(null);
@@ -341,6 +360,14 @@ function Composer({
 
           {/* Session details. Hidden until asked for, so an ordinary
               post stays a single box. */}
+          {atHostLimit && limits && (
+            <p className="mt-2 notch-md border border-accent/40 bg-accent-dim px-3 py-2 text-xs text-accent">
+              Free accounts can host {limits.hostLimit} upcoming session at a
+              time, and you're already hosting one. Pentra Pro has no limit —
+              or post this once your current session has started.
+            </p>
+          )}
+
           {isSession && (
             <div className="mt-2 flex flex-wrap items-center gap-2 notch-md border border-accent/40 bg-accent/5 p-2.5">
               <label className="flex items-center gap-2 text-xs text-muted">
@@ -502,7 +529,7 @@ function Composer({
 
             <button
               onClick={submit}
-              disabled={!canPost || busy}
+              disabled={!canPost || busy || atHostLimit}
               className="ml-auto shrink-0 whitespace-nowrap notch-md bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
             >
               {uploading > 0

@@ -17,6 +17,7 @@ import {
   type SessionInvite,
 } from "../lib/invites";
 import { useLiveRows } from "../lib/live";
+import { joinLimitMessage } from "../lib/limits";
 import { useAuth } from "../lib/AuthContext";
 import { Avatar } from "./Avatar";
 import { CommendPlayers } from "./CommendPlayers";
@@ -124,6 +125,9 @@ export function SessionCard({
       case "unavailable":
         setNote("That player isn't available.");
         break;
+      case "limit":
+        setNote(joinLimitMessage());
+        break;
       case "missing":
       case "not_session":
         setNote("That session has gone.");
@@ -164,6 +168,11 @@ export function SessionCard({
         break;
       case "no_invite":
         setNote("That invite has been taken back.");
+        break;
+      case "limit":
+        // The invite stays open, so leaving another session and coming
+        // back to Accept works.
+        setNote(joinLimitMessage() + " Your invite stays open.");
         break;
       case "missing":
       case "not_session":

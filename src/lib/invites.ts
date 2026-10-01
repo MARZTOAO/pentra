@@ -34,7 +34,9 @@ export type AcceptResult =
   | "no_invite"
   | "missing"
   | "not_session"
-  | "signed_out";
+  | "signed_out"
+  /** A free account at its join limit (82). The invite is kept. */
+  | "limit";
 
 /**
  * Pending invites for a set of posts, batched the way comment counts
