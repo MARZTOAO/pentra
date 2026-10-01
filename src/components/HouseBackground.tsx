@@ -19,7 +19,7 @@ import { MotionBackground } from "./MotionBackground";
 export const HOUSE_BACKGROUND = "motion-cipher";
 
 /** Screens that get it. `/messages` covers `/messages/:id` too. */
-const PAGES = ["/home", "/sessions", "/friends", "/messages", "/settings"];
+const PAGES = ["/home", "/discover", "/sessions", "/friends", "/messages", "/settings"];
 
 export function usesHouseBackground(path: string): boolean {
   return PAGES.some((p) => path === p || path.startsWith(p + "/"));

@@ -112,8 +112,8 @@ export default function Discover() {
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-8 py-6 sm:py-10">
       <header className="mb-6">
-        <h1 className="display text-2xl">Find players</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="display on-art text-2xl">Find players</h1>
+        <p className="on-art mt-1 text-sm text-muted">
           Ranked by how much you have in common, best match first. Every
           result says why.
         </p>
@@ -160,7 +160,7 @@ export default function Discover() {
               setRegion(null);
               setPage(0);
             }}
-            className="notch-md px-3 py-2 text-sm text-muted transition hover:text-ink"
+            className="notch-md on-art px-3 py-2 text-sm text-muted transition hover:text-ink"
           >
             Clear
           </button>
@@ -175,7 +175,7 @@ export default function Discover() {
         <EmptyState hasFilters={Boolean(gameId || platform || region)} />
       ) : (
         <>
-          <p className="mb-3 text-xs text-muted">
+          <p className="on-art mb-3 text-xs text-muted">
             <span className="numeric">
               {page * PAGE_SIZE + 1}–{page * PAGE_SIZE + matches.length}
             </span>{" "}
@@ -196,7 +196,7 @@ export default function Discover() {
       )}
 
       {myTopFive.length === 0 && !loading && (
-        <div className="mt-6 notch-md border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent">
+        <div className="mt-6 notch-md border border-accent/40 bg-surface bg-[linear-gradient(rgb(255_122_47/0.1),rgb(255_122_47/0.1))] px-4 py-3 text-sm text-accent">
           You haven't picked a Top 5 yet, so matching has almost nothing to go
           on.{" "}
           <Link to="/me" className="font-medium underline underline-offset-2">
@@ -243,7 +243,7 @@ function Pager({
         type="button"
         onClick={() => onChange(page - 1)}
         disabled={page === 0}
-        className={`${base} border border-line text-muted hover:text-ink`}
+        className={`${base} border border-line bg-surface/85 text-muted hover:text-ink`}
       >
         Previous
       </button>
@@ -253,7 +253,7 @@ function Pager({
           {/* A gap in the run gets an ellipsis, so 1 … 7 8 9 … 20 reads
               as skipping rather than as missing pages. */}
           {i > 0 && p - numbers[i - 1] > 1 && (
-            <span className="px-1 text-sm text-muted" aria-hidden="true">
+            <span className="on-art px-1 text-sm text-muted" aria-hidden="true">
               …
             </span>
           )}
@@ -265,7 +265,7 @@ function Pager({
               `${base} numeric ` +
               (p === page
                 ? "bg-accent font-bold text-onaccent"
-                : "border border-line text-muted hover:text-ink")
+                : "border border-line bg-surface/85 text-muted hover:text-ink")
             }
           >
             {p + 1}
@@ -277,7 +277,7 @@ function Pager({
         type="button"
         onClick={() => onChange(page + 1)}
         disabled={page >= pageCount - 1}
-        className={`${base} border border-line text-muted hover:text-ink`}
+        className={`${base} border border-line bg-surface/85 text-muted hover:text-ink`}
       >
         Next
       </button>
@@ -287,7 +287,7 @@ function Pager({
 
 function EmptyState({ hasFilters }: { hasFilters: boolean }) {
   return (
-    <div className="notch border border-dashed border-line p-12 text-center">
+    <div className="notch border border-dashed border-line bg-surface/85 p-12 text-center backdrop-blur-sm">
       <h2 className="mb-2 font-semibold">
         {hasFilters ? "Nobody matches those filters" : "Nobody here yet"}
       </h2>

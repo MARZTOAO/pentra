@@ -222,8 +222,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
 
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-        {/* Cipher behind Home, Sessions, Friends, Messages and
-            Settings. Here rather than in each page: see the component. */}
+        {/* Cipher behind the main screens (the list is in
+            HouseBackground). Here rather than in each page: see the
+            component. */}
         {usesHouseBackground(location.pathname) && <HouseBackground />}
 
         {/* Draws nothing in the desktop app, nothing without a build
