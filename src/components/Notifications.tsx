@@ -10,7 +10,12 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/AuthContext";
-import { conversationName, getConversations, type Message } from "../lib/chat";
+import {
+  conversationName,
+  getConversations,
+  unreadTotal,
+  type Message,
+} from "../lib/chat";
 import { Avatar } from "./Avatar";
 import { play } from "../lib/sound";
 import { notify, reportUnread, MAX_TOASTS } from "../lib/desktop";
@@ -94,7 +99,7 @@ export function Notifications({ children }: { children: ReactNode }) {
       return;
     }
     const rows = await getConversations();
-    setUnread(rows.reduce((total, row) => total + Number(row.unread ?? 0), 0));
+    setUnread(unreadTotal(rows));
   }, [user]);
 
   const refreshRef = useRef(refresh);
@@ -128,7 +133,7 @@ export function Notifications({ children }: { children: ReactNode }) {
     if (!user) return;
 
     const rows = await getConversations();
-    setUnread(rows.reduce((total, row) => total + Number(row.unread ?? 0), 0));
+    setUnread(unreadTotal(rows));
 
     // The first pass records where things stand and announces none of
     // it. Without this, opening the app after a weekend fires a toast
@@ -144,6 +149,7 @@ export function Notifications({ children }: { children: ReactNode }) {
     const missed = rows.filter(
       (row) =>
         Number(row.unread ?? 0) > 0 &&
+        !row.archived &&
         !row.last_from_me &&
         row.conversation_id !== openIdRef.current &&
         stamp(row.last_message_at) >

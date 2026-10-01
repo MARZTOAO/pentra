@@ -24,7 +24,29 @@ export type Conversation = {
   /** Session chats only: the game's name. Computed, so it follows the post. */
   title: string | null;
   member_count: number;
+  /**
+   * Session chats only: true from 24 hours after the session's start.
+   * Archived chats live in their own tab and are read-only — the
+   * database refuses new messages into them (supabase/80).
+   */
+  archived: boolean;
 };
+
+/** How long after a session starts its chat is archived. Mirrors 80. */
+export const SESSION_CHAT_ARCHIVE_HOURS = 24;
+
+/**
+ * Total unread for the sidebar badge. Archived chats are left out:
+ * they live in a tab you only visit on purpose, so a leftover unread
+ * count in one shouldn't sit on the badge forever. The Archived tab
+ * shows its own count.
+ */
+export function unreadTotal(rows: Conversation[]): number {
+  return rows.reduce(
+    (total, row) => total + (row.archived ? 0 : Number(row.unread ?? 0)),
+    0,
+  );
+}
 
 export type ConversationMember = {
   id: string;

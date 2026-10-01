@@ -13,7 +13,7 @@
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
 --
---  Covers 02 through 79. schema.sql (the baseline) isn't listed: if
+--  Covers 02 through 80. schema.sql (the baseline) isn't listed: if
 --  it hadn't run, nothing else would work either. When a new
 --  migration is added, add a line for it here.
 -- ============================================================
@@ -611,7 +611,11 @@ checks(migration, feature, present) as (
 
     ('79_moving_backgrounds',
      'Moving backgrounds for Pentra Pro members',
-     exists (select 1 from fn where fn.name = 'guard_pro_perks' and fn.def like '%motion-%'))
+     exists (select 1 from fn where fn.name = 'guard_pro_perks' and fn.def like '%motion-%')),
+
+    ('80_archive_session_chats',
+     'Session chats archive 24 hours after the session',
+     exists (select 1 from fn where fn.name = 'session_chat_archived'))
 )
 select
   migration,

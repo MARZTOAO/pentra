@@ -12,6 +12,7 @@ import {
   messageTime,
   deleteMessage,
   leaveConversation,
+  SESSION_CHAT_ARCHIVE_HOURS,
   type Conversation,
   type ConversationMember,
   type Message,
@@ -52,6 +53,20 @@ export default function Messages() {
   const activeId = id ? Number(id) : null;
   const active = conversations.find((c) => c.conversation_id === activeId);
 
+  // Two tabs: live chats, and session chats that have been archived
+  // (24 hours after the session, read-only — supabase/80).
+  const [tab, setTab] = useState<"chats" | "archived">("chats");
+
+  // Opening an archived chat from anywhere (a link, a notification)
+  // shows the tab it lives in, so the list and the thread agree.
+  useEffect(() => {
+    if (active) setTab(active.archived ? "archived" : "chats");
+  }, [active?.conversation_id, active?.archived]);
+
+  const archived = conversations.filter((c) => c.archived);
+  const shown = conversations.filter((c) => c.archived === (tab === "archived"));
+  const archivedUnread = archived.reduce((n, c) => n + Number(c.unread ?? 0), 0);
+
   const load = useCallback(async () => {
     const list = await getConversations();
     setConversations(list);
@@ -81,20 +96,70 @@ export default function Messages() {
           (activeId ? "hidden w-full" : "block w-full")
         }
       >
-        <div className="px-4 py-4">
+        <div className="px-4 pb-2 pt-4">
           <h1 className="display text-lg">Messages</h1>
         </div>
 
-        {conversations.length === 0 ? (
-          <p className="px-4 text-sm text-muted">
-            No conversations yet.{" "}
-            <Link to="/discover" className="text-accent hover:underline">
-              Find someone
-            </Link>{" "}
-            and say hello.
-          </p>
+        {/* Chats | Archived. The archived tab carries its own count so
+            nothing in there is hidden from you — the sidebar badge
+            leaves archived chats out. */}
+        <div role="tablist" className="flex gap-1 border-b border-line px-4">
+          {(
+            [
+              ["chats", "Chats", 0],
+              ["archived", "Archived", archivedUnread],
+            ] as const
+          ).map(([key, label, count]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className={
+                "label-wide -mb-px flex items-center gap-1.5 border-b-2 px-2 py-2 transition " +
+                (tab === key
+                  ? "border-accent text-accent"
+                  : "border-transparent text-muted hover:text-ink")
+              }
+            >
+              {label}
+              {key === "archived" && archived.length > 0 && (
+                <span className="numeric text-[10px] opacity-70">
+                  {archived.length}
+                </span>
+              )}
+              {count > 0 && (
+                <span className="rounded-full bg-accent px-1.5 py-px text-[10px] font-bold text-onaccent">
+                  {count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {shown.length === 0 ? (
+          tab === "archived" ? (
+            <p className="px-4 py-4 text-sm text-muted">
+              Nothing archived yet. A session's chat moves here{" "}
+              {SESSION_CHAT_ARCHIVE_HOURS} hours after the session starts, and
+              stays readable.
+            </p>
+          ) : conversations.length === 0 ? (
+            <p className="px-4 py-4 text-sm text-muted">
+              No conversations yet.{" "}
+              <Link to="/discover" className="text-accent hover:underline">
+                Find someone
+              </Link>{" "}
+              and say hello.
+            </p>
+          ) : (
+            <p className="px-4 py-4 text-sm text-muted">
+              No active chats. Older session chats are under Archived.
+            </p>
+          )
         ) : (
-          conversations.map((c) => (
+          shown.map((c) => (
             <button
               key={c.conversation_id}
               onClick={() => navigate(`/messages/${c.conversation_id}`)}
@@ -110,7 +175,14 @@ export default function Messages() {
                   avatar. The shape difference is the point: you can tell
                   the two kinds apart without reading anything. */}
               {c.kind === "session" ? (
-                <div className="notch-sm flex h-10 w-10 shrink-0 items-center justify-center bg-accent-dim text-accent">
+                <div
+                  className={
+                    "notch-sm flex h-10 w-10 shrink-0 items-center justify-center " +
+                    (c.archived
+                      ? "bg-surface-2 text-muted"
+                      : "bg-accent-dim text-accent")
+                  }
+                >
                   <span className="numeric text-sm font-bold">
                     {c.member_count}
                   </span>
@@ -202,6 +274,7 @@ function Thread({
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
   /**
@@ -276,6 +349,7 @@ function Thread({
     if (!body || sending) return;
 
     setSending(true);
+    setSendError(null);
     setDraft("");
 
     const { error } = await sendMessage(conversation.conversation_id, body);
@@ -285,6 +359,11 @@ function Thread({
     if (error) {
       // Put it back rather than losing what they typed.
       setDraft(body);
+      setSendError("That didn't send. Try again.");
+      // The likeliest reason in a session chat is that it has just
+      // been archived while open; refreshing the list flips it to the
+      // read-only view.
+      onSent();
       return;
     }
 
@@ -315,6 +394,11 @@ function Thread({
                   : "Session chat"}
               </p>
             </div>
+            {conversation.archived && (
+              <span className="label-wide ml-auto shrink-0 notch-sm border border-line px-2 py-1 text-muted">
+                Archived
+              </span>
+            )}
           </>
         ) : (
           <>
@@ -511,9 +595,18 @@ function Thread({
         />
       )}
 
+      {conversation.archived ? (
+        // Read-only. The database refuses new messages here (80); this
+        // just says so instead of offering a box that can't send.
+        <p className="shrink-0 border-t border-line px-5 py-3 text-center text-xs text-muted">
+          This session chat was archived {SESSION_CHAT_ARCHIVE_HOURS} hours
+          after the session started. You can still read it, but it doesn't
+          take new messages.
+        </p>
+      ) : (
       <form
         onSubmit={submit}
-        className="flex shrink-0 gap-2 border-t border-line px-5 py-3"
+        className="flex shrink-0 flex-wrap gap-2 border-t border-line px-5 py-3"
       >
         <input
           value={draft}
@@ -524,7 +617,7 @@ function Thread({
               ? `Message the ${conversationName(conversation)} session`
               : `Message ${conversationName(conversation)}`
           }
-          className="flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+          className="min-w-0 flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
         />
         <button
           type="submit"
@@ -533,7 +626,11 @@ function Thread({
         >
           Send
         </button>
+        {sendError && (
+          <p className="w-full text-xs text-danger">{sendError}</p>
+        )}
       </form>
+      )}
     </section>
   );
 }
