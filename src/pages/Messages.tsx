@@ -92,7 +92,9 @@ export default function Messages() {
           thread, with the top bar's Back returning you here. */}
       <aside
         className={
-          "shrink-0 overflow-y-auto border-r border-line md:block md:w-72 " +
+          // A solid-ish panel: the conversation list sits on the Cipher
+          // background (AppShell) and has to stay readable over it.
+          "shrink-0 overflow-y-auto border-r border-line bg-surface/75 backdrop-blur-sm md:block md:w-72 " +
           (activeId ? "hidden w-full" : "block w-full")
         }
       >
@@ -191,7 +193,7 @@ export default function Messages() {
                 <div className="relative shrink-0">
                   <Avatar of={c} size={40} />
                   {stateOf(c, presence) !== "offline" && (
-                    <span className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-bg">
+                    <span className="absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-surface">
                       <StatusDot state={stateOf(c, presence)} size={9} />
                     </span>
                   )}
@@ -236,7 +238,7 @@ export default function Messages() {
         />
       ) : (
         <div className="hidden flex-1 items-center justify-center p-6 text-center sm:p-10 md:flex">
-          <p className="max-w-xs text-sm text-muted">
+          <p className="on-art max-w-xs text-sm text-muted">
             {conversations.length === 0
               ? "Nothing here yet. Open someone's profile and hit Message."
               : "Pick a conversation on the left."}
@@ -372,7 +374,9 @@ function Thread({
 
   return (
     <section className="flex flex-1 flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center gap-3 border-b border-line px-5 py-3">
+      {/* Header and composer are panels; the messages between them
+          float on the background, each bubble on its own surface. */}
+      <header className="flex shrink-0 items-center gap-3 border-b border-line bg-surface/90 px-5 py-3 backdrop-blur-sm">
         {conversation.kind === "session" ? (
           <>
             <div className="notch-sm flex h-9 w-9 shrink-0 items-center justify-center bg-accent-dim text-accent">
@@ -434,7 +438,7 @@ function Thread({
 
       <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4">
         {messages.length === 0 && (
-          <p className="py-6 sm:py-10 text-center text-sm text-muted">
+          <p className="on-art py-6 sm:py-10 text-center text-sm text-muted">
             No messages yet. Say something.
           </p>
         )}
@@ -465,7 +469,7 @@ function Thread({
                   onClick={() => setConfirmDelete(message.id)}
                   aria-label="Delete message"
                   title="Delete message"
-                  className="shrink-0 p-1.5 text-muted opacity-60 transition hover:text-danger hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
+                  className="shrink-0 p-1.5 text-muted opacity-80 drop-shadow-[0_1px_2px_rgb(0_0_0/0.9)] transition hover:text-danger hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -484,7 +488,7 @@ function Thread({
                 className={
                   "max-w-[70%] notch px-3.5 py-2 text-sm " +
                   (gone
-                    ? "border border-dashed border-line text-muted"
+                    ? "border border-dashed border-line bg-surface/85 text-muted"
                     : mine
                       ? "bg-accent text-onaccent"
                       : "border border-line bg-surface")
@@ -519,7 +523,7 @@ function Thread({
                   onClick={() => setReporting(message)}
                   aria-label="Report message"
                   title="Report this message"
-                  className="shrink-0 p-1.5 text-muted opacity-40 transition hover:text-danger hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
+                  className="shrink-0 p-1.5 text-muted opacity-60 drop-shadow-[0_1px_2px_rgb(0_0_0/0.9)] transition hover:text-danger hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -598,7 +602,7 @@ function Thread({
       {conversation.archived ? (
         // Read-only. The database refuses new messages here (80); this
         // just says so instead of offering a box that can't send.
-        <p className="shrink-0 border-t border-line px-5 py-3 text-center text-xs text-muted">
+        <p className="shrink-0 border-t border-line bg-surface/90 px-5 py-3 text-center text-xs text-muted backdrop-blur-sm">
           This session chat was archived {SESSION_CHAT_ARCHIVE_HOURS} hours
           after the session started. You can still read it, but it doesn't
           take new messages.
@@ -606,7 +610,7 @@ function Thread({
       ) : (
       <form
         onSubmit={submit}
-        className="flex shrink-0 flex-wrap gap-2 border-t border-line px-5 py-3"
+        className="flex shrink-0 flex-wrap gap-2 border-t border-line bg-surface/90 px-5 py-3 backdrop-blur-sm"
       >
         <input
           value={draft}

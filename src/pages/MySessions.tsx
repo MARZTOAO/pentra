@@ -49,8 +49,8 @@ export default function MySessions() {
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
       <header className="mb-6">
-        <h1 className="display text-2xl">Your sessions</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="display on-art text-2xl">Your sessions</h1>
+        <p className="on-art mt-1 text-sm text-muted">
           {sessions.length === 0
             ? "Nothing booked in."
             : past
@@ -120,7 +120,7 @@ export default function MySessions() {
 
       <button
         onClick={() => setPast((v) => !v)}
-        className="label-wide mt-6 text-muted transition hover:text-ink"
+        className="label-wide on-art mt-6 text-muted transition hover:text-ink"
       >
         {past ? "Hide past sessions" : "Show past sessions"}
       </button>
@@ -155,7 +155,7 @@ function whenLabel(iso: string | null): string {
 
 function Empty({ past }: { past: boolean }) {
   return (
-    <div className="notch border border-dashed border-line p-10 text-center">
+    <div className="notch border border-dashed border-line bg-surface/85 p-10 text-center backdrop-blur-sm">
       <h2 className="mb-2 font-semibold">
         {past ? "Nothing here yet" : "No sessions booked"}
       </h2>

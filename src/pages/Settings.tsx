@@ -53,8 +53,8 @@ export default function Settings() {
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
       <header className="mb-8">
-        <h1 className="display text-2xl">Settings</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="display on-art text-2xl">Settings</h1>
+        <p className="on-art mt-1 text-sm text-muted">
           How the app looks and behaves for you.
         </p>
       </header>

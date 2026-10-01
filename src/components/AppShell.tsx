@@ -13,6 +13,7 @@ import { WarningBanner } from "./WarningBanner";
 import { DesktopPrompt } from "./DesktopPrompt";
 import { NotificationBell } from "./NotificationBell";
 import { IgdbCredit } from "./IgdbCredit";
+import { HouseBackground, usesHouseBackground } from "./HouseBackground";
 
 /** `short` is the bottom-tab label. Seven of them share a phone's
     width — about 53px each at 375px — so these have to stay tiny:
@@ -221,6 +222,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </nav>
 
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
+        {/* Cipher behind Home, Sessions, Friends, Messages and
+            Settings. Here rather than in each page: see the component. */}
+        {usesHouseBackground(location.pathname) && <HouseBackground />}
+
         {/* Draws nothing in the desktop app, nothing without a build
             for this machine, and nothing for the first few visits. */}
         <DesktopPrompt />

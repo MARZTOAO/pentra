@@ -80,8 +80,8 @@ export default function Friends() {
     <div className="mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="display text-2xl">Friends</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h1 className="display on-art text-2xl">Friends</h1>
+          <p className="on-art mt-1 text-sm text-muted">
             {friends.length === 0
               ? "Nobody yet."
               : `${friends.length} ${friends.length === 1 ? "friend" : "friends"}` +
@@ -181,7 +181,7 @@ function Section({
 }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-3 label-wide text-muted">
+      <h2 className="on-art mb-3 label-wide text-muted">
         {title}
       </h2>
       <div className="space-y-2">{children}</div>
@@ -235,7 +235,7 @@ function Row({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="notch border border-dashed border-line p-8 text-center text-sm text-muted">
+    <p className="notch border border-dashed border-line bg-surface/85 p-8 text-center text-sm text-muted backdrop-blur-sm">
       {children}
     </p>
   );

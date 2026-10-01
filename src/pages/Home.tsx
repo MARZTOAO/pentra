@@ -15,8 +15,6 @@ import {
 import { PLATFORMS } from "../lib/constants";
 import { getSessionLimits, type SessionLimits } from "../lib/limits";
 import { ProCard, PRO_GOLD, ON_GOLD } from "../components/ProCard";
-import { MotionBackground } from "../components/MotionBackground";
-import { bannerStyle } from "../lib/backgrounds";
 import { releaseLabel, isUnreleased, type Game } from "../lib/topFive";
 import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
@@ -98,20 +96,8 @@ export default function Home() {
 
   return (
     <div className="relative mx-auto max-w-2xl px-4 sm:px-8 py-8">
-      {/* The feed's own background: Cipher, for everyone (not a Pro
-          perk here — it's the house look). Same fixed layer and 45%
-          scrim as the profile pages, so it stays put while the feed
-          scrolls over it. Holds still for reduced motion. Fixed only
-          works because AppShell's `rise` fill mode is `backwards` —
-          see index.css. */}
-      <div
-        className="pointer-events-none fixed inset-0 -z-20"
-        style={bannerStyle({ background: FEED_BACKGROUND })}
-      >
-        <MotionBackground preset={FEED_BACKGROUND} />
-      </div>
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/45" />
-
+      {/* The Cipher background behind this screen is drawn by
+          AppShell — see components/HouseBackground.tsx. */}
       <header className="mb-4 flex items-center justify-between">
         <h1 className="display on-art text-2xl">Home</h1>
 
@@ -228,9 +214,6 @@ export default function Home() {
     </div>
   );
 }
-
-/** The background behind the feed, for everyone. A key in lib/backgrounds.ts. */
-const FEED_BACKGROUND = "motion-cipher";
 
 /** Defaults the time box to the next whole hour, in local time. */
 function defaultStart(): string {

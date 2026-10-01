@@ -54,7 +54,7 @@ export function DeleteAccount({ username }: { username: string | null }) {
   }
 
   return (
-    <section className="mt-8 notch border border-danger/40 bg-danger/5 p-5">
+    <section className="mt-8 notch border border-danger/40 bg-surface bg-[linear-gradient(rgb(255_107_107/0.05),rgb(255_107_107/0.05))] p-5">
       <h2 className="mb-1 label-wide text-danger">Delete account</h2>
 
       <p className="mb-4 text-xs text-muted">

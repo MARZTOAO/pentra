@@ -78,7 +78,7 @@ export function DevPanel() {
 
   return (
     <>
-      <section className="notch border border-accent/40 bg-accent/5 p-5">
+      <section className="notch border border-accent/40 bg-surface bg-[linear-gradient(rgb(255_122_47/0.05),rgb(255_122_47/0.05))] p-5">
         <h2 className="mb-1 label-wide text-accent">Developer</h2>
         <p className="mb-4 text-xs text-muted">
           Only you can see this. The numbers behind the app, the feature
