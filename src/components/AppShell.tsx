@@ -145,8 +145,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Sidebar — desktop only. On a phone 224px of permanent chrome is
           most of the screen, so below md this is replaced by the bottom
-          tab bar at the end of this component. */}
-      <nav className="relative z-10 hidden w-56 shrink-0 flex-col border-r border-line bg-surface/85 backdrop-blur-sm md:flex">
+          tab bar at the end of this component.
+
+          z-20, one above the content column (z-10). Page backgrounds
+          (profiles, the feed) are position:fixed to the whole window, so
+          they reach under the sidebar too; at equal z the column — later
+          in the page — painted its background over the sidebar and hid
+          it. Above it, the sidebar's translucent blur sits on the art. */}
+      <nav className="relative z-20 hidden w-56 shrink-0 flex-col border-r border-line bg-surface/85 backdrop-blur-sm md:flex">
         {/* The wordmark. Two slashes rather than a logo for now — a
             mark that's only ever type is easier to keep consistent than
             one badly-drawn icon, and it scales to a favicon. */}
