@@ -82,8 +82,8 @@ export function Privacy() {
           check you're old enough to use Pentra, and used for one other
           thing: a happy-birthday message on the day. It's kept apart
           from your profile and never shown to anyone else; you can see
-          it in Settings. It can't be changed from inside the app — if
-          it's wrong, email us and we'll correct it.
+          it in Settings, and correct it there once if you entered it
+          wrong. After that, email us and we'll correct it.
         </p>
         <p>
           <strong>Your games.</strong> Your Top 5 and your library. This is

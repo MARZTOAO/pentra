@@ -175,3 +175,46 @@ export async function setBirthDate(value: string): Promise<SetBirthDateResult> {
   if (error) return "error";
   return (data as SetBirthDateResult) ?? "error";
 }
+
+export type BirthDateStatus = {
+  /** "YYYY-MM-DD", or null when nothing is on file. */
+  birthDate: string | null;
+  /** True while the one self-service correction is unused. */
+  canChange: boolean;
+};
+
+/** Your date of birth and whether you can still change it (supabase/81). */
+export async function getMyBirthDateStatus(): Promise<BirthDateStatus | null> {
+  const { data, error } = await supabase.rpc("my_birth_date_status");
+  if (error) return null;
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { birth_date: string | null; can_change: boolean }
+    | undefined;
+  // No row: an older account that has never added one.
+  if (!row) return { birthDate: null, canChange: false };
+  return {
+    birthDate: row.birth_date ? String(row.birth_date) : null,
+    canChange: Boolean(row.can_change),
+  };
+}
+
+export type ChangeBirthDateResult =
+  | "changed"
+  | "no_change_left"
+  | "not_set"
+  | "same"
+  | "too_young"
+  | "invalid"
+  | "signed_out"
+  | "error";
+
+/**
+ * The one self-service correction. The database enforces "once": a
+ * second call returns 'no_change_left'. An under-age date or the date
+ * already on file doesn't use it up.
+ */
+export async function changeBirthDate(value: string): Promise<ChangeBirthDateResult> {
+  const { data, error } = await supabase.rpc("change_birth_date", { d: value });
+  if (error) return "error";
+  return (data as ChangeBirthDateResult) ?? "error";
+}

@@ -13,7 +13,7 @@
 --  here, and the feature it powers will be dead on this database.
 --  Run them in number order — later ones assume the earlier ones.
 --
---  Covers 02 through 80. schema.sql (the baseline) isn't listed: if
+--  Covers 02 through 81. schema.sql (the baseline) isn't listed: if
 --  it hadn't run, nothing else would work either. When a new
 --  migration is added, add a line for it here.
 -- ============================================================
@@ -615,7 +615,11 @@ checks(migration, feature, present) as (
 
     ('80_archive_session_chats',
      'Session chats archive 24 hours after the session',
-     exists (select 1 from fn where fn.name = 'session_chat_archived'))
+     exists (select 1 from fn where fn.name = 'session_chat_archived')),
+
+    ('81_birth_date_one_change',
+     'Correct your date of birth once in Settings',
+     exists (select 1 from fn where fn.name = 'change_birth_date'))
 )
 select
   migration,

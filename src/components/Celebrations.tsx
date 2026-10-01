@@ -196,8 +196,8 @@ function BirthDatePrompt({ onFinished }: { onFinished: (saved: boolean) => void 
         </label>
 
         <p className="mt-2 text-xs text-muted">
-          Once it's saved it can't be changed in the app — if it's ever
-          wrong, email {SUPPORT_EMAIL}.
+          Double-check it before you save. You can correct it once
+          yourself in Settings; after that, email {SUPPORT_EMAIL}.
         </p>
 
         {error && <p className="mt-3 text-xs text-danger">{error}</p>}
