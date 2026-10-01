@@ -6,6 +6,7 @@ import {
   GROUPS,
   bannerStyle,
   findBackground,
+  thumbStyle,
 } from "../lib/backgrounds";
 import { hasPlus } from "../lib/profile";
 import { Anchored } from "./Anchored";
@@ -28,11 +29,12 @@ export function BackgroundPicker({
   const [error, setError] = useState<string | null>(null);
 
   const current = profile.banner_url ? null : findBackground(profile.background);
-  // The Motion group is Pentra Pro. Hidden for everyone else until
-  // there's something to buy; the database refuses it regardless (79).
+  // The Motion and Pro groups are Pentra Pro. Hidden for everyone else
+  // until there's something to buy; the database refuses them
+  // regardless (79, 83).
   const pro = hasPlus(profile);
-  const groups = GROUPS.filter((g) => g !== "Motion" || pro);
-  const choices = BACKGROUNDS.filter((bg) => !bg.motion || pro);
+  const groups = GROUPS.filter((g) => (g !== "Motion" && g !== "Pro") || pro);
+  const choices = BACKGROUNDS.filter((bg) => !(bg.motion || bg.pro) || pro);
 
   // Dismissal lives in <Anchored>: the panel is portalled to <body>, so a
   // contains() check against this trigger would close it on its own clicks.
@@ -118,9 +120,17 @@ export function BackgroundPicker({
                   <div key={group} className="mb-3 last:mb-0">
                     <p className="label-wide mb-1.5 flex items-center gap-2 text-muted">
                       {group}
-                      {group === "Motion" && <ProBadge />}
+                      {(group === "Motion" || group === "Pro") && <ProBadge />}
                     </p>
-                    <div className="grid grid-cols-8 gap-1.5">
+                    {/* Artwork needs room to be recognisable: four
+                        across and taller, where the CSS swatches fit
+                        eight. */}
+                    <div
+                      className={
+                        "grid gap-1.5 " +
+                        (group === "Pro" ? "grid-cols-4" : "grid-cols-8")
+                      }
+                    >
                       {choices.filter((bg) => bg.group === group).map((bg) => {
                         const active =
                           !profile.banner_url && profile.background === bg.key;
@@ -131,12 +141,13 @@ export function BackgroundPicker({
                             title={bg.label}
                             onClick={() => choosePreset(bg.key)}
                             className={
-                              "relative h-9 overflow-hidden notch-sm border-2 transition " +
+                              "relative overflow-hidden notch-sm border-2 transition " +
+                              (bg.pro ? "h-14 " : "h-9 ") +
                               (active
                                 ? "border-accent ring-2 ring-accent/30"
                                 : "border-transparent hover:border-muted")
                             }
-                            style={bannerStyle({ background: bg.key })}
+                            style={thumbStyle(bg.key)}
                           >
                             {/* Motion thumbnails move too - it's the
                                 thing being chosen. */}

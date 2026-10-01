@@ -48,3 +48,7 @@ brand/ads/
 # committed: this repo is public, and a blocklist anyone can read is a
 # blocklist anyone can work around. See supabase/local/README.md.
 supabase/local/
+
+# Pro artwork originals (full size). Only the compressed copies in
+# public/pro/ ship with the app.
+pro-art/

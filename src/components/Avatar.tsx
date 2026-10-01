@@ -1,4 +1,5 @@
 import { parsePreset } from "../lib/avatars";
+import { proAvatarOf, proAvatarUrl } from "../lib/proArt";
 import { useAvatarFrame } from "../lib/frames";
 import { AvatarFrame } from "./AvatarFrame";
 
@@ -11,8 +12,8 @@ type Source = {
 /**
  * One component for every avatar in the app.
  *
- * Falls back in order: uploaded image, then premade preset, then the
- * first letter of their username. Having this in one place means a
+ * Falls back in order: uploaded image, then Pentra Pro artwork, then
+ * premade preset, then the first letter of their username. Having this in one place means a
  * change to how avatars look lands everywhere at once — before this
  * the same markup was copied into four screens.
  *
@@ -33,6 +34,7 @@ export function Avatar({
   frame?: string | null;
 }) {
   const preset = parsePreset(of.avatar_preset);
+  const art = proAvatarOf(of.avatar_preset);
   const letter = (of.username ?? "?").charAt(0).toUpperCase();
   const worn = useAvatarFrame(of.username, frame);
 
@@ -47,6 +49,14 @@ export function Avatar({
       >
         {of.avatar_url ? (
           <img src={of.avatar_url} alt="" className="h-full w-full object-cover" />
+        ) : art ? (
+          <img
+            src={proAvatarUrl(art.key, size)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         ) : preset ? (
           <div
             className="flex h-full w-full items-center justify-center"

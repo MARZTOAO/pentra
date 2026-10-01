@@ -1,3 +1,5 @@
+import { PRO_BACKGROUND_ART } from "./proArt";
+
 /**
  * Built-in profile backgrounds.
  *
@@ -9,7 +11,7 @@
  * is what lets the tiled patterns work alongside the plain gradients.
  */
 
-export type BackgroundGroup = "Gradients" | "Neon" | "Muted" | "Patterns" | "Motion";
+export type BackgroundGroup = "Gradients" | "Neon" | "Muted" | "Patterns" | "Motion" | "Pro";
 
 export type Background = {
   key: string;
@@ -25,6 +27,15 @@ export type Background = {
    * thumbnail, and what anyone whose Pro has lapsed sees.
    */
   motion?: boolean;
+  /**
+   * Pentra Pro artwork (lib/proArt.ts): a picture rather than CSS. Key
+   * starts with "pro-", which is what the database checks (83). `thumb`
+   * is a small version for the picker, so opening it doesn't download
+   * forty full-size images.
+   */
+  pro?: boolean;
+  thumb?: string;
+  position?: string;
 };
 
 export const BACKGROUNDS: Background[] = [
@@ -233,15 +244,55 @@ export const BACKGROUNDS: Background[] = [
   { key: "motion-scan", label: "Scan", group: "Motion", motion: true, color: "#071a2b", css: "linear-gradient(rgba(53,192,232,0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(53,192,232,0.16) 1px, transparent 1px)", size: "34px 34px" },
   { key: "motion-tide", label: "Tide", group: "Motion", motion: true, css: "repeating-linear-gradient(115deg, rgba(111,227,196,0.14) 0 22px, #0a1a1a 22px 80px)" },
   { key: "motion-cipher", label: "Cipher", group: "Motion", motion: true, css: "linear-gradient(180deg, #1a0d06 0%, #0d0704 100%)" },
+
+  // ---- Pro artwork (Pentra Pro) ---------------------------------------
+  ...PRO_BACKGROUND_ART.map(
+    (art): Background => ({
+      key: `pro-${art.key}`,
+      label: art.label,
+      group: "Pro",
+      pro: true,
+      css: `url("/pro/backgrounds/${art.key}.webp")`,
+      thumb: `url("/pro/backgrounds/${art.key}.thumb.webp")`,
+      size: "cover",
+      position: "center",
+      color: art.color,
+    }),
+  ),
 ];
 
+// Pro first: for a member it's the thing they're paying for, and for
+// everyone else the picker leaves both Pro groups out.
 export const GROUPS: BackgroundGroup[] = [
+  "Pro",
+  "Motion",
   "Gradients",
   "Neon",
   "Muted",
   "Patterns",
-  "Motion",
 ];
+
+/** Is this key Pentra Pro artwork? Mirrors 83. */
+export function isProBackground(key: string | null | undefined) {
+  return !!key && key.startsWith("pro-");
+}
+
+/**
+ * The style for a small preview tile in the picker. The same as
+ * bannerStyle for everything except Pro artwork, which uses its thumb.
+ */
+export function thumbStyle(key: string): React.CSSProperties {
+  const preset = findBackground(key);
+  if (preset?.thumb) {
+    return {
+      backgroundImage: preset.thumb,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundColor: preset.color,
+    };
+  }
+  return bannerStyle({ background: key });
+}
 
 /** Is this key one of the Pro-only moving backgrounds? Mirrors 79. */
 export function isMotionBackground(key: string | null | undefined) {
@@ -273,6 +324,7 @@ export function bannerStyle(p: {
     return {
       backgroundImage: preset.css,
       backgroundSize: preset.size,
+      backgroundPosition: preset.position,
       backgroundColor: preset.color,
     };
   }

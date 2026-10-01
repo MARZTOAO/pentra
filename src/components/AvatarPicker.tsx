@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { useAuth } from "../lib/AuthContext";
-import { updateProfile, uploadAvatar, type Profile } from "../lib/profile";
+import { hasPlus, updateProfile, uploadAvatar, type Profile } from "../lib/profile";
+import { PRO_AVATARS, proAvatarOf, proAvatarPreset } from "../lib/proArt";
+import { ProBadge } from "./ProBadge";
 import { prepareAvatar, MediaError } from "../lib/media";
 import {
   AVATAR_SHAPES,
@@ -30,6 +32,10 @@ export function AvatarPicker({
   const [error, setError] = useState<string | null>(null);
 
   const current = parsePreset(profile.avatar_preset);
+  const currentArt = proAvatarOf(profile.avatar_preset);
+  // Pentra Pro artwork: shown to members only (the database refuses it
+  // for anyone else, 83).
+  const pro = hasPlus(profile);
 
   // Keep a colour selected even before they've chosen a symbol, so the
   // first click on a symbol produces something rather than nothing.
@@ -58,6 +64,12 @@ export function AvatarPicker({
     // Choosing a premade avatar clears the upload, or the photo would
     // keep winning and the click would look like it did nothing.
     save({ avatar_preset: makePreset(shapeKey, colorKey), avatar_url: null });
+    setOpen(false);
+  }
+
+  function pickArt(key: string) {
+    // Clears the upload for the same reason as pickShape.
+    save({ avatar_preset: proAvatarPreset(key), avatar_url: null });
     setOpen(false);
   }
 
@@ -151,7 +163,11 @@ export function AvatarPicker({
                     : "border-line text-muted hover:border-accent hover:text-accent")
                 }
               >
-                {current ? `Avatar: ${current.shape.label}` : "Choose an avatar"}
+                {currentArt
+                  ? `Avatar: ${currentArt.label}`
+                  : current
+                    ? `Avatar: ${current.shape.label}`
+                    : "Choose an avatar"}
                 <svg
                   className={"h-3 w-3 transition " + (open ? "rotate-180" : "")}
                   viewBox="0 0 24 24"
@@ -176,6 +192,44 @@ export function AvatarPicker({
                   width={380}
                 >
                 <div className="notch border border-line bg-surface p-3">
+                  {pro && (
+                    <>
+                      <p className="label-wide mb-2 flex items-center gap-2 text-muted">
+                        Pro
+                        <ProBadge />
+                      </p>
+                      <div className="mb-3 grid max-h-56 grid-cols-7 gap-1.5 overflow-y-auto overflow-x-hidden pr-1">
+                        {PRO_AVATARS.map((art) => {
+                          const active =
+                            !profile.avatar_url && currentArt?.key === art.key;
+                          return (
+                            <button
+                              key={art.key}
+                              type="button"
+                              title={art.label}
+                              onClick={() => pickArt(art.key)}
+                              className={
+                                "rounded-full border-2 p-0.5 transition " +
+                                (active
+                                  ? "border-[#f7b733] ring-2 ring-[#f7b733]/30"
+                                  : "border-transparent hover:border-muted")
+                              }
+                            >
+                              <Avatar
+                                of={{
+                                  username: profile.username,
+                                  avatar_preset: proAvatarPreset(art.key),
+                                }}
+                                size={34}
+                                frame={null}
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
                   <p className="label-wide mb-2 text-muted">
                     Colour
                   </p>
@@ -229,6 +283,7 @@ export function AvatarPicker({
                               avatar_preset: makePreset(shape.key, colorKey),
                             }}
                             size={34}
+                            frame={null}
                           />
                         </button>
                       );
