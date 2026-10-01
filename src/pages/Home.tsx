@@ -20,6 +20,8 @@ import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
 import { SessionGuests } from "../components/SessionGuests";
 import { PostCard } from "../components/PostCard";
+import { AdCard } from "../components/AdCard";
+import { getLiveAds, withAds, adRotationStart, type Ad } from "../lib/ads";
 import { getCommentCounts } from "../lib/comments";
 import { MentionBox } from "../components/MentionBox";
 import {
@@ -48,6 +50,11 @@ export default function Home() {
   const [games, setGames] = useState<FeedGame[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Ads (85): every 5th item in the feed when any are running. Which ad
+  // starts the rotation is picked once per visit, so a refresh doesn't
+  // reshuffle the ads under someone's thumb. See lib/ads.ts.
+  const [ads, setAds] = useState<Ad[]>([]);
+  const [adStart] = useState(adRotationStart);
 
   /**
    * @param showSpinner Only for a load that changes what the feed is
@@ -60,8 +67,12 @@ export default function Home() {
   const load = useCallback(
     async (showSpinner = false) => {
       if (showSpinner) setLoading(true);
-      const rows = await getFeed(scope, gameId, sessionsOnly);
+      const [rows, liveAds] = await Promise.all([
+        getFeed(scope, gameId, sessionsOnly),
+        getLiveAds(),
+      ]);
       setPosts(rows);
+      setAds(liveAds);
       setCommentCounts(await getCommentCounts(rows.map((p) => p.id)));
       setLoading(false);
     },
@@ -200,15 +211,19 @@ export default function Home() {
         <Empty scope={scope} gameName={activeGame?.name ?? null} />
       ) : (
         <div className="space-y-3">
-          {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onChange={afterPost}
-              onPickGame={setGameId}
-              commentCount={commentCounts[post.id] ?? 0}
-            />
-          ))}
+          {withAds(posts, ads, adStart).map((item) =>
+            item.kind === "ad" ? (
+              <AdCard key={`ad-${item.slot}-${item.ad.id}`} ad={item.ad} />
+            ) : (
+              <PostCard
+                key={item.post.id}
+                post={item.post}
+                onChange={afterPost}
+                onPickGame={setGameId}
+                commentCount={commentCounts[item.post.id] ?? 0}
+              />
+            ),
+          )}
         </div>
       )}
     </div>

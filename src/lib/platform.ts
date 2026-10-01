@@ -17,6 +17,34 @@ export function isDesktopApp(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
+/**
+ * Opens a web address in the person's own browser.
+ *
+ * In a browser that's a new tab. In the desktop app a plain link or
+ * window.open would try to open inside Pentra's own window, so it goes
+ * through Tauri's opener plugin instead (allowed for http/https by
+ * "opener:default" in src-tauri/capabilities/default.json).
+ *
+ * Only http(s) — anything else is ignored rather than opened.
+ */
+export async function openExternal(url: string): Promise<void> {
+  if (!/^https?:\/\//i.test(url)) return;
+
+  if (isDesktopApp()) {
+    try {
+      const { openUrl } = await import("@tauri-apps/plugin-opener");
+      await openUrl(url);
+      return;
+    } catch {
+      // Fall through to the browser way rather than doing nothing.
+    }
+  }
+
+  // Called before any await on this path, so the browser still counts
+  // it as part of the click and doesn't block it as a pop-up.
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
 export type OS = "windows" | "mac" | "linux" | "other";
 
 /**

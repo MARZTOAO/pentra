@@ -37,6 +37,7 @@ import {
 } from "../lib/dev";
 import { clearFlagCache } from "../lib/flags";
 import { Avatar } from "./Avatar";
+import { DevAds } from "./DevAds";
 
 /**
  * The developer panel.
@@ -153,7 +154,7 @@ function Dialog({
           <h2 className="label-wide text-accent">Developer</h2>
 
           <nav className="order-last flex w-full flex-wrap gap-1 sm:order-none sm:ml-auto sm:w-auto">
-            {(["reports", "news", "numbers", "flags", "pro", "build"] as const).map((t) => (
+            {(["reports", "news", "numbers", "ads", "flags", "pro", "build"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -182,6 +183,7 @@ function Dialog({
           {tab === "reports" && <Reports />}
           {tab === "news" && <News />}
           {tab === "numbers" && <Numbers />}
+          {tab === "ads" && <DevAds />}
           {tab === "flags" && <Flags />}
           {tab === "pro" && <Pro />}
           {tab === "build" && <Build />}
@@ -192,7 +194,7 @@ function Dialog({
   );
 }
 
-type Tab = "reports" | "news" | "numbers" | "flags" | "pro" | "build";
+type Tab = "reports" | "news" | "numbers" | "ads" | "flags" | "pro" | "build";
 
 /* ------------------------------------------------------------------ */
 

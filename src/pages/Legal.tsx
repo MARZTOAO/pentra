@@ -14,7 +14,7 @@ import { MIN_AGE, SUPPORT_EMAIL } from "../lib/constants";
  * Not reviewed by a lawyer. Before this is relied on, it should be.
  */
 
-const UPDATED = "September 24, 2026";
+const UPDATED = "October 1, 2026";
 
 /**
  * Where someone writes with a question.
@@ -133,11 +133,20 @@ export function Privacy() {
           we fetch the list of games; nothing about you is sent back.
         </p>
         <p>
-          Advertising may appear on the public website — the home page
-          and pages like this one — but not inside the app once you're
-          signed in. If and when it does, the ad network (Google AdSense)
-          will set its own cookies on those public pages, and this policy
-          will be updated to say so before it happens.
+          The feed inside the app shows sponsored posts, always labelled
+          "Sponsored". We place these ourselves — there is no ad network
+          inside the app, and advertisers are given nothing about you. We
+          count how many times each sponsored post is shown and clicked,
+          as totals only; nothing records who saw or clicked one.
+          Clicking one opens the advertiser's website in your browser,
+          where their own privacy policy applies.
+        </p>
+        <p>
+          Advertising may also appear on the public website — the home
+          page and pages like this one. If and when it does, the ad
+          network (Google AdSense) will set its own cookies on those
+          public pages, and this policy will be updated to say so before
+          it happens.
         </p>
       </Section>
 
