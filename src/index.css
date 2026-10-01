@@ -226,7 +226,14 @@ textarea {
 }
 
 @utility rise {
-  animation: edge-rise 220ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  /* `backwards`, not `both`. With `both` the finished animation keeps
+     holding `transform: none`, and Chrome then treats the element as
+     transformed: anything position:fixed inside it (the profile
+     background) stops being fixed to the window and scrolls away with
+     the page. `backwards` covers the start the same way and lets go
+     at the end. Measured: background moved 800px on an 800px scroll
+     with `both`, 0px with `backwards`. */
+  animation: edge-rise 220ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
