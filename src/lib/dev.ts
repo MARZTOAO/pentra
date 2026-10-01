@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 /**
@@ -82,10 +83,120 @@ export async function amIDeveloper(): Promise<boolean> {
   return data === true;
 }
 
+/*
+ * The same question, asked once per account rather than once per
+ * screen. The sidebar needs it to decide whether to show Metrics, and
+ * the sidebar is rebuilt on every navigation — without this it would
+ * be a database call per click, and the link would flicker in late
+ * each time.
+ *
+ * A failed request isn't remembered, so a blip at startup doesn't
+ * hide the link for the whole session.
+ */
+const devKnown = new Map<string, boolean>();
+const devAsking = new Map<string, Promise<boolean>>();
+
+function askOnce(userId: string): Promise<boolean> {
+  let p = devAsking.get(userId);
+  if (!p) {
+    p = Promise.resolve(supabase.rpc("am_i_developer")).then(({ data, error }) => {
+      if (error) {
+        devAsking.delete(userId);
+        return false;
+      }
+      const yes = data === true;
+      devKnown.set(userId, yes);
+      return yes;
+    });
+    devAsking.set(userId, p);
+  }
+  return p;
+}
+
+/** False until known. Pass the signed-in user's id (or nothing). */
+export function useIsDeveloper(userId: string | null | undefined): boolean {
+  const [yes, setYes] = useState(() => (userId ? devKnown.get(userId) ?? false : false));
+  useEffect(() => {
+    if (!userId) {
+      setYes(false);
+      return;
+    }
+    let live = true;
+    askOnce(userId).then((v) => {
+      if (live) setYes(v);
+    });
+    return () => {
+      live = false;
+    };
+  }, [userId]);
+  return yes;
+}
+
 export async function getMetrics(): Promise<DevMetrics | null> {
   const { data, error } = await supabase.rpc("dev_metrics");
   if (error || !data) return null;
   return data as DevMetrics;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Metrics over time — supabase/84_dev_metrics_charts.sql             */
+/* ------------------------------------------------------------------ */
+
+export type DevDay = {
+  day: string; // YYYY-MM-DD, in the time zone asked for
+  signups: number;
+  /** Accounts that existed at the end of the day. */
+  accounts: number;
+  /** People who opened Pentra that (UTC) day. Null before 84 ran. */
+  active: number | null;
+  posts: number;
+  sessions: number;
+  /** Joins by someone other than the host. */
+  joins: number;
+  comments: number;
+  likes: number;
+  messages: number;
+  friendships: number;
+  referrals: number;
+};
+
+export type DevSeries = {
+  generated_at: string;
+  days: number;
+  tz: string;
+  real_only: boolean;
+  test_accounts: number;
+  active_since: string | null;
+  daily: DevDay[];
+  tiers: { pro: number; free: number };
+  platforms: { label: string; n: number }[];
+  top_games: { label: string; n: number }[];
+  health: { active: number; quiet: number; gone: number; never: number };
+  funnel: { accounts: number; top_five: number; played: number; friend: number };
+  session_fill: { host_only: number; partial: number; full: number };
+};
+
+/**
+ * @param days 7–365 (the database clamps it)
+ * @param realOnly leave out the seed scripts' @example.test accounts
+ */
+export async function getMetricsSeries(
+  days: number,
+  realOnly: boolean,
+): Promise<DevSeries | null> {
+  let tz = "UTC";
+  try {
+    tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    /* very old WebView: UTC it is */
+  }
+  const { data, error } = await supabase.rpc("dev_metrics_series", {
+    days,
+    tz,
+    real_only: realOnly,
+  });
+  if (error || !data) return null;
+  return data as DevSeries;
 }
 
 export async function getEnvironment(): Promise<DevEnvironment | null> {

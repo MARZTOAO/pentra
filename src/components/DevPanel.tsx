@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
 import {
   addTester,
   amIDeveloper,
@@ -105,6 +106,27 @@ export function DevPanel() {
           </svg>
           Open developer tools
         </button>
+
+        {/* The metrics page: the Numbers tab with charts, too wide for
+            this dialog. Also in the sidebar on a computer. */}
+        <Link
+          to="/dev"
+          className="mt-2 inline-flex items-center gap-2 notch-md border border-accent/50 px-4 py-2 sm:ml-2 sm:mt-0 text-sm font-semibold text-accent transition hover:bg-accent/10"
+        >
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+          </svg>
+          Metrics &amp; charts
+        </Link>
       </section>
 
       {open && <Dialog tab={tab} setTab={setTab} onClose={() => setOpen(false)} />}
@@ -602,7 +624,8 @@ function News() {
 
 /* ------------------------------------------------------------------ */
 
-function Numbers() {
+/** Also shown at the foot of the metrics page (pages/DevMetrics.tsx). */
+export function Numbers({ onPage = false }: { onPage?: boolean }) {
   const [m, setM] = useState<DevMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -621,6 +644,16 @@ function Numbers() {
 
   return (
     <div className="space-y-5">
+      {!onPage && (
+        <Link
+          to="/dev"
+          className="flex items-center justify-between notch-md border border-accent/40 bg-accent/5 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent/10"
+        >
+          See these as charts, over time
+          <span aria-hidden="true">→</span>
+        </Link>
+      )}
+
       <Group title="Growth">
         <Stat label="Accounts" value={m.growth.accounts} />
         <Stat label="New today" value={m.growth.new_today} />

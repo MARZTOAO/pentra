@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
+import { useIsDeveloper } from "../lib/dev";
 import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
@@ -98,6 +99,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { unread } = useNotifications();
   const [query, setQuery] = useState("");
+  // Only decides whether to show the Metrics link. The numbers behind
+  // it are refused by the database to anybody else.
+  const isDev = useIsDeveloper(user?.id);
 
   // Check in every minute while the app is open. This is what drives
   // the online dots and the recency part of match scoring - without it
@@ -184,6 +188,23 @@ export function AppShell({ children }: { children: ReactNode }) {
               )}
             </NavLink>
           ))}
+
+          {/* Developers only, and only here: the phone tab bar is full,
+              so on a phone it's reached from Settings → Developer. */}
+          {isDev && (
+            <NavLink
+              to="/dev"
+              className={({ isActive }) =>
+                "label-wide mt-3 flex items-center gap-3 border-t border-line px-3 pb-2.5 pt-3.5 transition " +
+                (isActive
+                  ? "notch-sm border-transparent bg-accent text-onaccent"
+                  : "text-accent/80 hover:bg-surface-2 hover:text-accent")
+              }
+            >
+              <Icon d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+              <span className="flex-1">Metrics</span>
+            </NavLink>
+          )}
         </div>
 
         <div className="border-t border-line p-3">

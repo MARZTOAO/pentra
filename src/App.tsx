@@ -22,6 +22,7 @@ import Landing from "./pages/Landing";
 import { Privacy, Terms } from "./pages/Legal";
 import Confirm from "./pages/Confirm";
 import Forgot from "./pages/Forgot";
+import DevMetrics from "./pages/DevMetrics";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -163,6 +164,17 @@ export default function App() {
             element={
               <Shell>
                 <Settings />
+              </Shell>
+            }
+          />
+
+          {/* Developers only — the page checks, and the database
+              refuses the numbers to anyone else. */}
+          <Route
+            path="/dev"
+            element={
+              <Shell>
+                <DevMetrics />
               </Shell>
             }
           />
