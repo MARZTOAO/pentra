@@ -15,6 +15,8 @@ import {
 import { PLATFORMS } from "../lib/constants";
 import { getSessionLimits, type SessionLimits } from "../lib/limits";
 import { ProCard, PRO_GOLD, ON_GOLD } from "../components/ProCard";
+import { MotionBackground } from "../components/MotionBackground";
+import { bannerStyle } from "../lib/backgrounds";
 import { releaseLabel, isUnreleased, type Game } from "../lib/topFive";
 import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
@@ -95,11 +97,25 @@ export default function Home() {
   const activeGame = games.find((g) => g.game_id === gameId);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 sm:px-8 py-8">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="display text-2xl">Home</h1>
+    <div className="relative mx-auto max-w-2xl px-4 sm:px-8 py-8">
+      {/* The feed's own background: Cipher, for everyone (not a Pro
+          perk here — it's the house look). Same fixed layer and 45%
+          scrim as the profile pages, so it stays put while the feed
+          scrolls over it. Holds still for reduced motion. Fixed only
+          works because AppShell's `rise` fill mode is `backwards` —
+          see index.css. */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-20"
+        style={bannerStyle({ background: FEED_BACKGROUND })}
+      >
+        <MotionBackground preset={FEED_BACKGROUND} />
+      </div>
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-bg/45" />
 
-        <div className="flex notch-md border border-line p-0.5">
+      <header className="mb-4 flex items-center justify-between">
+        <h1 className="display on-art text-2xl">Home</h1>
+
+        <div className="flex notch-md border border-line bg-surface/85 p-0.5 backdrop-blur-sm">
           {(["everyone", "friends"] as FeedScope[]).map((s) => (
             <button
               key={s}
@@ -126,13 +142,13 @@ export default function Home() {
               "rounded-full border px-3 py-1 text-xs font-semibold transition " +
               (sessionsOnly
                 ? "border-accent bg-accent text-onaccent"
-                : "border-line text-muted hover:border-accent hover:text-accent")
+                : "border-line bg-surface/80 text-muted hover:border-accent hover:text-accent")
             }
           >
             Looking for players
           </button>
 
-          <span className="mx-1 h-4 w-px bg-line" />
+          <span className="mx-1 h-4 w-px bg-muted/50" />
 
           <button
             onClick={() => setGameId(null)}
@@ -140,7 +156,7 @@ export default function Home() {
               "rounded-full border px-3 py-1 text-xs font-medium transition " +
               (gameId === null
                 ? "border-accent bg-accent/15 text-accent"
-                : "border-line text-muted hover:border-muted hover:text-ink")
+                : "border-line bg-surface/80 text-muted hover:border-muted hover:text-ink")
             }
           >
             All games
@@ -155,7 +171,7 @@ export default function Home() {
                 "flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-xs font-medium transition " +
                 (gameId === game.game_id
                   ? "border-accent bg-accent/15 text-accent"
-                  : "border-line text-muted hover:border-muted hover:text-ink")
+                  : "border-line bg-surface/80 text-muted hover:border-muted hover:text-ink")
               }
             >
               {game.cover_url && (
@@ -212,6 +228,9 @@ export default function Home() {
     </div>
   );
 }
+
+/** The background behind the feed, for everyone. A key in lib/backgrounds.ts. */
+const FEED_BACKGROUND = "motion-cipher";
 
 /** Defaults the time box to the next whole hour, in local time. */
 function defaultStart(): string {
@@ -580,7 +599,7 @@ function Empty({
   gameName: string | null;
 }) {
   return (
-    <div className="notch border border-dashed border-line p-12 text-center">
+    <div className="notch border border-dashed border-line bg-surface/85 p-12 text-center backdrop-blur-sm">
       <h2 className="mb-2 font-semibold">
         {gameName
           ? `Nothing about ${gameName} yet`
