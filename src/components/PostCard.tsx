@@ -12,6 +12,9 @@ import { PostMediaGrid } from "./PostMediaGrid";
 import { SessionCard } from "./SessionCard";
 import { ReportDialog } from "./SafetyMenu";
 import { Comments } from "./Comments";
+import { ProCard } from "./ProCard";
+import { ProBadge } from "./ProBadge";
+import { useIsPro } from "../lib/frames";
 
 /**
  * One post, everywhere a post is shown.
@@ -45,6 +48,10 @@ export function PostCard({
   const [liked, setLiked] = useState(post.liked_by_me);
   const [likes, setLikes] = useState(Number(post.likes));
   const [reporting, setReporting] = useState(false);
+  // Pentra Pro members' posts and sessions are gold (ProCard). Looked
+  // up by username through the avatar-frame cache, so a feed of thirty
+  // posts is one request, not thirty.
+  const pro = useIsPro(post.username);
 
   async function like() {
     const next = !liked;
@@ -65,7 +72,7 @@ export function PostCard({
   }
 
   return (
-    <article className="notch border border-line bg-surface p-4">
+    <ProCard pro={pro} className="p-4">
       <div className="flex gap-3">
         <Link to={`/u/${post.username}`} className="shrink-0">
           <Avatar of={post} size={40} />
@@ -79,6 +86,11 @@ export function PostCard({
             >
               {post.display_name || post.username}
             </Link>
+            {pro && (
+              <span className="shrink-0 self-center">
+                <ProBadge />
+              </span>
+            )}
             <span className="truncate text-xs text-muted">
               @{post.username} · {postTime(post.created_at)}
             </span>
@@ -173,6 +185,6 @@ export function PostCard({
           onClose={() => setReporting(false)}
         />
       )}
-    </article>
+    </ProCard>
   );
 }

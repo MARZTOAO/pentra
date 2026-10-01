@@ -73,6 +73,10 @@ export function frameOf(p: {
 //  by username. Unknown names are collected for a few milliseconds and
 //  fetched in one request; the answer is kept for a while; everyone
 //  showing that avatar re-renders when it arrives.
+//
+//  The same lookup also answers "is this person Pro right now?" — the
+//  gold posts in the feed need it (useIsPro below), and it comes from
+//  the same row, so it costs nothing extra.
 // ---------------------------------------------------------------
 
 const FRESH_FOR = 5 * 60 * 1000;   // a known answer is good for 5 min
@@ -80,7 +84,7 @@ const RETRY_AFTER = 30 * 1000;     // a failed request isn't repeated sooner
 const BATCH_DELAY = 40;            // ms to wait for more names
 const BATCH_SIZE = 100;
 
-type Entry = { frame: string | null; until: number };
+type Entry = { frame: string | null; pro: boolean; until: number };
 
 const cache = new Map<string, Entry>();        // lower-case username → answer
 const spelling = new Map<string, string>();    // lower-case → as given
@@ -115,7 +119,7 @@ async function flush() {
     const now = Date.now();
     if (error || !data) {
       for (const l of chunk) {
-        if (!cache.has(l)) cache.set(l, { frame: null, until: now + RETRY_AFTER });
+        if (!cache.has(l)) cache.set(l, { frame: null, pro: false, until: now + RETRY_AFTER });
         else cache.get(l)!.until = now + RETRY_AFTER;
       }
       continue;
@@ -130,12 +134,16 @@ async function flush() {
     }[]) {
       const l = row.username.toLowerCase();
       seen.add(l);
-      cache.set(l, { frame: frameOf(row), until: now + FRESH_FOR });
+      cache.set(l, {
+        frame: frameOf(row),
+        pro: hasPlus({ tier: row.tier, tier_expires_at: row.tier_expires_at }),
+        until: now + FRESH_FOR,
+      });
     }
     // Names that came back empty (deleted account, or a name that
     // never existed): no frame, and don't ask again for a while.
     for (const l of chunk) {
-      if (!seen.has(l)) cache.set(l, { frame: null, until: now + FRESH_FOR });
+      if (!seen.has(l)) cache.set(l, { frame: null, pro: false, until: now + FRESH_FOR });
     }
   }
 
@@ -175,6 +183,37 @@ export function useAvatarFrame(
  * without a round trip.
  */
 export function rememberFrame(username: string, frame: string | null) {
-  cache.set(username.toLowerCase(), { frame, until: Date.now() + FRESH_FOR });
+  const lower = username.toLowerCase();
+  // Only someone with Pro can save a frame, so a frame means Pro; no
+  // frame keeps whatever we already knew.
+  const pro = frame !== null || (cache.get(lower)?.pro ?? false);
+  cache.set(lower, { frame, pro, until: Date.now() + FRESH_FOR });
   notify();
+}
+
+/**
+ * Whether this username is a Pentra Pro member right now, from the same
+ * cached lookup as avatar frames. False until it knows. Pass `explicit`
+ * when the screen already has the answer (your own profile).
+ */
+export function useIsPro(
+  username: string | null | undefined,
+  explicit?: boolean,
+): boolean {
+  const lower = username ? username.toLowerCase() : null;
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+
+  useEffect(() => {
+    if (explicit !== undefined || !lower) return;
+    spelling.set(lower, username!);
+    want(lower);
+    listeners.add(rerender);
+    return () => {
+      listeners.delete(rerender);
+    };
+  }, [lower, username, explicit]);
+
+  if (explicit !== undefined) return explicit;
+  if (!lower) return false;
+  return cache.get(lower)?.pro ?? false;
 }

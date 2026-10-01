@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
-import { getProfile, type Profile } from "../lib/profile";
+import { getProfile, hasPlus, type Profile } from "../lib/profile";
 import {
   getFeed,
   getFeedGames,
@@ -14,6 +14,7 @@ import {
 } from "../lib/feed";
 import { PLATFORMS } from "../lib/constants";
 import { getSessionLimits, type SessionLimits } from "../lib/limits";
+import { ProCard, PRO_GOLD, ON_GOLD } from "../components/ProCard";
 import { releaseLabel, isUnreleased, type Game } from "../lib/topFive";
 import { Avatar } from "../components/Avatar";
 import { GameSearchModal } from "../components/GameSearchModal";
@@ -263,6 +264,10 @@ function Composer({
   const atHostLimit =
     isSession && !!limits?.limited && limits.hosting >= limits.hostLimit;
 
+  // Pentra Pro: the composer is gold too, matching how the post will
+  // look in the feed once it's out.
+  const pro = hasPlus(profile);
+
   const attach = useAttachments(media, setMedia);
 
   // A picture on its own is a perfectly good post.
@@ -338,7 +343,7 @@ function Composer({
   }
 
   return (
-    <section className="mb-5 notch border border-line bg-surface p-4">
+    <ProCard pro={pro} as="section" className="p-4" outerClassName="mb-5">
       {error && <Alert>{error}</Alert>}
 
       <div className="flex gap-3">
@@ -355,7 +360,12 @@ function Composer({
                 ? "What are you playing, and what are you after? \"Ranked, mics on, no rage.\""
                 : "Looking for a group? Just finished something good? Say it here."
             }
-            className="w-full resize-none notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"
+            className={
+              "w-full resize-none notch-md border bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:ring-2 " +
+              (pro
+                ? "border-[#f7b733]/50 focus:border-[#f7b733] focus:ring-[#f7b733]/30"
+                : "border-line focus:border-accent focus:ring-accent/30")
+            }
           />
 
           {/* Session details. Hidden until asked for, so an ordinary
@@ -530,7 +540,13 @@ function Composer({
             <button
               onClick={submit}
               disabled={!canPost || busy || atHostLimit}
-              className="ml-auto shrink-0 whitespace-nowrap notch-md bg-accent px-4 py-1.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+              className={
+                "ml-auto shrink-0 whitespace-nowrap notch-md px-4 py-1.5 text-sm font-semibold transition disabled:opacity-40 " +
+                (pro
+                  ? "hover:brightness-110"
+                  : "bg-accent text-onaccent hover:bg-accent-hi")
+              }
+              style={pro ? { background: PRO_GOLD, color: ON_GOLD } : undefined}
             >
               {uploading > 0
                 ? `Uploading ${uploading}/${media.length}…`
@@ -552,7 +568,7 @@ function Composer({
           }}
         />
       )}
-    </section>
+    </ProCard>
   );
 }
 
