@@ -328,3 +328,33 @@ textarea {
 .mb-cipher>u{position:absolute;inset:0;text-decoration:none;background:radial-gradient(ellipse at 50% 0%,rgba(255,122,47,.12),transparent 60%)}
 @keyframes mb-rain{from{transform:translateY(-100%)}to{transform:translateY(var(--mb-h,100vh))}}
 
+
+/* ------------------------------------------------------------
+   The public home page (pages/Landing.tsx).
+   ------------------------------------------------------------ */
+
+/* A hairline grid that fades out from the middle — texture without
+   pattern. */
+@utility lp-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 35%, #000 25%, transparent 75%);
+}
+
+/* Big outlined step numbers. */
+@utility lp-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(255 122 47 / 0.7);
+}
+
+/* The mascot bobbing, very gently. Stilled by the reduced-motion rule
+   above. */
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@utility lp-float {
+  animation: lp-float 7s ease-in-out infinite;
+}
