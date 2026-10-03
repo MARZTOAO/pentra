@@ -12,6 +12,7 @@ import { hasPlus } from "../lib/profile";
 import { Anchored } from "./Anchored";
 import { MotionBackground } from "./MotionBackground";
 import { ProBadge } from "./ProBadge";
+import { ProNudge } from "./ProNudge";
 import { Alert } from "./ui";
 
 export function BackgroundPicker({
@@ -169,6 +170,8 @@ export function BackgroundPicker({
           </p>
         </div>
       </div>
+
+      {!pro && <ProNudge what="Moving backgrounds and the Pro set" />}
     </section>
   );
 }

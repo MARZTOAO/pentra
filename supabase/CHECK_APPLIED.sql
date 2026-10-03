@@ -642,7 +642,13 @@ checks(migration, feature, present) as (
 
     ('86_ad_spacing',
      'Posts between ads, set in DevPanel -> Ads',
-     exists (select 1 from fn where fn.name = 'ad_posts_between'))
+     exists (select 1 from fn where fn.name = 'ad_posts_between')),
+
+    ('87_pentra_pro_billing',
+     'Pentra Pro subscriptions (Stripe), creator codes, refunds',
+     to_regclass('public.billing_subscriptions') is not null
+     and exists (select 1 from fn where fn.name = 'billing_apply_payment')
+     and exists (select 1 from fn where fn.name = 'pro_on_sale'))
 )
 select
   migration,

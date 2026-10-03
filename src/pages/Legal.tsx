@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Prose, Section } from "../components/Site";
 import { MIN_AGE, SUPPORT_EMAIL } from "../lib/constants";
+import { PRICES, REFUND_DAYS } from "../lib/billing";
 
 /**
  * Privacy and Terms.
@@ -14,7 +15,7 @@ import { MIN_AGE, SUPPORT_EMAIL } from "../lib/constants";
  * Not reviewed by a lawyer. Before this is relied on, it should be.
  */
 
-const UPDATED = "October 1, 2026";
+const UPDATED = "October 2, 2026";
 
 /**
  * Where someone writes with a question.
@@ -127,6 +128,7 @@ export function Privacy() {
           <li><strong>Supabase</strong> hosts the database and handles sign-in.</li>
           <li><strong>Vercel</strong> serves the website.</li>
           <li><strong>GitHub</strong> hosts the desktop app downloads and updates. Checking for an update tells GitHub your IP address, as any download does.</li>
+          <li><strong>Stripe</strong> takes payment for Pentra Pro. Your card details go to Stripe, on Stripe's own page, and never to us; we keep Stripe's reference for your subscription, what plan you're on, and a record of each payment and refund. Stripe's <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer" className="text-accent hover:underline">privacy policy</a> covers what Stripe does with the card.</li>
         </ul>
         <p>
           The games catalogue comes from IGDB. That is a one-way import:
@@ -154,8 +156,9 @@ export function Privacy() {
         <p>
           Pentra keeps you signed in with a token stored in your browser
           (or in the desktop app). It also remembers small preferences
-          locally, like which theme you use. There are no tracking cookies
-          and no analytics scripts.
+          locally, like which theme you use, or a creator's code you
+          arrived with so it's filled in if you upgrade. There are no
+          tracking cookies and no analytics scripts.
         </p>
       </Section>
 
@@ -200,10 +203,11 @@ export function Terms() {
     <Prose kicker="Terms" title="The deal." updated={UPDATED}>
       <Section title="The short version">
         <p>
-          Pentra is free to use. Be a decent person to the people you
-          meet through it, don't try to break it, and understand that
-          it's run by a small team and might occasionally go down or
-          change. That's most of it.
+          Pentra is free to use, with a paid tier called Pentra Pro for
+          extras. Be a decent person to the people you meet through it,
+          don't try to break it, and understand that it's run by a small
+          team and might occasionally go down or change. That's most of
+          it.
         </p>
       </Section>
 
@@ -245,6 +249,55 @@ export function Terms() {
         <p>
           Don't post things you don't have the right to post — someone
           else's artwork, for instance.
+        </p>
+      </Section>
+
+      <Section title="Pentra Pro, payments and refunds">
+        <p>
+          <strong>What it is.</strong> Pentra Pro is a subscription that
+          unlocks cosmetic extras and lifts the free account's session
+          limits. Everything else — finding players, sessions, messaging
+          — stays free. Pro never changes who you're matched with.
+        </p>
+        <p>
+          <strong>Price.</strong> ${PRICES.monthly.billed.toFixed(2)} a
+          month, or ${PRICES.yearly.billed.toFixed(2)} a year (about
+          ${PRICES.yearly.perMonth.toFixed(2)} a month). Prices are in US
+          dollars; your bank may add conversion fees, and tax may be added
+          at checkout where it applies. We'll tell you at least
+          30 days before a price changes, and the change applies from
+          your next renewal after that.
+        </p>
+        <p>
+          <strong>Renewal and cancelling.</strong> A subscription renews
+          automatically — monthly or yearly, whichever you chose — until
+          you cancel, and you can cancel at any time from Settings →
+          Pentra Pro (it opens Stripe, where you can also change your
+          card). Cancelling stops the next charge; Pro stays on until the
+          end of the period you've already paid for. Paid time is added
+          on top of any Pro you were given, so nothing you had is lost.
+        </p>
+        <p>
+          <strong>Refunds.</strong> If Pro isn't for you, ask within{" "}
+          {REFUND_DAYS} days of your first payment and we'll refund it in
+          full — once per account. Renewals, and anything after the{" "}
+          {REFUND_DAYS} days, aren't refundable; cancel instead and use
+          what you've paid for. A refund ends the subscription and the
+          time it bought. Where the law where you live gives you more
+          than this, that applies. Write to us (below) with your username
+          to ask.
+        </p>
+        <p>
+          <strong>Creator codes.</strong> A code from a partner takes a
+          percentage off your first payment only; renewals are at the
+          full price. One code per account, for a first-time subscriber.
+          We tell the partner how many people used their code, never who.
+        </p>
+        <p>
+          <strong>Payment.</strong> Stripe takes the payment on its own
+          page; we never see your card. If a renewal fails, Stripe retries
+          for a while and Pro stops if it keeps failing. If your account
+          is closed for breaking these terms, no refund is owed.
         </p>
       </Section>
 

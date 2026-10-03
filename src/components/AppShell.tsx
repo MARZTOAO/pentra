@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { useIsDeveloper } from "../lib/dev";
+import { useFlag } from "../lib/flags";
 import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
@@ -103,6 +104,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Only decides whether to show the Metrics link. The numbers behind
   // it are refused by the database to anybody else.
   const isDev = useIsDeveloper(user?.id);
+  // The Pro link, once there's something to buy. Sidebar only: the
+  // phone tab bar is full, and Settings has the same door.
+  const proSales = useFlag("pro_sales");
 
   // Check in every minute while the app is open. This is what drives
   // the online dots and the recency part of match scoring - without it
@@ -190,15 +194,30 @@ export function AppShell({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
 
+          {proSales && (
+            <NavLink
+              to="/pro"
+              className={({ isActive }) =>
+                "label-wide mt-3 flex items-center gap-3 border-t border-line px-3 pb-2.5 pt-3.5 transition " +
+                (isActive
+                  ? "notch-sm border-transparent bg-accent text-onaccent"
+                  : "text-[#f7b733] hover:bg-surface-2 hover:text-[#ffd36b]")
+              }
+            >
+              <Icon d="M12 2.5 15 9l7 .8-5.2 4.8 1.5 7-6.3-3.6L5.7 21.6l1.5-7L2 9.8 9 9z" />
+              <span className="flex-1">Pentra Pro</span>
+            </NavLink>
+          )}
+
           {/* Developers only, and only here: the phone tab bar is full,
               so on a phone it's reached from Settings → Developer. */}
           {isDev && (
             <NavLink
               to="/dev"
               className={({ isActive }) =>
-                "label-wide mt-3 flex items-center gap-3 border-t border-line px-3 pb-2.5 pt-3.5 transition " +
+                "label-wide flex items-center gap-3 px-3 py-2.5 transition " +
                 (isActive
-                  ? "notch-sm border-transparent bg-accent text-onaccent"
+                  ? "notch-sm bg-accent text-onaccent"
                   : "text-accent/80 hover:bg-surface-2 hover:text-accent")
               }
             >

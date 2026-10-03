@@ -3,6 +3,7 @@ import { useAuth } from "../lib/AuthContext";
 import { hasPlus, updateProfile, uploadAvatar, type Profile } from "../lib/profile";
 import { PRO_AVATARS, proAvatarOf, proAvatarPreset } from "../lib/proArt";
 import { ProBadge } from "./ProBadge";
+import { ProNudge } from "./ProNudge";
 import { prepareAvatar, MediaError } from "../lib/media";
 import {
   AVATAR_SHAPES,
@@ -322,6 +323,8 @@ export function AvatarPicker({
           <Alert>{error}</Alert>
         </div>
       )}
+
+      {!pro && <ProNudge what="The Pro avatars" />}
     </section>
   );
 }

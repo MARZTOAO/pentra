@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
 import { captureReferralFromUrl } from "./lib/referrals";
+import { captureCreatorFromUrl } from "./lib/billing";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
 import { Notifications } from "./components/Notifications";
@@ -23,6 +24,7 @@ import { Privacy, Terms } from "./pages/Legal";
 import Confirm from "./pages/Confirm";
 import Forgot from "./pages/Forgot";
 import DevMetrics from "./pages/DevMetrics";
+import Pro from "./pages/Pro";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -37,6 +39,8 @@ function Shell({ children }: { children: React.ReactNode }) {
 // `?ref=` on the root, and the router would otherwise throw the query
 // string away on the first navigation.
 captureReferralFromUrl();
+// Same for a creator's `?creator=CODE` link (lib/billing.ts).
+captureCreatorFromUrl();
 
 export default function App() {
   return (
@@ -164,6 +168,17 @@ export default function App() {
             element={
               <Shell>
                 <Settings />
+              </Shell>
+            }
+          />
+
+          {/* Pentra Pro: the upgrade page and your plan. Stripe sends
+              people back here (/pro?done=1) after paying. */}
+          <Route
+            path="/pro"
+            element={
+              <Shell>
+                <Pro />
               </Shell>
             }
           />

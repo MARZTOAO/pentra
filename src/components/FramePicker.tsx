@@ -4,13 +4,13 @@ import { hasPlus, updateProfile, type Profile } from "../lib/profile";
 import { FRAMES, frameOf, rememberFrame } from "../lib/frames";
 import { Avatar } from "./Avatar";
 import { ProBadge } from "./ProBadge";
+import { ProNudge } from "./ProNudge";
 import { Alert } from "./ui";
 
 /**
- * Choose an avatar frame. Pentra Pro only — the section doesn't
- * appear for anyone else (the upsell belongs with the Pro section in
- * Settings, once there is something to buy). The database enforces
- * the rule regardless; see supabase/78.
+ * Choose an avatar frame. Pentra Pro only — anyone else gets a line
+ * pointing at the upgrade page (nothing at all while Pro isn't on
+ * sale). The database enforces the rule regardless; see supabase/78.
  */
 export function FramePicker({
   profile,
@@ -23,7 +23,7 @@ export function FramePicker({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!hasPlus(profile)) return null;
+  if (!hasPlus(profile)) return <ProNudge what="Avatar frames" section />;
 
   const current = frameOf(profile);
 

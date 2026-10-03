@@ -30,10 +30,21 @@ function jumpTo(id: string) {
 /**
  * @param sections Show the jump links. Only on the home page — the
  *   sections they point to don't exist on Privacy or Terms.
+ * @param pricing Add the Pricing link: the home page has that section
+ *   only once Pentra Pro is on sale.
  */
-export function SiteHeader({ sections = false }: { sections?: boolean }) {
+export function SiteHeader({
+  sections = false,
+  pricing = false,
+}: {
+  sections?: boolean;
+  pricing?: boolean;
+}) {
   const { session } = useAuth();
   const signedIn = Boolean(session);
+  const links = pricing
+    ? [...SECTIONS.slice(0, 2), { id: "pricing", label: "Pricing" }, SECTIONS[2]]
+    : SECTIONS;
 
   return (
     // Sticky and frosted, with a hairline under it, so it stays to hand
@@ -46,7 +57,7 @@ export function SiteHeader({ sections = false }: { sections?: boolean }) {
 
         {sections && (
           <nav className="hidden items-center gap-1 md:flex" aria-label="Sections">
-            {SECTIONS.map((s) => (
+            {links.map((s) => (
               <button
                 key={s.id}
                 type="button"

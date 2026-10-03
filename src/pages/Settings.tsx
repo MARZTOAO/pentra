@@ -10,6 +10,7 @@ import { ChangePassword } from "../components/ChangePassword";
 import { BirthDateSection } from "../components/BirthDateSection";
 import { DevPanel } from "../components/DevPanel";
 import { DesktopSection } from "../components/DesktopSection";
+import { ProSection } from "../components/ProSection";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -60,6 +61,8 @@ export default function Settings() {
       </header>
 
       {error && <Alert>{error}</Alert>}
+
+      <ProSection />
 
       <NotificationSettingsPanel />
 

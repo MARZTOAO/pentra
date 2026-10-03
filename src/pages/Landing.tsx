@@ -13,6 +13,8 @@ import {
 import { PLATFORMS } from "../lib/constants";
 import { AdSlot } from "../components/AdSlot";
 import { SiteHeader, SiteFooter } from "../components/Site";
+import { CREATOR_DISCOUNT, PRICES, useProOnSale } from "../lib/billing";
+import { ON_GOLD, PRO_GOLD } from "../components/ProCard";
 import { FullScreenLoader } from "../components/ui";
 
 /**
@@ -29,10 +31,13 @@ import { FullScreenLoader } from "../components/ui";
  * light rather than colour, and small pieces of real Pentra UI in
  * place of stock imagery. The UI pieces use made-up sample data and
  * describe features that exist today; nothing here promises anything
- * the app doesn't do. Pentra Pro isn't mentioned until it's on sale.
+ * the app doesn't do. Pentra Pro isn't mentioned until it's on sale
+ * (the Pricing section asks the database, so launch day needs no
+ * deploy of the site).
  */
 export default function Landing() {
   const { session, loading } = useAuth();
+  const proOnSale = useProOnSale();
 
   // The desktop app never shows the page that sells the desktop app.
   // Signed-in people in a browser DO see it — it is where the
@@ -45,13 +50,14 @@ export default function Landing() {
 
   return (
     <div className="min-h-full overflow-x-clip bg-bg text-ink">
-      <SiteHeader sections />
+      <SiteHeader sections pricing={proOnSale} />
       <Hero signedIn={signedIn} />
       <PlatformStrip />
       <HowItWorks />
       <AdSlot slot={import.meta.env.VITE_ADSENSE_SLOT_HOME_MID} className="my-16" />
       <Features />
       <OgCallout signedIn={signedIn} />
+      {proOnSale && <Pricing signedIn={signedIn} />}
       <Download />
       <FinalCta signedIn={signedIn} />
       <SiteFooter />
@@ -504,6 +510,115 @@ function OgCallout({ signedIn }: { signedIn: boolean }) {
             <Arrow />
           </Link>
         )}
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pricing — only once Pro is on sale                                 */
+/* ------------------------------------------------------------------ */
+
+const FREE_HAS = [
+  "Find players by game, platform and hours",
+  "Host a session, join up to three",
+  "Friends, messages and the feed",
+  "The desktop app",
+];
+
+const PRO_HAS = [
+  "Everything in Free",
+  "The gold PRO badge",
+  "30 avatar frames",
+  "Moving profile backgrounds",
+  "50 Pro avatars and 40 backgrounds",
+  "Gold posts and sessions",
+  "Host and join unlimited sessions",
+];
+
+function Pricing({ signedIn }: { signedIn: boolean }) {
+  const y = PRICES.yearly;
+  const m = PRICES.monthly;
+  return (
+    <section id="pricing" className="scroll-mt-20 border-t border-line bg-surface/30">
+      <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
+        <SectionHead kicker="Pricing" title="Free to play. Pro if you want the gold." />
+
+        <div className="mt-12 grid gap-4 md:grid-cols-2">
+          {/* Free */}
+          <div className="notch border border-line bg-surface p-7 sm:p-9">
+            <p className="label-wide text-muted">Free</p>
+            <p className="mt-4">
+              <span className="display text-4xl">$0</span>
+            </p>
+            <p className="mt-1 text-sm text-muted">Everything it takes to find your next squad.</p>
+            <ul className="mt-7 space-y-2.5 text-sm">
+              {FREE_HAS.map((f) => (
+                <li key={f} className="flex items-start gap-2.5">
+                  <span className="mt-1 text-accent"><Check /></span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+            {!signedIn && (
+              <Link
+                to="/signup"
+                className="notch-md mt-9 inline-flex items-center gap-2 border border-line px-5 py-3 text-sm font-semibold transition hover:border-muted"
+              >
+                Create your free account
+                <Arrow />
+              </Link>
+            )}
+          </div>
+
+          {/* Pro */}
+          <div className="relative notch p-px" style={{ background: PRO_GOLD }}>
+            <div className="notch h-full bg-surface p-7 sm:p-9">
+              <div className="flex items-center justify-between gap-3">
+                <p className="label-wide" style={{ color: "#f7b733" }}>Pentra Pro</p>
+                <span
+                  className="notch-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  style={{ background: PRO_GOLD, color: ON_GOLD }}
+                >
+                  Save 17% yearly
+                </span>
+              </div>
+              <p className="mt-4">
+                <span className="display text-4xl">${y.perMonth.toFixed(2)}</span>
+                <span className="text-sm text-muted"> / month</span>
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                Billed ${y.billed.toFixed(2)} a year, or ${m.billed.toFixed(2)} month to month.
+              </p>
+              <ul className="mt-7 space-y-2.5 text-sm">
+                {PRO_HAS.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5">
+                    <span className="mt-1" style={{ color: "#f7b733" }}><Check /></span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to={signedIn ? "/pro" : "/signup"}
+                className="notch-md mt-9 inline-flex items-center gap-2 px-5 py-3 text-sm font-bold transition hover:brightness-105"
+                style={{ background: PRO_GOLD, color: ON_GOLD }}
+              >
+                {signedIn ? "Get Pentra Pro" : "Start free, upgrade any time"}
+                <Arrow />
+              </Link>
+              <p className="mt-5 text-xs leading-relaxed text-muted">
+                Cancel any time. Full refund within 14 days of your first
+                payment. Got a creator's code? {CREATOR_DISCOUNT.monthly}% off
+                your first month or {CREATOR_DISCOUNT.yearly}% off your first year.
+              </p>
+            </div>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 right-4 top-0 h-[3px]"
+              style={{ background: PRO_GOLD }}
+            />
+          </div>
+        </div>
       </div>
     </section>
   );
