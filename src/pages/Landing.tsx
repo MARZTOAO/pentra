@@ -13,7 +13,7 @@ import {
 import { PLATFORMS } from "../lib/constants";
 import { AdSlot } from "../components/AdSlot";
 import { SiteHeader, SiteFooter } from "../components/Site";
-import { CREATOR_DISCOUNT, PRICES, useProOnSale } from "../lib/billing";
+import { PRICES, useProOnSale } from "../lib/billing";
 import { ON_GOLD, PRO_GOLD } from "../components/ProCard";
 import { FullScreenLoader } from "../components/ui";
 
@@ -608,8 +608,7 @@ function Pricing({ signedIn }: { signedIn: boolean }) {
               </Link>
               <p className="mt-5 text-xs leading-relaxed text-muted">
                 Cancel any time. Full refund within 14 days of your first
-                payment. Got a creator's code? {CREATOR_DISCOUNT.monthly}% off
-                your first month or {CREATOR_DISCOUNT.yearly}% off your first year.
+                payment. Promo codes are entered at checkout.
               </p>
             </div>
             <span

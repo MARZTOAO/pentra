@@ -156,7 +156,7 @@ export function Privacy() {
         <p>
           Pentra keeps you signed in with a token stored in your browser
           (or in the desktop app). It also remembers small preferences
-          locally, like which theme you use, or a creator's code you
+          locally, like which theme you use, or a promo code you
           arrived with so it's filled in if you upgrade. There are no
           tracking cookies and no analytics scripts.
         </p>
@@ -288,10 +288,11 @@ export function Terms() {
           to ask.
         </p>
         <p>
-          <strong>Creator codes.</strong> A code from a partner takes a
-          percentage off your first payment only; renewals are at the
-          full price. One code per account, for a first-time subscriber.
-          We tell the partner how many people used their code, never who.
+          <strong>Promo codes.</strong> A promo code from one of our
+          creator partners takes a percentage off your first payment only;
+          renewals are at the full price. One code per account, for a
+          first-time subscriber. We tell the partner how many people used
+          their code, never who.
         </p>
         <p>
           <strong>Payment.</strong> Stripe takes the payment on its own

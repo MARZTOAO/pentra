@@ -308,11 +308,11 @@ function Buy({ billing, onWaiting }: { billing: MyBilling; onWaiting: () => void
         ))}
       </div>
 
-      {/* Creator code. Only first-time subscribers get the discount;
+      {/* Promo code (a creator partner's). Only first-time subscribers get the discount;
           the database knows whether this account has paid before. */}
       <div className="mt-4 notch-md border border-line bg-surface p-4">
         <label htmlFor="creator-code" className="label-wide text-muted">
-          Creator code <span className="normal-case tracking-normal">(optional)</span>
+          Promo code <span className="normal-case tracking-normal">(optional)</span>
         </label>
         <div className="mt-2 flex gap-2">
           <input
@@ -320,7 +320,7 @@ function Buy({ billing, onWaiting }: { billing: MyBilling; onWaiting: () => void
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             maxLength={20}
-            placeholder="From a YouTuber or streamer"
+            placeholder="Have a code? Enter it here"
             spellCheck={false}
             autoCapitalize="characters"
             className="numeric min-w-0 flex-1 notch-md border border-line bg-surface-2 px-3 py-2 text-sm uppercase outline-none transition placeholder:normal-case placeholder:text-muted focus:border-accent"
@@ -328,9 +328,9 @@ function Buy({ billing, onWaiting }: { billing: MyBilling; onWaiting: () => void
         </div>
         <p className="mt-2 min-h-[1.25rem] text-xs">
           {code.trim().length < 3 ? (
-            <span className="text-muted">
-              {CREATOR_DISCOUNT.monthly}% off your first month, or {CREATOR_DISCOUNT.yearly}% off your first year.
-            </span>
+            /* Nothing until a code is typed: the discount is the code's
+               to reveal, not the page's to advertise. */
+            <span />
           ) : checking ? (
             <span className="text-muted">Checking…</span>
           ) : check === null ? (
@@ -338,7 +338,7 @@ function Buy({ billing, onWaiting }: { billing: MyBilling; onWaiting: () => void
           ) : !check.ok ? (
             <span className="text-danger">That code isn't valid or isn't active.</span>
           ) : !check.first_time ? (
-            <span className="text-muted">Creator codes are for your first subscription only.</span>
+            <span className="text-muted">Promo codes are for your first subscription only.</span>
           ) : (
             <span className="text-ok">
               {check.creator_name}'s code: {CREATOR_DISCOUNT[plan]}% off your first{" "}
