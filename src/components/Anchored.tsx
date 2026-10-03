@@ -45,24 +45,29 @@ export function Anchored({
   children: ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   useLayoutEffect(() => {
     function place() {
       const anchor = anchorRef.current;
       if (!anchor) return;
 
+      // A panel wider than the screen (the background picker is 416px;
+      // a phone is 360–430) gets narrowed to fit, with the same 8px
+      // margin each side. The grids inside are fluid, so they reflow.
+      const w = Math.min(width, window.innerWidth - 16);
+
       const rect = anchor.getBoundingClientRect();
-      const wanted = align === "right" ? rect.right - width : rect.left;
+      const wanted = align === "right" ? rect.right - w : rect.left;
 
       // Never let it hang off the side of the window; an 8px margin keeps
       // it from looking wedged against the edge.
       const left = Math.max(
         8,
-        Math.min(wanted, window.innerWidth - width - 8),
+        Math.min(wanted, window.innerWidth - w - 8),
       );
 
-      setPos({ top: rect.bottom + 8, left });
+      setPos({ top: rect.bottom + 8, left, width: w });
     }
 
     place();
@@ -101,7 +106,7 @@ export function Anchored({
       className="float-shadow z-50"
       style={{
         position: "fixed",
-        width,
+        width: pos?.width ?? width,
         // Parked off-screen for the first paint, before we've measured.
         top: pos?.top ?? -9999,
         left: pos?.left ?? -9999,
