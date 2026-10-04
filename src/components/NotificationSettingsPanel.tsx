@@ -10,6 +10,7 @@ import {
   setAutostart,
   setCloseToTray,
   setNotificationsEnabled,
+  testNotification,
 } from "../lib/desktop";
 import {
   DEFAULT_SETTINGS,
@@ -41,6 +42,20 @@ export function NotificationSettingsPanel() {
   const [tray, setTray] = useState(closeToTray);
   const [startup, setStartup] = useState(false);
   const [startupError, setStartupError] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  async function sendTest() {
+    if (testing) return;
+    setTesting(true);
+    setTestResult(null);
+    const problem = await testNotification();
+    setTesting(false);
+    setTestResult(
+      problem ??
+        "Sent. If nothing appeared, open Windows Settings → System → Notifications and check Pentra is allowed and Do not disturb is off.",
+    );
+  }
 
   useEffect(() => {
     if (desktop) void autostartEnabled().then(setStartup);
@@ -144,6 +159,22 @@ export function NotificationSettingsPanel() {
               setNotificationsEnabled(next);
             }}
           />
+
+          {toasts && (
+            <div className="px-3 pb-2">
+              <button
+                type="button"
+                onClick={sendTest}
+                disabled={testing}
+                className="notch-sm border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-muted hover:text-ink disabled:opacity-50"
+              >
+                {testing ? "Sending…" : "Send a test notification"}
+              </button>
+              {testResult && (
+                <p className="mt-2 text-xs leading-snug text-muted">{testResult}</p>
+              )}
+            </div>
+          )}
 
           <DeviceToggle
             on={tray}

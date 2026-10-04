@@ -83,13 +83,16 @@ export async function ensurePermission(): Promise<boolean> {
   if (!isDesktopApp()) return false;
   if (granted !== null) return granted;
 
+  // The plugin's own commands, called directly. Its JavaScript wrapper
+  // consults the browser's `window.Notification.permission` first, and
+  // WebView2 answers "denied" to that regardless of what Windows would
+  // say — which made this return false and silenced every toast.
   try {
-    const { isPermissionGranted, requestPermission } = await import(
-      "@tauri-apps/plugin-notification"
-    );
-    granted = (await isPermissionGranted())
-      ? true
-      : (await requestPermission()) === "granted";
+    const { invoke } = await import("@tauri-apps/api/core");
+    const already = (await invoke("plugin:notification|is_permission_granted")) as boolean | null;
+    granted =
+      already === true ||
+      ((await invoke("plugin:notification|request_permission")) as string) === "granted";
   } catch {
     granted = false;
   }
@@ -119,22 +122,80 @@ export const MAX_TOASTS = 3;
 export async function notify(title: string, body: string): Promise<void> {
   if (!isDesktopApp()) return;
   if (!notificationsEnabled()) return;
-  if (isWindowInFront()) return;
-  if (!(await ensurePermission())) return;
+  if (await isWindowInFront()) return;
+  await send(title, body);
+}
 
+/**
+ * The Windows toast itself, with the "is anyone looking" check left
+ * out. notify() and the Settings test button both end up here.
+ *
+ * @returns null when Windows accepted it, otherwise a sentence.
+ */
+async function send(title: string, body: string): Promise<string | null> {
+  if (!(await ensurePermission())) {
+    return "Windows hasn't given Pentra permission to show notifications.";
+  }
   try {
-    const { sendNotification } = await import("@tauri-apps/plugin-notification");
-    sendNotification({ title, body: trim(body) });
-  } catch {
-    /* A notification that fails to send is not worth interrupting
-       anything over. The bell still has it. */
+    // Straight to the command. The wrapper (`sendNotification`) fires
+    // and forgets, so a failure there is invisible; this one is awaited
+    // and reports back.
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("plugin:notification|notify", { options: { title, body: trim(body) } });
+    return null;
+  } catch (e) {
+    // A notification that fails to send is not worth interrupting
+    // anything over — the bell still has it — but the test button
+    // wants to know what Windows said.
+    return e instanceof Error ? e.message : String(e);
   }
 }
 
-/** True when Pentra is the window being looked at right now. */
-export function isWindowInFront(): boolean {
+/**
+ * Settings → "Send a test notification". Skips the in-front check on
+ * purpose (you are, by definition, looking at Settings) so it answers
+ * the only question that matters: does a toast from Pentra reach
+ * Windows on this machine at all?
+ *
+ * @returns null when it was sent, or the reason it wasn't.
+ */
+export async function testNotification(): Promise<string | null> {
+  if (!isDesktopApp()) return "Only the desktop app can show Windows notifications.";
+  if (!notificationsEnabled()) return "Windows notifications are switched off above.";
+  return send("Pentra", "This is what a notification looks like. If you can read this, they work.");
+}
+
+/**
+ * True when Pentra is the window being looked at right now.
+ *
+ * Asks Windows, through Tauri, rather than the page. The page's own
+ * answer — `document.visibilityState` and `document.hasFocus()` — is
+ * not trustworthy here: the window is hidden with ShowWindow(SW_HIDE),
+ * and WebView2 isn't told, so a window sitting in the tray can keep
+ * reporting itself visible and focused. Every toast was then being
+ * suppressed as "they're already looking at it". (Found 2026-10-03:
+ * sound and tray dot arrived, no toast ever did.)
+ *
+ * If the native calls fail, this says "not in front": a toast you
+ * didn't need beats one you never got.
+ */
+export async function isWindowInFront(): Promise<boolean> {
+  if (!isDesktopApp()) {
+    try {
+      return document.visibilityState === "visible" && document.hasFocus();
+    } catch {
+      return false;
+    }
+  }
   try {
-    return document.visibilityState === "visible" && document.hasFocus();
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    const w = getCurrentWindow();
+    const [visible, minimized, focused] = await Promise.all([
+      w.isVisible(),
+      w.isMinimized(),
+      w.isFocused(),
+    ]);
+    return visible && !minimized && focused;
   } catch {
     return false;
   }

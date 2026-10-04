@@ -18,7 +18,7 @@ import {
 } from "../lib/chat";
 import { Avatar } from "./Avatar";
 import { play } from "../lib/sound";
-import { notify, reportUnread, MAX_TOASTS } from "../lib/desktop";
+import { notify, isWindowInFront, reportUnread, MAX_TOASTS } from "../lib/desktop";
 import { POLL_MS } from "../lib/notifications";
 
 type Toast = {
@@ -146,12 +146,15 @@ export function Notifications({ children }: { children: ReactNode }) {
       return;
     }
 
+    // A thread that is open in a window nobody is looking at is not
+    // being read; only skip it when the window is actually in front.
+    const front = await isWindowInFront();
     const missed = rows.filter(
       (row) =>
         Number(row.unread ?? 0) > 0 &&
         !row.archived &&
         !row.last_from_me &&
-        row.conversation_id !== openIdRef.current &&
+        (row.conversation_id !== openIdRef.current || !front) &&
         stamp(row.last_message_at) >
           (announced.current.get(row.conversation_id) ?? 0),
     );
@@ -225,8 +228,11 @@ export function Notifications({ children }: { children: ReactNode }) {
 
           refreshRef.current();
 
-          // Don't interrupt someone already reading that thread.
-          if (openIdRef.current === message.conversation_id) return;
+          // Don't interrupt someone already reading that thread — but
+          // a thread left open in a window that's hidden in the tray
+          // isn't being read, and that message still needs announcing.
+          const reading = openIdRef.current === message.conversation_id;
+          if (reading && (await isWindowInFront())) return;
 
           const { data } = await supabase
             .from("profiles")
@@ -238,7 +244,12 @@ export function Notifications({ children }: { children: ReactNode }) {
 
           // They may have opened the thread while that query was in
           // flight. Check again before showing anything.
-          if (openIdRef.current === message.conversation_id) return;
+          if (
+            openIdRef.current === message.conversation_id &&
+            (await isWindowInFront())
+          ) {
+            return;
+          }
 
           const toast: Toast = {
             id: message.id,
@@ -257,6 +268,14 @@ export function Notifications({ children }: { children: ReactNode }) {
           if (!notified.current.has(message.id)) {
             notified.current.add(message.id);
             void notify(data.display_name || data.username, message.body);
+          }
+
+          // The thread itself is open (just not in front): the message
+          // is already on screen for when they come back, so the
+          // Windows toast and the sound are enough — no in-app toast.
+          if (reading) {
+            play("message");
+            return;
           }
 
           setToasts((current) => {
