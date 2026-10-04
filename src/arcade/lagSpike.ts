@@ -44,7 +44,7 @@ const JUMP_V = -640;
 const HOLD_GRAVITY = 0.52; // gravity while the button is held and still rising
 const SPEED_START = 320;
 const SPEED_MAX = 700;
-const SPEED_RAMP = 11; // px/s gained per second
+const SPEED_RAMP = 14; // px/s gained per second
 const SCORE_DIVISOR = 32; // points per second = speed / this
 const RESTART_LOCK_MS = 450; // ignore presses right after dying
 
@@ -123,7 +123,7 @@ export function mountLagSpike(
     py = GROUND;
     vy = 0;
     spikes = [];
-    nextSpawnIn = 0.9;
+    nextSpawnIn = 0.8;
     scroll = 0;
     flash = 0;
     squash = 0;
@@ -179,20 +179,43 @@ export function mountLagSpike(
     held = false;
   }
 
-  // Spikes come in groups of one to three; the gap after a group grows
-  // with speed so there is always time to land and jump again.
+  // How far into the run we are, 0 at the start and 1 at full speed.
+  // Everything that makes the game harder reads from this.
+  function difficulty() {
+    return Math.min(1, Math.max(0, (speed - SPEED_START) / (SPEED_MAX - SPEED_START)));
+  }
+
+  // Spikes come in groups; the gaps between groups are random and get
+  // shorter as the run goes on, and the groups get bigger and taller.
+  // The gap is measured in time at the current speed, not pixels: a
+  // jump lasts the same ~0.6s no matter how fast the wire moves, so
+  // the floor is "just enough to land and jump again" at any speed.
   function spawnGroup() {
-    const n = rnd() < 0.5 ? 1 : rnd() < 0.7 ? 2 : 3;
-    const w = 16 + rnd() * 8;
+    const d = difficulty();
+    const r = rnd();
+    // Group size: early on mostly singles and pairs; late, pairs to fours.
+    const n =
+      r < 0.45 - d * 0.35 ? 1
+      : r < 0.85 - d * 0.25 ? 2
+      : r < 0.97 - d * 0.1 ? 3
+      : 4;
+    const w = 15 + rnd() * 8;
+    // One tall spike now and then that needs the held, higher jump.
+    const tall = n === 1 && rnd() < 0.15 + d * 0.25;
     let x = width + 20;
     for (let i = 0; i < n; i++) {
-      const h = 26 + rnd() * 20;
+      const h = tall ? 72 + rnd() * 12 : 24 + rnd() * (18 + d * 12);
       spikes.push({ x, w, h });
       x += w + 2;
     }
-    // Seconds until the next group: enough for a jump plus a breath.
+    // Seconds until the next group. The floor is a jump's air time
+    // (land, jump straight away); the ceiling closes in with difficulty.
     const airTime = (2 * -JUMP_V) / GRAVITY; // ≈ 0.61s
-    nextSpawnIn = airTime * 1.15 + 0.35 + rnd() * 0.9;
+    const minT = airTime * 0.95;
+    const maxT = 1.9 - d * 1.05;
+    // Squared so short gaps are the common case, long ones the breather.
+    const t = minT + Math.pow(rnd(), 1.4) * (maxT - minT);
+    nextSpawnIn = t + (n * (w + 2)) / Math.max(speed, 1);
   }
 
   function step(dt: number) {
