@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { registerPlugin } from "@capacitor/core";
 import { supabase } from "./supabase";
-import { isDesktopApp, openExternal } from "./platform";
+import { isDesktopApp, isNativeApp, openExternal } from "./platform";
 
 /**
  * Pentra Pro billing — the app's side.
@@ -132,6 +133,63 @@ export function forgetCreatorCode() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Where Pro can be sold                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The iPhone app's own Swift code (ios/App/App/Storefront.swift): which
+ * country's App Store this iPhone is signed in to.
+ */
+const Storefront = registerPlugin<{
+  getCountryCode(): Promise<{ countryCode: string }>;
+}>("Storefront");
+
+let sellsHere: Promise<boolean> | null = null;
+
+/**
+ * May this copy of Pentra show Pro's checkout and billing buttons?
+ *
+ * On the website and in the Windows app: always.
+ *
+ * In the iPhone app: only for the US App Store. Since May 2025 Apple
+ * lets US apps link to buying on the web (App Review Guideline 3.1.1);
+ * everywhere else, an app that points people at outside payment gets
+ * rejected. The App Store's country is not the phone's language or
+ * location: it's the Apple account's, which only iOS can tell us. If it
+ * can't be read, the answer is no — hiding a button is a smaller
+ * mistake than a rejection.
+ *
+ * Re-check Guideline 3.1.1 before every App Store submission.
+ */
+export function canSellProHere(): Promise<boolean> {
+  if (!isNativeApp()) return Promise.resolve(true);
+  sellsHere ??= Storefront.getCountryCode()
+    .then((r) => r.countryCode === "USA")
+    .catch(() => false);
+  return sellsHere;
+}
+
+/**
+ * canSellProHere() as a hook. null while the iPhone app is still
+ * asking (a moment, once per launch); callers that just hide a button
+ * can treat that as false.
+ */
+export function useSellsProHere(): boolean | null {
+  const [here, setHere] = useState<boolean | null>(isNativeApp() ? null : true);
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    let active = true;
+    canSellProHere().then((v) => {
+      if (active) setHere(v);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return here;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Opening Stripe                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -155,14 +213,15 @@ async function callPro(body: Record<string, unknown>): Promise<FnResult> {
 /**
  * Sends the player to Stripe. In a browser that's this tab (Stripe
  * brings them back to pentra.gg/#/pro); in the desktop app it's their
- * own browser, and the app notices Pro arriving when they come back.
+ * own browser, and in the iPhone app a Safari sheet over the app —
+ * either way the app notices Pro arriving when they come back.
  *
  * @returns null once Stripe is opening, or a sentence to show.
  */
 async function go(body: Record<string, unknown>): Promise<string | null> {
   const r = await callPro(body);
   if (!r.url) return r.message ?? "Something went wrong. Try again in a minute.";
-  if (isDesktopApp()) await openExternal(r.url);
+  if (isDesktopApp() || isNativeApp()) await openExternal(r.url);
   else window.location.assign(r.url);
   return null;
 }

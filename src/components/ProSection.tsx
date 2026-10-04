@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { useFlag } from "../lib/flags";
-import { PRICES, getMyBilling, openBillingPortal, renews, type MyBilling } from "../lib/billing";
+import {
+  PRICES,
+  getMyBilling,
+  openBillingPortal,
+  renews,
+  useSellsProHere,
+  type MyBilling,
+} from "../lib/billing";
 import { ProBadge } from "./ProBadge";
 
 /**
@@ -14,7 +21,11 @@ import { ProBadge } from "./ProBadge";
  */
 export function ProSection() {
   const { user } = useAuth();
-  const open = useFlag("pro_sales");
+  const flag = useFlag("pro_sales");
+  // In the iPhone app outside the US App Store there are no buttons to
+  // Stripe at all (see canSellProHere): a member still sees their plan.
+  const sellsHere = useSellsProHere() === true;
+  const open = flag && sellsHere;
   const [billing, setBilling] = useState<MyBilling | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +67,7 @@ export function ProSection() {
       <p className="mb-4 text-xs text-muted">{line}</p>
 
       <div className="flex flex-wrap gap-2">
-        {s ? (
+        {s && sellsHere ? (
           <button
             type="button"
             onClick={manage}

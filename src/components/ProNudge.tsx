@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useFlag } from "../lib/flags";
+import { useSellsProHere } from "../lib/billing";
 import { ProBadge } from "./ProBadge";
 
 /**
@@ -7,7 +8,8 @@ import { ProBadge } from "./ProBadge";
  * backgrounds, Pro art — pointing at the upgrade page.
  *
  * Draws nothing while Pro isn't on sale: a pitch for something you
- * can't buy is just a tease. Callers hide the perk's own controls for
+ * can't buy is just a tease — which is also why it's hidden in the
+ * iPhone app outside the US App Store. Callers hide the perk's own controls for
  * non-Pro regardless; this is the only thing they see instead.
  *
  * @param what  The perk, as a plural noun: "Avatar frames".
@@ -15,8 +17,9 @@ import { ProBadge } from "./ProBadge";
  *   otherwise hidden) rather than a line inside one.
  */
 export function ProNudge({ what, section = false }: { what: string; section?: boolean }) {
-  const open = useFlag("pro_sales");
-  if (!open) return null;
+  const flag = useFlag("pro_sales");
+  const sellsHere = useSellsProHere();
+  if (!flag || sellsHere !== true) return null;
 
   const line = (
     <>

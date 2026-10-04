@@ -14,7 +14,7 @@ import { DesktopSection } from "../components/DesktopSection";
 import { ProSection } from "../components/ProSection";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   // For the link at the foot of the page: on a phone there is no
   // sidebar, so this is how a developer reaches /dev.
   const isDev = useIsDeveloper(user?.id);
@@ -170,6 +170,25 @@ export default function Settings() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Signing out on a phone. On a computer it's at the foot of the
+          sidebar; a phone has no sidebar and the tab bar has no room, so
+          until this card there was no way to sign out on a phone at all
+          (website or iPhone app). Phones only, so a computer doesn't
+          show it twice. */}
+      <section className="mb-8 notch border border-line bg-surface p-5 md:hidden">
+        <h2 className="mb-1 label-wide text-muted">Account</h2>
+        <p className="mb-4 truncate text-xs text-muted">
+          Signed in as {user?.email}
+        </p>
+        <button
+          type="button"
+          onClick={signOut}
+          className="notch-md border border-line px-4 py-2 text-sm font-semibold transition hover:border-muted"
+        >
+          Sign out
+        </button>
       </section>
 
       {/* Last on the page, on purpose. */}

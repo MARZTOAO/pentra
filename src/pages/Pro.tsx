@@ -13,11 +13,12 @@ import {
   rememberedCreatorCode,
   renews,
   startCheckout,
+  useSellsProHere,
   type CodeCheck,
   type MyBilling,
   type Plan,
 } from "../lib/billing";
-import { isDesktopApp } from "../lib/platform";
+import { isDesktopApp, isNativeApp } from "../lib/platform";
 import { ProBadge } from "../components/ProBadge";
 import { ON_GOLD, PRO_GOLD } from "../components/ProCard";
 import { Alert, FullScreenLoader } from "../components/ui";
@@ -45,6 +46,9 @@ export default function Pro() {
   // "Waiting for Stripe" — after coming back from checkout, or while
   // the desktop app's browser has the checkout open.
   const [waiting, setWaiting] = useState(done);
+  // false only in the iPhone app outside the US App Store, where this
+  // page shows your plan but has no buttons to Stripe (canSellProHere).
+  const sellsHere = useSellsProHere();
 
   useEffect(() => {
     loadFlags().then((f) => setOpen(f.has("pro_sales")));
@@ -78,7 +82,7 @@ export default function Pro() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [waiting]);
 
-  if (open === null || billing === undefined) return <FullScreenLoader />;
+  if (open === null || billing === undefined || sellsHere === null) return <FullScreenLoader />;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
@@ -101,7 +105,13 @@ export default function Pro() {
       ) : billing.permanent ? (
         <Permanent />
       ) : billing.subscription ? (
-        <Member billing={billing} onRefresh={() => getMyBilling().then(setBilling)} />
+        <Member
+          billing={billing}
+          canManage={sellsHere}
+          onRefresh={() => getMyBilling().then(setBilling)}
+        />
+      ) : !sellsHere ? (
+        <NotHere pro={billing.pro} expires={billing.expires_at} />
       ) : !open ? (
         <NotYet pro={billing.pro} expires={billing.expires_at} />
       ) : (
@@ -163,8 +173,39 @@ function NotYet({ pro, expires }: { pro: boolean; expires: string | null }) {
   );
 }
 
-/** A subscriber: what they're on, when it renews or ends, and the door to Stripe. */
-function Member({ billing, onRefresh }: { billing: MyBilling; onRefresh: () => void }) {
+/**
+ * The iPhone app outside the US App Store, for someone without a
+ * subscription. Apple doesn't allow pointing people at outside payment
+ * there — not even saying where else to buy — so this says only what's
+ * true and stops.
+ */
+function NotHere({ pro, expires }: { pro: boolean; expires: string | null }) {
+  return (
+    <section className="mb-8 notch border border-line bg-surface p-5 sm:p-6">
+      <h2 className="font-semibold">
+        {pro ? "You have Pentra Pro." : "Pentra Pro isn't available in the app here."}
+      </h2>
+      {pro && expires && (
+        <p className="mt-1 text-sm text-muted">Yours until {day(expires)}.</p>
+      )}
+    </section>
+  );
+}
+
+/**
+ * A subscriber: what they're on, when it renews or ends, and the door
+ * to Stripe — unless canManage is false (the iPhone app outside the US
+ * App Store), when it's the plan alone.
+ */
+function Member({
+  billing,
+  canManage,
+  onRefresh,
+}: {
+  billing: MyBilling;
+  canManage: boolean;
+  onRefresh: () => void;
+}) {
   const s = billing.subscription!;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -202,20 +243,25 @@ function Member({ billing, onRefresh }: { billing: MyBilling; onRefresh: () => v
             </p>
             {s.status === "past_due" && (
               <p className="mt-2 text-sm text-danger">
-                The last payment didn't go through. Update your card below to keep Pro.
+                {canManage
+                  ? "The last payment didn't go through. Update your card below to keep Pro."
+                  : "The last payment didn't go through."}
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={manage}
-            disabled={busy}
-            className="notch-md border border-line px-4 py-2 text-sm font-semibold transition hover:border-muted disabled:opacity-50"
-          >
-            {busy ? "Opening…" : live ? "Manage or cancel" : "Manage billing"}
-          </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={manage}
+              disabled={busy}
+              className="notch-md border border-line px-4 py-2 text-sm font-semibold transition hover:border-muted disabled:opacity-50"
+            >
+              {busy ? "Opening…" : live ? "Manage or cancel" : "Manage billing"}
+            </button>
+          )}
         </div>
         {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+        {canManage && (
         <p className="mt-4 text-xs leading-relaxed text-muted">
           Managing opens Stripe, where you can change your card, see
           receipts, or cancel. Cancelling stops the renewal; Pro runs to
@@ -225,6 +271,7 @@ function Member({ billing, onRefresh }: { billing: MyBilling; onRefresh: () => v
           </button>{" "}
           after making a change.
         </p>
+        )}
       </div>
       <span
         aria-hidden="true"
@@ -283,8 +330,9 @@ function Buy({ billing, onWaiting }: { billing: MyBilling; onWaiting: () => void
     }
     if (codeOk) forgetCreatorCode();
     // In a browser this tab is already on its way to Stripe. In the
-    // desktop app, the browser has it; wait here.
-    if (isDesktopApp()) onWaiting();
+    // desktop app the browser has it, and in the iPhone app a Safari
+    // sheet does; wait here.
+    if (isDesktopApp() || isNativeApp()) onWaiting();
   }
 
   return (

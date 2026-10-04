@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { useIsDeveloper } from "../lib/dev";
 import { useFlag } from "../lib/flags";
+import { useSellsProHere } from "../lib/billing";
 import { useDevMode, setDevMode } from "../lib/devMode";
 import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
@@ -111,8 +112,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   // it is refused by the database to anybody else.
   const isDev = useIsDeveloper(user?.id);
   // The Pro link, once there's something to buy. Sidebar only: the
-  // phone tab bar is full, and Settings has the same door.
-  const proSales = useFlag("pro_sales");
+  // phone tab bar is full, and Settings has the same door. Not in the
+  // iPhone app outside the US App Store (see canSellProHere).
+  const proFlag = useFlag("pro_sales");
+  const sellsHere = useSellsProHere();
+  const proSales = proFlag && sellsHere === true;
   // A strip under the top bar while developer mode is on, so it's
   // never on by accident for a week.
   const devMode = useDevMode();

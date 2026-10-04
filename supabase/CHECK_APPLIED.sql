@@ -701,7 +701,12 @@ checks(migration, feature, present) as (
     ('98_changelog_phone_download',
      'What''s New line for phones offered the Mac download',
      case when to_regclass('public.changelog_entries') is null then false
-          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Home page on phones''', false, true, '')))[1]::text::int > 0 end)
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Home page on phones''', false, true, '')))[1]::text::int > 0 end),
+
+    ('99_changelog_phone_sign_out',
+     'What''s New line for signing out on phones',
+     case when to_regclass('public.changelog_entries') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Sign out on phones''', false, true, '')))[1]::text::int > 0 end)
 )
 select
   migration,
