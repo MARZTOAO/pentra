@@ -13,6 +13,7 @@ import { formatLocation } from "../lib/constants";
 import { getGamerTags, networkLabel, type GamerTag } from "../lib/gamerTags";
 import { bannerStyle } from "../lib/backgrounds";
 import { FriendButton } from "../components/FriendButton";
+import { getFriendStatus, type FriendStatus } from "../lib/friends";
 import { MessageButton } from "../components/MessageButton";
 import { CommendButton } from "../components/CommendButton";
 import { SafetyMenu } from "../components/SafetyMenu";
@@ -48,6 +49,10 @@ export default function PublicProfile({ username: fixed }: { username?: string }
   const [profile, setProfile] = useState<Profile | null>(null);
   const [topFive, setTopFive] = useState<TopFiveEntry[]>([]);
   const [tags, setTags] = useState<GamerTag[]>([]);
+  // Only to word the empty gamer-tags box honestly: "no tags yet" for
+  // a friend, "visible once you're friends" for everyone else. The
+  // database decides what is actually returned either way.
+  const [friendStatus, setFriendStatus] = useState<FriendStatus>("none");
   const [friendCount, setFriendCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -75,6 +80,7 @@ export default function PublicProfile({ username: fixed }: { username?: string }
       setProfile(row);
       setTopFive(await getTopFive(row.id));
       setTags(await getGamerTags(row.id));
+      setFriendStatus(await getFriendStatus(row.id));
       setFriendCount(await getFriendCount(row.id));
       setLoading(false);
     });
@@ -230,7 +236,10 @@ export default function PublicProfile({ username: fixed }: { username?: string }
             <FriendButton
               targetId={profile.id}
               // Becoming friends unlocks their gamer tags, so refetch.
-              onChange={() => getGamerTags(profile.id).then(setTags)}
+              onChange={() => {
+                getGamerTags(profile.id).then(setTags);
+                getFriendStatus(profile.id).then(setFriendStatus);
+              }}
             />
             <MessageButton targetId={profile.id} />
             <CommendButton
@@ -407,6 +416,8 @@ export default function PublicProfile({ username: fixed }: { username?: string }
           <p className="text-sm text-muted">
             You haven't added any yet. They're only ever shown to friends.
           </p>
+        ) : friendStatus === "friend" ? (
+          <p className="text-sm text-muted">They haven't added any gamer tags yet.</p>
         ) : (
           <p className="flex items-center gap-2 text-sm text-muted">
             <svg
