@@ -146,15 +146,19 @@ function Lightbox({
   // so rendered in place this gets cut to the post card's box.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-8"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-3 sm:p-8"
       onClick={onClose}
     >
+      {/* An × rather than the word, same as the ad viewer, so every
+          enlarged picture in Pentra closes the same way. */}
       <button
         onClick={onClose}
         aria-label="Close"
-        className="absolute right-4 top-4 notch-md px-3 py-1.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+        className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center notch-md bg-black/50 text-white/80 transition hover:bg-white/15 hover:text-white sm:right-4 sm:top-4"
       >
-        Close
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
       </button>
 
       {media.length > 1 && (
