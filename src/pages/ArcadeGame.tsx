@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import {
@@ -39,6 +39,24 @@ export default function ArcadeGame() {
 
   const bests = useBests(user?.id, refresh);
   const mine = bests?.find((b) => b.game === slug) ?? null;
+
+  // On a phone a finger over the game hides the game. So on touch
+  // screens the whole top of the page — title, canvas and a big pad
+  // under it — is the button, and the pad is where a thumb can rest.
+  const [touch] = useState(
+    () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches,
+  );
+
+  const pressHandlers = {
+    onPointerDown: (e: PointerEvent) => {
+      e.preventDefault();
+      game.current?.press();
+    },
+    onPointerUp: () => game.current?.release(),
+    onPointerCancel: () => game.current?.release(),
+    onPointerLeave: () => game.current?.release(),
+    onContextMenu: (e: MouseEvent) => e.preventDefault(),
+  };
 
   const onRunEnd = useCallback(
     async (run: RunResult) => {
@@ -113,6 +131,12 @@ export default function ArcadeGame() {
         Arcade
       </Link>
 
+      {/* On touch screens everything from here to the jump pad is one
+          tap target (touch-action none so a tap is never a scroll). */}
+      <div
+        className={touch ? "select-none [touch-action:none]" : undefined}
+        {...(touch ? pressHandlers : {})}
+      >
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="display on-art text-3xl sm:text-4xl">{info.name}</h1>
@@ -135,14 +159,7 @@ export default function ArcadeGame() {
           select-none so a double-tap doesn't highlight the overlay. */}
       <section
         className="relative select-none overflow-hidden notch border border-line bg-surface [touch-action:none]"
-        onPointerDown={(e) => {
-          e.preventDefault();
-          game.current?.press();
-        }}
-        onPointerUp={() => game.current?.release()}
-        onPointerCancel={() => game.current?.release()}
-        onPointerLeave={() => game.current?.release()}
-        onContextMenu={(e) => e.preventDefault()}
+        {...(touch ? {} : pressHandlers)}
         aria-label={`${info.name} game`}
         role="application"
       >
@@ -194,7 +211,21 @@ export default function ArcadeGame() {
         )}
       </section>
 
-      <p className="mt-2 text-center text-xs text-muted">{info.controls}</p>
+      {touch ? (
+        <div
+          className="mt-3 flex h-24 items-center justify-center notch border border-accent/40 bg-surface-2/80 text-center active:bg-accent/15"
+          aria-label="Jump"
+          role="button"
+        >
+          <div>
+            <p className="display text-xl text-accent">JUMP</p>
+            <p className="text-xs text-muted">Tap anywhere up here. Hold for a higher jump.</p>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-2 text-center text-xs text-muted">{info.controls}</p>
+      )}
+      </div>
 
       <Leaderboards game={info.slug} refreshKey={refresh} />
     </div>
