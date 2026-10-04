@@ -26,6 +26,8 @@
  * they're crisp at any size.
  */
 
+import { play } from "./sound";
+
 export type TraceCallbacks = {
   /** Elapsed clock (including penalties), every ~250ms while running. */
   onTick: (elapsedMs: number) => void;
@@ -537,6 +539,7 @@ export function mountStackTrace(
     if (tiles.length === 0) {
       finished = true;
       pause();
+      play("win");
       callbacks.onWin(Math.round(clock()));
     }
   }
@@ -560,17 +563,21 @@ export function mountStackTrace(
       return;
     }
     if (!free(hit)) {
+      play("deny");
       shake = { tile: hit, until: performance.now() + 350 };
       loop();
       return;
     }
     if (selected === hit) {
       selected = null;
+      play("click");
     } else if (selected && selected.face === hit.face) {
+      play("match");
       remove(selected, hit);
       return;
     } else {
       selected = hit;
+      play("click");
     }
     draw();
   }
@@ -643,7 +650,9 @@ export function mountStackTrace(
     roundRect(c, side / 2, side / 2, w, h, 4);
     c.fill();
 
-    c.fillStyle = opts.free ? "#23262c" : "#1b1e23";
+    // Blocked tiles sit well behind free ones: darker face, dimmer
+    // symbol, fainter edge (MARZ, 2026-10-05: "hard to differentiate").
+    c.fillStyle = opts.free ? "#262a31" : "#131519";
     roundRect(c, 0, 0, w, h, 4);
     c.fill();
     c.lineWidth = opts.selected || opts.hinted ? 2 : 1;
@@ -652,8 +661,8 @@ export function mountStackTrace(
       : opts.hinted
         ? "#8bff3a"
         : opts.free
-          ? "rgba(233,235,238,0.22)"
-          : "rgba(233,235,238,0.08)";
+          ? "rgba(233,235,238,0.28)"
+          : "rgba(233,235,238,0.05)";
     c.stroke();
     if (opts.selected) {
       c.fillStyle = "rgba(255,122,47,0.14)";
@@ -663,7 +672,7 @@ export function mountStackTrace(
     // The face, in the family colour; blocked tiles are dimmer.
     const face = FACES[t.face];
     c.translate(w / 2, h / 2);
-    c.globalAlpha = opts.alpha * (opts.free ? 1 : 0.5);
+    c.globalAlpha = opts.alpha * (opts.free ? 1 : 0.32);
     c.fillStyle = face.color;
     c.strokeStyle = face.color;
     face.draw(c, Math.min(w, h) * 0.9);

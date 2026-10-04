@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
+import { SoundToggle } from "../components/SoundToggle";
 import { gameInfo, recordLevelClear, useLevels, type LevelClear } from "../lib/arcade";
 import {
   formatTime,
@@ -263,6 +264,7 @@ function Level({
               <p className="numeric text-xl font-bold leading-none text-muted">{formatTime(best)}</p>
             </div>
           )}
+          <SoundToggle />
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import type { ArcadeHandle, GameCallbacks, GameState, PointerKind } from "./types";
+import { play } from "./sound";
 
 /**
  * Packet Pop — Pentra's bubble shooter (supabase/94).
@@ -208,6 +209,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
   }
 
   function die() {
+    play("crash");
     state = "over";
     diedAt = performance.now();
     flash = 0.3;
@@ -235,6 +237,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
     };
     current = next;
     next = randomColor(true);
+    play("shoot");
   }
 
   function press() {
@@ -355,6 +358,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
         grid.delete(key(c.row, c.col));
       }
       addScore(cluster.length * 10);
+      play("pop", cluster.length);
 
       // Anything no longer attached to the top row falls.
       const attached = new Set<string>();
@@ -371,11 +375,15 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
         grid.delete(k);
         dropped++;
       }
-      if (dropped > 0) addScore(dropped * 20);
+      if (dropped > 0) {
+        addScore(dropped * 20);
+        play("drop");
+      }
       if (dropped >= 4) banner = { text: `${dropped} dropped!`, t: 1.1 };
 
       if (grid.size === 0) {
         addScore(100);
+        play("win");
         banner = { text: "Board clear! +100", t: 1.4 };
         for (let i = 0; i < 3; i++) addRowOnTop();
         shotsUntilPush = pushCadence();

@@ -13,6 +13,7 @@ import {
 } from "../lib/arcade";
 import { engineFor, type ArcadeHandle, type GameState, type RunResult } from "../arcade";
 import { Avatar } from "../components/Avatar";
+import { SoundToggle } from "../components/SoundToggle";
 
 /**
  * One arcade game at /arcade/:slug — supabase/93, src/arcade/.
@@ -58,6 +59,9 @@ export default function ArcadeGame() {
       e.preventDefault();
       const g = game.current;
       if (!g) return;
+      // On a phone the start screen's button is the only way to start,
+      // so a touch that was meant to scroll can't launch a run.
+      if (touch && state === "ready") return;
       if (g.pointer) {
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
         const p = local(e);
@@ -190,23 +194,32 @@ export default function ArcadeGame() {
           <h1 className="display on-art text-3xl sm:text-4xl">{info.name}</h1>
           <p className="on-art mt-1 text-sm text-muted">{info.tagline}</p>
         </div>
-        <div className="text-right">
-          <p className="label-wide text-muted">Your best</p>
-          <p className="numeric text-2xl font-bold text-accent">
-            {mine ? formatScore(mine.best) : "—"}
-          </p>
-          {mine && (
-            <p className="text-xs text-muted">
-              #{formatScore(mine.rank)} of everyone · {mine.runs} {mine.runs === 1 ? "run" : "runs"}
+        <div className="flex items-start gap-3">
+          <div className="text-right">
+            <p className="label-wide text-muted">Your best</p>
+            <p className="numeric text-2xl font-bold text-accent">
+              {mine ? formatScore(mine.best) : "—"}
             </p>
-          )}
+            {mine && (
+              <p className="text-xs text-muted">
+                #{formatScore(mine.rank)} of everyone · {mine.runs} {mine.runs === 1 ? "run" : "runs"}
+              </p>
+            )}
+          </div>
+          <SoundToggle className="mt-0.5" />
         </div>
       </header>
 
       {/* The game. touch-action none so a tap is a tap, not a scroll;
           select-none so a double-tap doesn't highlight the overlay. */}
+      {/* On a phone a game that uses the board itself as its control
+          leaves a gutter either side (mx-6) so there's always somewhere
+          to put a finger that scrolls the page (MARZ, 2026-10-05). */}
       <section
-        className="relative select-none overflow-hidden notch border border-line bg-surface [touch-action:none]"
+        className={
+          "relative select-none overflow-hidden notch border border-line bg-surface [touch-action:none]" +
+          (touch && !zone ? " mx-6" : "")
+        }
         {...(zone ? {} : pressHandlers)}
         aria-label={`${info.name} game`}
         role="application"
@@ -227,11 +240,23 @@ export default function ArcadeGame() {
         )}
 
         {state === "ready" && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <p className="display text-2xl text-ink">Ready?</p>
-              <p className="mt-1 text-sm text-muted">{touch ? "Tap to start" : "Click or press Space to start"}</p>
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-bg/55 p-4">
+            <div className="max-w-sm text-center">
+              <p className="display text-2xl text-ink">{info.name}</p>
+              <p className="mt-2 text-sm text-ink/90">{info.objective}</p>
               <p className="mt-2 text-xs text-muted">{touch ? info.touchControls : info.controls}</p>
+              {/* A real button, so starting is a deliberate tap and not a
+                  stray touch while scrolling. It swallows the press so the
+                  board underneath doesn't also fire. */}
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => game.current?.press()}
+                className="pointer-events-auto mt-4 notch-md bg-accent px-6 py-2.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi"
+              >
+                Start
+              </button>
+              {!touch && <p className="mt-2 text-xs text-muted">or press Space</p>}
             </div>
           </div>
         )}

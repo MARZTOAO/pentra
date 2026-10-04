@@ -18,6 +18,7 @@
  */
 
 import type { ArcadeHandle, GameCallbacks, GameState } from "./types";
+import { play } from "./sound";
 
 type Spike = { x: number; w: number; h: number; hit?: boolean };
 
@@ -26,8 +27,10 @@ const HEIGHT = 220;
 const GROUND = HEIGHT - 30;
 const PLAYER_X = 64;
 const PLAYER_R = 13;
-const GRAVITY = 2100;
-const JUMP_V = -640;
+// Retuned 2026-10-05 ("too lofty"): heavier gravity with a stronger
+// jump keeps the same height (~95px) in less air time (0.54s vs 0.61s).
+const GRAVITY = 2600;
+const JUMP_V = -700;
 const HOLD_GRAVITY = 0.52; // gravity while the button is held and still rising
 const SPEED_START = 320;
 const SPEED_MAX = 700;
@@ -121,6 +124,7 @@ export function mountLagSpike(canvas: HTMLCanvasElement, callbacks: GameCallback
   }
 
   function die() {
+    play("crash");
     state = "over";
     diedAt = performance.now();
     flash = 0.25;
@@ -135,6 +139,7 @@ export function mountLagSpike(canvas: HTMLCanvasElement, callbacks: GameCallback
   function jump() {
     if (state !== "running" || !onGround()) return;
     vy = JUMP_V;
+    play("jump");
   }
 
   function press() {
@@ -143,12 +148,14 @@ export function mountLagSpike(canvas: HTMLCanvasElement, callbacks: GameCallback
       begin();
       // A press that starts the run also jumps, like the dinosaur.
       vy = JUMP_V;
+      play("jump");
       return;
     }
     if (state === "over") {
       if (performance.now() - diedAt > RESTART_LOCK_MS) {
         begin();
         vy = JUMP_V;
+        play("jump");
       }
       return;
     }

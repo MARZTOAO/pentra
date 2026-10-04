@@ -18,6 +18,8 @@ export type ArcadeGameInfo = {
    *  "levels": progress through levels with a time each, no boards
    *  (its own page). */
   kind: "score" | "levels";
+  /** What you're trying to do, in one line — on the start screen. */
+  objective: string;
   /** How to play, in one line. */
   controls: string;
   /** The same line for a phone. */
@@ -36,6 +38,7 @@ export const GAMES: ArcadeGameInfo[] = [
     name: "Lag Spike",
     kind: "score",
     tagline: "Keep the signal running. Jump the spikes. It only gets faster.",
+    objective: "Jump the lag spikes for as long as you can. The further you get, the higher the score.",
     controls: "Space, ↑ or tap to jump. Hold for a higher jump.",
     touchControls: "Tap anywhere up here to jump. Hold for a higher jump.",
     touchPad: "JUMP",
@@ -46,9 +49,10 @@ export const GAMES: ArcadeGameInfo[] = [
     name: "Packet Pop",
     kind: "score",
     tagline: "Match three to pop. Drop what's left hanging. New rows keep coming.",
+    objective: "Fire bubbles into the board. Three of a colour touching pop; anything left hanging drops for double points. Don't let the bubbles reach the line.",
     controls: "Move the mouse to aim, click or Space to fire. ← → also aim.",
-    touchControls: "Drag left or right anywhere to aim. Tap to fire.",
-    touchPad: "AIM",
+    touchControls: "Drag left or right on the board to aim. Tap to fire.",
+    touchPad: null,
     overlayHud: false,
   },
   {
@@ -56,6 +60,7 @@ export const GAMES: ArcadeGameInfo[] = [
     name: "Stack Trace",
     kind: "levels",
     tagline: "Clear the stack, one matching pair at a time. Five tiers, Casual to Brutal. No clock but your own.",
+    objective: "Clear every tile from the stack by matching free pairs.",
     controls: "Click two free tiles with the same face.",
     touchControls: "Tap two free tiles with the same face.",
     touchPad: null,
