@@ -168,7 +168,7 @@ function Level({
       setWon({ ms, best: null, newBest: false, problem: null });
       const r = await recordLevelClear(SLUG, level, ms);
       if (typeof r === "string") setWon({ ms, best: null, newBest: false, problem: r });
-      else setWon({ ms, best: r.best_ms, newBest: r.new_best });
+      else setWon({ ms, best: r.best_ms, newBest: r.new_best, problem: null });
       onCleared();
     },
     [level, onCleared],
