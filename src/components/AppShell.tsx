@@ -19,7 +19,8 @@ import { HouseBackground, usesHouseBackground } from "./HouseBackground";
 
 /** `short` is the bottom-tab label. Seven of them share a phone's
     width — about 53px each at 375px — so these have to stay tiny:
-    "Find players" becomes "Find", "Sessions" becomes "Play". */
+    "Find players" becomes "Find", "Sessions" becomes "Play". Settings
+    isn't one of them: it's the gear in the top bar. */
 type Item = { to: string; label: string; short: string; icon: ReactNode };
 
 function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
@@ -38,6 +39,10 @@ function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
     </svg>
   );
 }
+
+/** Settings left the tab bar for the Arcade (2026-10-04) and became
+    this gear in the top bar, reachable from every screen. */
+const GEAR = "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z";
 
 const ITEMS: Item[] = [
   {
@@ -83,11 +88,11 @@ const ITEMS: Item[] = [
     icon: <Icon d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />,
   },
   {
-    to: "/settings",
-    label: "Settings",
-    short: "More",
+    to: "/arcade",
+    label: "Arcade",
+    short: "Arcade",
     icon: (
-      <Icon d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+      <Icon d="M6 11h4M8 9v4M15 12h.01M18 10h.01M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z" />
     ),
   },
 ];
@@ -338,6 +343,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto md:ml-0">
             <NotificationBell />
           </div>
+
+          <NavLink
+            to="/settings"
+            aria-label="Settings"
+            title="Settings"
+            className={({ isActive }) =>
+              "p-2 transition hover:text-ink " + (isActive ? "text-accent" : "text-muted")
+            }
+          >
+            <Icon d={GEAR} />
+          </NavLink>
 
           {/* On mobile the box won't fit beside the wordmark, so search
               becomes a button that opens the screen built for it. */}

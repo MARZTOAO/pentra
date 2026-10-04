@@ -30,6 +30,8 @@ import Forgot from "./pages/Forgot";
 import DevMetrics from "./pages/DevMetrics";
 import Developer from "./pages/Developer";
 import Pro from "./pages/Pro";
+import Arcade from "./pages/Arcade";
+import ArcadeGame from "./pages/ArcadeGame";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -221,6 +223,24 @@ export default function App() {
 
           {/* Developers only — the pages check, and the database
               refuses everything behind them to anyone else. */}
+          {/* The Arcade: small games, scores on profiles (93). */}
+          <Route
+            path="/arcade"
+            element={
+              <Shell>
+                <Arcade />
+              </Shell>
+            }
+          />
+          <Route
+            path="/arcade/:slug"
+            element={
+              <Shell>
+                <ArcadeGame />
+              </Shell>
+            }
+          />
+
           <Route
             path="/dev"
             element={

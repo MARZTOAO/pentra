@@ -23,6 +23,7 @@ import { MotionBackground } from "../components/MotionBackground";
 import { DevProfileTools } from "../components/DevProfileTools";
 import { SeededTag } from "../components/SeededTag";
 import { ProfileFeed } from "../components/ProfileFeed";
+import { ArcadeCard } from "../components/ArcadeCard";
 
 /**
  * A player's profile as everyone sees it.
@@ -424,7 +425,8 @@ export default function PublicProfile({ username: fixed }: { username?: string }
         )}
       </section>
 
-      {/* Everything they're part of, under everything else. */}
+      {/* Arcade bests (93), then everything they're part of. */}
+      <ArcadeCard userId={profile.id} isSelf={isSelf} />
       <ProfileFeed userId={profile.id} isSelf={isSelf} />
       </>
       )}
