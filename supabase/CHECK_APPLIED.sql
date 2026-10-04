@@ -664,7 +664,12 @@ checks(migration, feature, present) as (
 
     ('91_profile_feed',
      'The feed on a profile: posts, sessions, tags',
-     exists (select 1 from fn where fn.name = 'get_profile_feed'))
+     exists (select 1 from fn where fn.name = 'get_profile_feed')),
+
+    ('92_changelog_update_4',
+     'What''s New catch-up: Pro, profile tabs, bigger text and more',
+     case when to_regclass('public.changelog_entries') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Profile tabs and an activity feed''', false, true, '')))[1]::text::int > 0 end)
 )
 select
   migration,
