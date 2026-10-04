@@ -61,6 +61,17 @@ export function detectOS(): OS {
   return "other";
 }
 
+/**
+ * A phone or tablet, where there is no desktop app to offer. iPadOS
+ * Safari calls itself a Mac, so the touch-point count is the tell.
+ */
+export function isHandheld(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+  return /Macintosh/i.test(ua) && (navigator.maxTouchPoints ?? 0) > 1;
+}
+
 export function osLabel(os: OS): string {
   switch (os) {
     case "windows":

@@ -104,49 +104,51 @@ export function AdCard({ ad }: { ad: Ad }) {
           {ad.body && (
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">{ad.body}</p>
           )}
-
-          {/* Sized from the stored width and height, so the space is
-              reserved before the file arrives and the feed doesn't jump. */}
-          {url && (
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              title={ad.media_kind === "video" ? "Open the video" : "Open the picture"}
-              className="group relative mt-3 block w-full cursor-zoom-in overflow-hidden notch-md bg-surface-2 text-left"
-              style={{ aspectRatio: `${ad.width ?? 16} / ${ad.height ?? 9}`, maxHeight: 520 }}
-            >
-              {ad.media_kind === "video" ? (
-                <video
-                  ref={video}
-                  src={url}
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  className="pointer-events-none h-full w-full object-cover"
-                />
-              ) : (
-                <img
-                  src={url}
-                  alt={alt}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.01]"
-                />
-              )}
-              <span className="pointer-events-none absolute bottom-2 right-2 notch-sm bg-black/60 px-2 py-1 text-3xs font-semibold text-white/90 opacity-0 transition group-hover:opacity-100">
-                {ad.media_kind === "video" ? "Play large" : "View large"}
-              </span>
-            </button>
-          )}
-
-          {link && (
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <span className="truncate text-xs text-muted">{domain}</span>
-              <VisitButton domain={domain} onClick={visit} />
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Full card width — a picture squeezed beside the avatar was
+          unreadable on a phone (MARZ, 2026-10-05). Sized from the stored
+          width and height, so the space is reserved before the file
+          arrives and the feed doesn't jump. */}
+      {url && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          title={ad.media_kind === "video" ? "Open the video" : "Open the picture"}
+          className="group relative mt-3 block w-full cursor-zoom-in overflow-hidden notch-md bg-surface-2 text-left"
+          style={{ aspectRatio: `${ad.width ?? 16} / ${ad.height ?? 9}`, maxHeight: 520 }}
+        >
+          {ad.media_kind === "video" ? (
+            <video
+              ref={video}
+              src={url}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="pointer-events-none h-full w-full object-cover"
+            />
+          ) : (
+            <img
+              src={url}
+              alt={alt}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.01]"
+            />
+          )}
+          <span className="pointer-events-none absolute bottom-2 right-2 notch-sm bg-black/60 px-2 py-1 text-3xs font-semibold text-white/90 opacity-0 transition group-hover:opacity-100">
+            {ad.media_kind === "video" ? "Play large" : "View large"}
+          </span>
+        </button>
+      )}
+
+      {link && (
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <span className="truncate text-xs text-muted">{domain}</span>
+          <VisitButton domain={domain} onClick={visit} />
+        </div>
+      )}
 
       {open && url && (
         <AdLightbox

@@ -3,6 +3,7 @@ import {
   detectOS,
   getLatestRelease,
   isDesktopApp,
+  isHandheld,
   osLabel,
   RELEASES_PAGE,
   type Release,
@@ -20,7 +21,35 @@ import { useUpdateState } from "./UpdateBanner";
  * download) is never shown again, and this is where you'd look.
  */
 export function DesktopSection() {
-  return isDesktopApp() ? <InApp /> : <InBrowser />;
+  if (isDesktopApp()) return <InApp />;
+  if (isHandheld()) return <OnHandheld />;
+  return <InBrowser />;
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * On a phone or tablet there's nothing to download, and "No build
+ * published yet" read as if something was missing (MARZ, 2026-10-05).
+ * Say what's true instead and point at the PC.
+ */
+function OnHandheld() {
+  return (
+    <section className="mb-8 notch border border-line bg-surface p-5">
+      <h2 className="mb-1 label-wide text-muted">Desktop app</h2>
+      <p className="mb-4 text-xs text-muted">
+        The same Pentra, installed on a Windows PC: its own window, its own
+        taskbar icon, and it updates itself. Same account — sign in and
+        everything's there.
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="notch-md border border-line px-4 py-2 text-sm font-medium text-muted">
+          Not available on this device
+        </span>
+        <p className="text-xs text-muted">Open pentra.gg on your PC to install it.</p>
+      </div>
+    </section>
+  );
 }
 
 /* ------------------------------------------------------------------ */
