@@ -5,6 +5,7 @@ import {
   detectOS,
   getLatestRelease,
   isDesktopApp,
+  isNativeApp,
   osLabel,
   RELEASES_PAGE,
   type OS,
@@ -43,7 +44,9 @@ export default function Landing() {
   // Signed-in people in a browser DO see it — it is where the
   // download lives, and hiding it from the people most likely to
   // install was backwards.
-  if (isDesktopApp()) return <Navigate to="/home" replace />;
+  // Same for the iPhone app: it's installed already, so it goes
+  // straight in (signed-out people land on /login via ProtectedRoute).
+  if (isDesktopApp() || isNativeApp()) return <Navigate to="/home" replace />;
   if (loading) return <FullScreenLoader />;
 
   const signedIn = Boolean(session);

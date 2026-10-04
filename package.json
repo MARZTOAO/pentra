@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "ios": "npm run build && cap sync ios",
     "fetch-fonts": "node scripts/fetch-fonts.mjs",
     "og-card": "node scripts/og-card/render.mjs",
     "import-games": "node --env-file=.env scripts/import-games.mjs",
@@ -19,6 +20,9 @@
     "seed-posts": "node --env-file=.env scripts/seed-posts.mjs"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@supabase/supabase-js": "^2.116.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-autostart": "^2",

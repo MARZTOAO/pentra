@@ -136,6 +136,16 @@ body,
 
 body {
   margin: 0;
+  /* Keep everything clear of the iPhone status bar and notch (and the
+     sides of the screen in landscape). The sizes come from iOS, which
+     only reports them because index.html's viewport has
+     viewport-fit=cover; everywhere else they are 0, so desktop and the
+     Windows app are unaffected. The bottom edge is handled by the
+     phone tab bar in AppShell. Body background fills the padded area,
+     so the strip behind the clock is the app's own colour. */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   background-color: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);

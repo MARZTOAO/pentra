@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core";
+
 /**
  * Where is this running, and what can it download?
  *
@@ -15,6 +17,18 @@
  */
 export function isDesktopApp(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+/**
+ * Inside the iPhone/iPad app?
+ *
+ * The iOS app is the same React build inside a Capacitor web view (see
+ * capacitor.config.ts). Like the desktop app it has already been
+ * installed, so it never shows the marketing page or offers downloads.
+ * On the website and in the Windows app this is false.
+ */
+export function isNativeApp(): boolean {
+  return Capacitor.isNativePlatform();
 }
 
 /**
@@ -54,6 +68,9 @@ export type OS = "windows" | "mac" | "linux" | "other";
  */
 export function detectOS(): OS {
   if (typeof navigator === "undefined") return "other";
+  // Phones and tablets first: an iPhone's user agent says "like Mac OS
+  // X", which used to make the home page offer it the Mac download.
+  if (isHandheld()) return "other";
   const ua = navigator.userAgent;
   if (/Windows/i.test(ua)) return "windows";
   if (/Macintosh|Mac OS X/i.test(ua)) return "mac";
