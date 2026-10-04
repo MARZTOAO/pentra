@@ -20,9 +20,12 @@
     "seed-posts": "node --env-file=.env scripts/seed-posts.mjs"
   },
   "dependencies": {
+    "@capacitor/browser": "^8.0.5",
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@capacitor/ios": "^8.5.2",
+    "@capacitor/keyboard": "^8.0.6",
+    "@capacitor/status-bar": "^8.0.4",
     "@supabase/supabase-js": "^2.116.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-autostart": "^2",

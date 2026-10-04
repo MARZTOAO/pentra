@@ -44,6 +44,17 @@ export function isNativeApp(): boolean {
 export async function openExternal(url: string): Promise<void> {
   if (!/^https?:\/\//i.test(url)) return;
 
+  // The iPhone app: a Safari sheet over the app (see lib/native.ts).
+  if (isNativeApp()) {
+    try {
+      const { openInBrowser } = await import("./native");
+      await openInBrowser(url);
+      return;
+    } catch {
+      // Fall through to the browser way rather than doing nothing.
+    }
+  }
+
   if (isDesktopApp()) {
     try {
       const { openUrl } = await import("@tauri-apps/plugin-opener");

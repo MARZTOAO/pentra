@@ -400,7 +400,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             rather than assembled. */}
         <main
           key={location.pathname}
-          className="rise flex-1 overflow-y-auto pb-[4.5rem] md:pb-0"
+          data-tabbar-gap
+          className="rise flex-1 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
         >
           {children}
 
@@ -420,6 +421,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           and it carries the iOS home-indicator inset so the last row of
           labels isn't sitting under the bar on a notched phone. */}
       <nav
+        data-tabbar
         className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur-sm md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >

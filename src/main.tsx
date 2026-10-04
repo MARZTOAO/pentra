@@ -5,6 +5,7 @@ import "./index.css";
 import { applyTheme, loadStoredTheme } from "./lib/themes";
 import { isDesktopApp } from "./lib/platform";
 import { initDesktop } from "./lib/desktop";
+import { initNative } from "./lib/native";
 
 // Before React renders anything, put up the palette this machine used
 // last time. Otherwise every start flashes the default colours for a
@@ -18,6 +19,9 @@ if (isDesktopApp()) document.documentElement.dataset.desktop = "";
 // close button does the right thing even if somebody shuts the window
 // during the first second.
 initDesktop();
+
+// The iPhone/iPad app: status bar, keyboard, links. Nothing elsewhere.
+initNative();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

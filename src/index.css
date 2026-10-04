@@ -167,6 +167,16 @@ textarea {
   user-select: text;
 }
 
+/* iPhone app: while the keyboard is up, hide the bottom tab bar (it
+   would sit on top of the keyboard and squeeze the chat box) and the
+   space kept for it. lib/native.ts sets the attribute. */
+html[data-keyboard] [data-tabbar] {
+  display: none;
+}
+html[data-keyboard] [data-tabbar-gap] {
+  padding-bottom: 0;
+}
+
 /* ------------------------------------------------------------
    The notch.
 
