@@ -60,7 +60,7 @@ export const GAMES: ArcadeGameInfo[] = [
     name: "Hot Swap",
     kind: "score",
     tagline: "Swap two chips to line up three. Cascades pay double. Sixty seconds.",
-    objective: "Swap neighbouring chips to line up three or more of a colour. Chains that fall into place on their own score more each step. You have sixty seconds.",
+    objective: "Swap neighbouring chips to line up three or more of a colour. Four in a line leaves a striped chip that blasts its whole row or column when matched; five, or an L, makes a cross that blasts both. You have sixty seconds.",
     controls: "Click a chip, then a neighbour — or drag it. Space to start.",
     touchControls: "Tap a chip, then a neighbour — or drag it toward one.",
     touchPad: null,

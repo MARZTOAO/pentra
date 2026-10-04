@@ -11,14 +11,25 @@ import { play } from "./sound";
  * nobody has to tell teal from green in a hurry). Swap two neighbours
  * to line up three or more; they clear, the column drops, new chips
  * fall in, and anything that lines up on the way down clears too —
- * a cascade, worth more each step. A swap that makes nothing swaps
- * straight back. Sixty seconds on the clock; the score is what you
- * have when it runs out. A board with no moves reshuffles itself.
+ * a cascade, worth more each step. A swap that makes nothing slides
+ * there and straight back with a dull sound — the board never
+ * changes unless something matched (MARZ, 2026-10-05). Sixty seconds
+ * on the clock; the score is what you have when it runs out. A board
+ * with no moves reshuffles itself.
  *
- * Scoring: 10 a chip, ×2 on the second step of a cascade, ×3 on the
- * third and so on; a line of four is +20, five or more +50. A run of
- * excellent play lands around 3,000–6,000, so submit_arcade_score's
- * cap of 300 a second (97) is well clear of honest play.
+ * Super chips (MARZ: "larger combos can create a super tile that
+ * destroys a whole line"): a line of four leaves behind a LINE chip
+ * of that colour, striped along the line; when it's next part of a
+ * match it clears its whole row (horizontal stripe) or column
+ * (vertical). Five in a line, or an L or T, leaves a CROSS chip that
+ * clears both its row and its column. A super chip caught in another
+ * super chip's blast goes off too.
+ *
+ * Scoring: 10 a chip (blasted chips included), ×2 on the second step
+ * of a cascade, ×3 on the third and so on; a line of four is +20,
+ * five or more +50. A run of excellent play lands around 3,000–8,000,
+ * so submit_arcade_score's cap of 300 a second (97) is well clear of
+ * honest play.
  *
  * Controls: tap a chip then a neighbour, or drag a chip toward a
  * neighbour. Space starts and restarts.
@@ -43,13 +54,19 @@ const CHIPS = [
   { color: "#ff4fa3", shape: "pentagon" },
 ] as const;
 
+type Special = "none" | "row" | "col" | "cross";
+
 type Cell = {
   type: number;
+  /** A super chip, and which way it blasts. */
+  special: Special;
   /** Cells above its resting place while falling (0 = at rest). */
   drop: number;
   /** Clear animation progress, 0..1, or -1 when not clearing. */
   clearing: number;
 };
+
+type Beam = { r?: number; c?: number; t: number; color: string };
 
 type Phase = "idle" | "swapping" | "clearing" | "falling";
 
@@ -84,6 +101,10 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
   let banner: { text: string; t: number } | null = null;
   let drag: { r: number; c: number; x: number; y: number } | null = null;
   let flash = 0;
+  let beams: Beam[] = [];
+  /** The two cells of the last swap, so a super chip appears where the
+   *  player made the move rather than in the middle of the line. */
+  let lastSwap: { r: number; c: number }[] = [];
 
   function rnd() {
     seed = (seed * 1664525 + 1013904223) >>> 0;
@@ -139,9 +160,14 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
   }
 
   function swapTypes(a: { r: number; c: number }, b: { r: number; c: number }) {
-    const t = grid[a.r][a.c].type;
-    grid[a.r][a.c].type = grid[b.r][b.c].type;
-    grid[b.r][b.c].type = t;
+    const ca = grid[a.r][a.c];
+    const cb = grid[b.r][b.c];
+    const t = ca.type;
+    const sp = ca.special;
+    ca.type = cb.type;
+    ca.special = cb.special;
+    cb.type = t;
+    cb.special = sp;
   }
 
   function makesMatch(a: { r: number; c: number }, b: { r: number; c: number }): boolean {
@@ -177,7 +203,7 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
             (c >= 2 && row[c - 1].type === t && row[c - 2].type === t) ||
             (r >= 2 && grid[r - 1][c].type === t && grid[r - 2][c].type === t)
           );
-          row.push({ type: t, drop: 0, clearing: -1 });
+          row.push({ type: t, special: "none", drop: 0, clearing: -1 });
         }
         grid.push(row);
       }
@@ -195,7 +221,12 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
         [types[i], types[j]] = [types[j], types[i]];
       }
       let k = 0;
-      for (const row of grid) for (const cl of row) cl.type = types[k++];
+      for (const row of grid) {
+        for (const cl of row) {
+          cl.type = types[k++];
+          cl.special = "none";
+        }
+      }
       if (findMatches().size === 0 && findMove()) break;
     }
     banner = { text: "No moves — reshuffled", t: 1.4 };
@@ -215,6 +246,8 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     banner = null;
     drag = null;
     flash = 0;
+    beams = [];
+    lastSwap = [];
     phase = "idle";
     fillBoard();
   }
@@ -339,12 +372,14 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     if (phase === "swapping" && swap) {
       swap.t += (dt * 1000) / SWAP_MS;
       if (swap.t >= 1) {
-        swapTypes(swap.a, swap.b);
         if (swap.back) {
-          // It made nothing: the swap we just applied is the way back.
+          // It made nothing: the chips slid there and back on screen and
+          // the board is exactly as it was.
           swap = null;
           phase = "idle";
         } else {
+          swapTypes(swap.a, swap.b);
+          lastSwap = [swap.a, swap.b];
           swap = null;
           resolve();
         }
@@ -370,51 +405,125 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
       banner.t -= dt;
       if (banner.t <= 0) banner = null;
     }
+    for (const b of beams) b.t -= dt;
+    beams = beams.filter((b) => b.t > 0);
+  }
+
+  /** The runs of three or more, as lists, so their length and
+   *  direction are known. */
+  function findRuns(): { cells: { r: number; c: number }[]; horizontal: boolean }[] {
+    const runs: { cells: { r: number; c: number }[]; horizontal: boolean }[] = [];
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; ) {
+        const t = grid[r][c].type;
+        let len = 1;
+        while (c + len < SIZE && grid[r][c + len].type === t) len++;
+        if (len >= 3) runs.push({ cells: Array.from({ length: len }, (_, i) => ({ r, c: c + i })), horizontal: true });
+        c += len;
+      }
+    }
+    for (let c = 0; c < SIZE; c++) {
+      for (let r = 0; r < SIZE; ) {
+        const t = grid[r][c].type;
+        let len = 1;
+        while (r + len < SIZE && grid[r + len][c].type === t) len++;
+        if (len >= 3) runs.push({ cells: Array.from({ length: len }, (_, i) => ({ r: r + i, c })), horizontal: false });
+        r += len;
+      }
+    }
+    return runs;
   }
 
   /** After a swap or a fall: clear what matches, or go idle. */
   function resolve() {
-    const m = findMatches();
-    if (m.size === 0) {
+    const runs = findRuns();
+    if (runs.length === 0) {
       phase = "idle";
       cascade = 0;
+      lastSwap = [];
       if (!findMove()) reshuffle();
       return;
     }
     cascade++;
-    // Score: count runs for the length bonuses.
-    let points = m.size * 10;
-    for (let r = 0; r < SIZE; r++) {
-      let len = 0;
-      for (let c = 0; c <= SIZE; c++) {
-        if (c < SIZE && m.has(`${r},${c}`)) len++;
-        else {
-          if (len >= 5) points += 50;
-          else if (len === 4) points += 20;
-          len = 0;
+
+    const key = (r: number, c: number) => `${r},${c}`;
+    const clear = new Set<string>();
+    let points = 0;
+    for (const run of runs) {
+      for (const cl of run.cells) clear.add(key(cl.r, cl.c));
+      if (run.cells.length >= 5) points += 50;
+      else if (run.cells.length === 4) points += 20;
+    }
+
+    // Where super chips are born. A cell in two runs (an L or a T) or
+    // a run of five makes a cross; a run of four makes a line chip
+    // striped along the run. The chip appears on the swapped cell if
+    // the player's move made it, otherwise in the middle of the run.
+    const spawn = new Map<string, Special>();
+    const inRuns = new Map<string, number>();
+    for (const run of runs) for (const cl of run.cells) inRuns.set(key(cl.r, cl.c), (inRuns.get(key(cl.r, cl.c)) ?? 0) + 1);
+    for (const [k, n] of inRuns) if (n >= 2) spawn.set(k, "cross");
+    for (const run of runs) {
+      if (run.cells.length < 4) continue;
+      const kind: Special = run.cells.length >= 5 ? "cross" : run.horizontal ? "row" : "col";
+      const onSwap = run.cells.find((cl) => lastSwap.some((sw) => sw.r === cl.r && sw.c === cl.c));
+      const anchor = onSwap ?? run.cells[Math.floor(run.cells.length / 2)];
+      const k = key(anchor.r, anchor.c);
+      if (spawn.get(k) !== "cross") spawn.set(k, kind);
+    }
+
+    // Super chips in the clearing go off, and can set off others.
+    const queue = [...clear];
+    const fired = new Set<string>();
+    while (queue.length) {
+      const k = queue.pop()!;
+      const [r, c] = k.split(",").map(Number);
+      const cl = grid[r][c];
+      if (cl.special === "none" || fired.has(k) || spawn.has(k)) continue;
+      fired.add(k);
+      const color = CHIPS[cl.type].color;
+      const hit: string[] = [];
+      if (cl.special === "row" || cl.special === "cross") {
+        beams.push({ r, t: 0.35, color });
+        for (let cc = 0; cc < SIZE; cc++) hit.push(key(r, cc));
+      }
+      if (cl.special === "col" || cl.special === "cross") {
+        beams.push({ c, t: 0.35, color });
+        for (let rr = 0; rr < SIZE; rr++) hit.push(key(rr, c));
+      }
+      for (const h of hit) {
+        if (!clear.has(h)) {
+          clear.add(h);
+          queue.push(h);
         }
       }
     }
-    for (let c = 0; c < SIZE; c++) {
-      let len = 0;
-      for (let r = 0; r <= SIZE; r++) {
-        if (r < SIZE && m.has(`${r},${c}`)) len++;
-        else {
-          if (len >= 5) points += 50;
-          else if (len === 4) points += 20;
-          len = 0;
-        }
-      }
+
+    // A chip being born is not cleared; it becomes the super chip.
+    for (const [k, kind] of spawn) {
+      clear.delete(k);
+      const [r, c] = k.split(",").map(Number);
+      grid[r][c].special = kind;
     }
+
+    points += clear.size * 10;
     points *= cascade;
     addScore(points);
-    if (cascade >= 2) {
+
+    if (fired.size > 0) {
+      banner = { text: fired.size > 1 ? `${fired.size} blasts!` : "Blast!", t: 0.9 };
+      play("zap");
+    } else if (cascade >= 2) {
       banner = { text: `×${cascade} cascade`, t: 0.9 };
       play("match");
     } else {
-      play("pop", Math.min(6, m.size));
+      play("pop", Math.min(6, clear.size));
     }
-    for (const k of m) {
+    if (spawn.size > 0 && fired.size === 0 && cascade < 2) {
+      banner = { text: [...spawn.values()].includes("cross") ? "Cross chip!" : "Line chip!", t: 0.9 };
+    }
+
+    for (const k of clear) {
       const [r, c] = k.split(",").map(Number);
       grid[r][c].clearing = 0;
     }
@@ -442,7 +551,7 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
       // New chips fill the top rows, starting stacked above the board
       // so they pour in as one block.
       for (let r = 0; r < missing; r++) {
-        column[r] = { type: Math.floor(rnd() * CHIPS.length), drop: missing, clearing: -1 };
+        column[r] = { type: Math.floor(rnd() * CHIPS.length), special: "none", drop: missing, clearing: -1 };
       }
       for (let r = 0; r < SIZE; r++) grid[r][c] = column[r];
     }
@@ -451,7 +560,7 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
 
   /* ---- drawing ------------------------------------------------------ */
 
-  function chip(x: number, y: number, size: number, type: number, alpha = 1) {
+  function chip(x: number, y: number, size: number, type: number, alpha = 1, special: Special = "none") {
     const c = ctx!;
     const { color, shape } = CHIPS[type];
     const r = size * 0.36;
@@ -512,6 +621,16 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     g.addColorStop(1, "rgba(0,0,0,0.2)");
     c.fillStyle = g;
     c.fill();
+    // Super chips: a bright stripe the way they blast, and a glow.
+    if (special !== "none") {
+      c.shadowColor = color;
+      c.shadowBlur = size * 0.35;
+      c.fillStyle = "rgba(255,255,255,0.92)";
+      const w = size * 0.11;
+      if (special === "row" || special === "cross") c.fillRect(-r * 1.15, -w / 2, r * 2.3, w);
+      if (special === "col" || special === "cross") c.fillRect(-w / 2, -r * 1.15, w, r * 2.3);
+      c.shadowBlur = 0;
+    }
     c.restore();
   }
 
@@ -595,13 +714,22 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
           c.fillStyle = isSel ? "rgba(255,122,47,0.22)" : "rgba(139,255,58,0.16)";
           c.fillRect(bx + col * cell + 1, by + r * cell + 1, cell - 2, cell - 2);
         }
-        chip(x, y, size, cl.type, alpha);
+        chip(x, y, size, cl.type, alpha, cl.special);
         if (isSel) {
           c.strokeStyle = "#ff7a2f";
           c.lineWidth = 2;
           c.strokeRect(bx + col * cell + 1.5, by + r * cell + 1.5, cell - 3, cell - 3);
         }
       }
+    }
+    // Blast beams: a bright bar along the row or column, fading.
+    for (const bm of beams) {
+      const k = bm.t / 0.35;
+      c.globalAlpha = k * 0.85;
+      c.fillStyle = bm.color;
+      if (bm.r !== undefined) c.fillRect(bx, by + bm.r * cell + cell * 0.3, cell * SIZE, cell * 0.4);
+      if (bm.c !== undefined) c.fillRect(bx + bm.c * cell + cell * 0.3, by, cell * 0.4, cell * SIZE);
+      c.globalAlpha = 1;
     }
     c.restore();
 
@@ -630,7 +758,7 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     if (state === "running") step(dt);
     if (flash > 0) flash = Math.max(0, flash - dt);
     draw();
-    if (state === "running" || flash > 0 || banner) raf = requestAnimationFrame(frame);
+    if (state === "running" || flash > 0 || banner || beams.length) raf = requestAnimationFrame(frame);
   }
   function loop() {
     cancelAnimationFrame(raf);

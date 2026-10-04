@@ -18,6 +18,7 @@ export type SoundName =
   | "click"
   | "deny"
   | "match"
+  | "zap"
   | "win";
 
 const KEY = "pentra.arcadeSound";
@@ -138,6 +139,10 @@ export function play(name: SoundName, detail = 1) {
       case "match":
         tone(c, { type: "triangle", from: 660, dur: 0.12, gain: 0.18 });
         tone(c, { type: "triangle", from: 990, dur: 0.16, gain: 0.18, at: 0.08 });
+        break;
+      case "zap":
+        tone(c, { type: "sawtooth", from: 1100, to: 180, dur: 0.26, gain: 0.16 });
+        noise(c, 0.2, 0.25, 3000);
         break;
       case "win":
         [523, 659, 784, 1046].forEach((f, i) =>
