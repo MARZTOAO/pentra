@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
   addTester,
@@ -36,206 +35,123 @@ import {
   type ProMember,
 } from "../lib/dev";
 import { clearFlagCache } from "../lib/flags";
-import { devModeStored, setDevMode } from "../lib/devMode";
+import { listSeeded, type SeededAccount } from "../lib/seeded";
 import { Avatar } from "./Avatar";
 import { DevAds } from "./DevAds";
 import { DevCreators } from "./DevCreators";
 
 /**
- * The developer panel.
+ * The developer tools: one tab strip, eight tabs. Lives on the
+ * Developer page (/dev, src/pages/Developer.tsx), reached from the
+ * sidebar. It used to be a dialog opened from a Settings card; the
+ * page has the width the ads and creators tabs wanted, and a page in
+ * the sidebar is where "my tools" belongs.
  *
- * Renders nothing at all unless the database says you're a developer,
- * and everything inside it fails closed for anybody else — see
- * supabase/58_developer_mode.sql. Faking the check in the console
- * gets you a panel full of errors.
- *
- * A section on Settings rather than a floating button. It started as
- * a button pinned to the bottom-left corner so it would be reachable
- * from whatever screen looked wrong — which put it directly on top of
- * Sign out. A permanent overlay has to sit somewhere, and there is no
- * corner of a small screen that is reliably empty.
- *
- * The dialog is still portalled to <body>: clip-path on the notched
- * panels clips descendants, position: fixed included, so a modal
- * rendered inside one gets cut to that panel's box.
+ * Renders nothing unless the database says you're a developer, and
+ * everything inside fails closed for anybody else — see
+ * supabase/58_developer_mode.sql. Faking the check in the console gets
+ * you a panel full of errors.
  */
-export function DevPanel() {
+export function DevTools() {
   const [isDev, setIsDev] = useState(false);
-  const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("reports");
-  const [master, setMaster] = useState(devModeStored);
 
   useEffect(() => {
     amIDeveloper().then(setIsDev);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
   if (!isDev) return null;
 
   return (
-    <>
-      <section className="notch border border-accent/40 bg-surface bg-[linear-gradient(rgb(255_122_47/0.05),rgb(255_122_47/0.05))] p-5">
-        <h2 className="mb-1 label-wide text-accent">Developer</h2>
-        <p className="mb-4 text-xs text-muted">
-          Only you can see this. The numbers behind the app, the feature
-          flags, and what this build actually is.
-        </p>
-
-        {/* Developer mode: the switch for the controls that act on
-            other people's things (lib/devMode.ts, supabase/89). Per
-            machine; the database checks who you are regardless. */}
-        <label className="mb-4 flex cursor-pointer items-start gap-3 notch-md border border-line bg-surface-2/60 px-3 py-2.5">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={master}
-            onClick={() => {
-              const next = !master;
-              setMaster(next);
-              setDevMode(next);
-            }}
-            className={
-              "relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition " +
-              (master ? "bg-accent" : "bg-line")
-            }
-          >
-            <span
+    <section className="notch border border-accent/40 bg-surface">
+      <header className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-4 py-3">
+        <h2 className="label-wide text-accent">Tools</h2>
+        <nav className="order-last flex w-full flex-wrap gap-1 sm:order-none sm:ml-auto sm:w-auto">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
               className={
-                "absolute top-0.5 h-4 w-4 rounded-full bg-bg transition " +
-                (master ? "left-[18px]" : "left-0.5")
+                "notch-sm px-2.5 py-1 text-xs font-semibold capitalize transition " +
+                (tab === t ? "bg-accent text-onaccent" : "text-muted hover:text-ink")
               }
-            />
-          </button>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium">
-              Developer mode {master ? "— on" : ""}
-            </span>
-            <span className="block text-xs leading-snug text-muted">
-              Shows the master controls everywhere: delete any post or comment,
-              and warn, ban or edit any player from their profile. Every action
-              is logged. Off, Pentra behaves as it does for everyone else.
-            </span>
-          </span>
-        </label>
+            >
+              {t}
+            </button>
+          ))}
+        </nav>
+      </header>
 
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 notch-md border border-accent/50 px-4 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10"
-        >
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="m8 9-3 3 3 3" />
-            <path d="m16 9 3 3-3 3" />
-            <path d="M13.5 7.5 10.5 16.5" />
-          </svg>
-          Open developer tools
-        </button>
-
-        {/* The metrics page: the Numbers tab with charts, too wide for
-            this dialog. Also in the sidebar on a computer. */}
-        <Link
-          to="/dev"
-          className="mt-2 inline-flex items-center gap-2 notch-md border border-accent/50 px-4 py-2 sm:ml-2 sm:mt-0 text-sm font-semibold text-accent transition hover:bg-accent/10"
-        >
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
-          </svg>
-          Metrics &amp; charts
-        </Link>
-      </section>
-
-      {open && <Dialog tab={tab} setTab={setTab} onClose={() => setOpen(false)} />}
-    </>
-  );
-}
-
-function Dialog({
-  tab,
-  setTab,
-  onClose,
-}: {
-  tab: Tab;
-  setTab: (t: Tab) => void;
-  onClose: () => void;
-}) {
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-3 pt-10 sm:p-6 sm:pt-16">
-      <div className="flex max-h-full w-full max-w-2xl flex-col notch border border-accent/40 bg-surface">
-        {/* Wraps: a fourth tab pushes "build" off the right edge at
-              375px wide, so on a phone the tabs drop to their own
-              line rather than being clipped. */}
-          <header className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-line px-4 py-3">
-          <h2 className="label-wide text-accent">Developer</h2>
-
-          <nav className="order-last flex w-full flex-wrap gap-1 sm:order-none sm:ml-auto sm:w-auto">
-            {(["reports", "news", "numbers", "ads", "flags", "pro", "creators", "build"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={
-                  "notch-sm px-2.5 py-1 text-xs font-semibold capitalize transition " +
-                  (tab === t
-                    ? "bg-accent text-onaccent"
-                    : "text-muted hover:text-ink")
-                }
-              >
-                {t}
-              </button>
-            ))}
-          </nav>
-
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="ml-1 px-2 text-lg leading-none text-muted transition hover:text-ink"
-          >
-            ×
-          </button>
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          {tab === "reports" && <Reports />}
-          {tab === "news" && <News />}
-          {tab === "numbers" && <Numbers />}
-          {tab === "ads" && <DevAds />}
-          {tab === "flags" && <Flags />}
-          {tab === "pro" && <Pro />}
-          {tab === "creators" && <DevCreators />}
-          {tab === "build" && <Build />}
-        </div>
+      <div className="p-4">
+        {tab === "reports" && <Reports />}
+        {tab === "news" && <News />}
+        {tab === "numbers" && <Numbers />}
+        {tab === "ads" && <DevAds />}
+        {tab === "flags" && <Flags />}
+        {tab === "pro" && <Pro />}
+        {tab === "creators" && <DevCreators />}
+        {tab === "seeded" && <Seeded />}
+        {tab === "build" && <Build />}
       </div>
-    </div>,
-    document.body,
+    </section>
   );
 }
 
-type Tab = "reports" | "news" | "numbers" | "ads" | "flags" | "pro" | "creators" | "build";
+const TABS = ["reports", "news", "numbers", "ads", "flags", "pro", "creators", "seeded", "build"] as const;
+type Tab = (typeof TABS)[number];
+
+/* ------------------------------------------------------------------ */
+
+/** The seeded (fake) accounts — supabase/90. */
+function Seeded() {
+  const [rows, setRows] = useState<SeededAccount[] | null | undefined>(undefined);
+
+  useEffect(() => {
+    listSeeded().then(setRows);
+  }, []);
+
+  if (rows === undefined) return <p className="text-sm text-muted">Loading…</p>;
+  if (rows === null) {
+    return (
+      <p className="text-sm text-danger">
+        Couldn't load. Has supabase/90_seeded_accounts.sql been run?
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs leading-relaxed text-muted">
+        The {rows.length} account{rows.length === 1 ? "" : "s"} made by the seed
+        scripts (every <span className="numeric">@example.test</span> sign-up).
+        They carry a dashed <span className="label-wide text-[9px]">Seeded</span>{" "}
+        tag everywhere their name appears — on posts, comments, profiles and
+        match cards — and only developers see it. Metrics leave them out
+        unless you tick "include test accounts".
+      </p>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted">None.</p>
+      ) : (
+        <ul className="grid gap-1 sm:grid-cols-2 md:grid-cols-3">
+          {rows.map((r) => (
+            <li key={r.id}>
+              <Link
+                to={`/u/${r.username}`}
+                className="flex items-center justify-between gap-2 notch-sm border border-line px-2.5 py-1.5 text-sm transition hover:border-accent hover:text-accent"
+              >
+                <span className="truncate">@{r.username}</span>
+                <span className="numeric shrink-0 text-[11px] text-muted">
+                  {new Date(r.created_at).toLocaleDateString()}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 
 /* ------------------------------------------------------------------ */
 
@@ -689,7 +605,7 @@ export function Numbers({ onPage = false }: { onPage?: boolean }) {
     <div className="space-y-5">
       {!onPage && (
         <Link
-          to="/dev"
+          to="/dev/metrics"
           className="flex items-center justify-between notch-md border border-accent/40 bg-accent/5 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent/10"
         >
           See these as charts, over time

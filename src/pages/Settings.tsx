@@ -8,12 +8,16 @@ import { NotificationSettingsPanel } from "../components/NotificationSettingsPan
 import { DeleteAccount } from "../components/DeleteAccount";
 import { ChangePassword } from "../components/ChangePassword";
 import { BirthDateSection } from "../components/BirthDateSection";
-import { DevPanel } from "../components/DevPanel";
+import { Link } from "react-router-dom";
+import { useIsDeveloper } from "../lib/dev";
 import { DesktopSection } from "../components/DesktopSection";
 import { ProSection } from "../components/ProSection";
 
 export default function Settings() {
   const { user } = useAuth();
+  // For the link at the foot of the page: on a phone there is no
+  // sidebar, so this is how a developer reaches /dev.
+  const isDev = useIsDeveloper(user?.id);
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -168,13 +172,18 @@ export default function Settings() {
         )}
       </section>
 
-      {/* Draws nothing unless the database says you're a developer.
-          The check is server-side — this only decides whether to
-          render the section. */}
-      <DevPanel />
-
       {/* Last on the page, on purpose. */}
       <DeleteAccount username={profile?.username ?? null} />
+
+      {/* Developers only. The Developer page is in the sidebar on a
+          computer; a phone has no sidebar, so it's reachable here. */}
+      {isDev && (
+        <p className="mt-8 text-center text-xs text-muted md:hidden">
+          <Link to="/dev" className="font-semibold text-accent hover:underline">
+            Developer tools →
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

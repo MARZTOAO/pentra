@@ -28,6 +28,7 @@ import { Privacy, Terms } from "./pages/Legal";
 import Confirm from "./pages/Confirm";
 import Forgot from "./pages/Forgot";
 import DevMetrics from "./pages/DevMetrics";
+import Developer from "./pages/Developer";
 import Pro from "./pages/Pro";
 
 /** Every signed-in screen gets the sidebar frame. */
@@ -218,10 +219,18 @@ export default function App() {
             }
           />
 
-          {/* Developers only — the page checks, and the database
-              refuses the numbers to anyone else. */}
+          {/* Developers only — the pages check, and the database
+              refuses everything behind them to anyone else. */}
           <Route
             path="/dev"
+            element={
+              <Shell>
+                <Developer />
+              </Shell>
+            }
+          />
+          <Route
+            path="/dev/metrics"
             element={
               <Shell>
                 <DevMetrics />

@@ -13,6 +13,7 @@ import { Linkify } from "./Linkify";
 import { MentionBox } from "./MentionBox";
 import { useDevMode } from "../lib/devMode";
 import { devDeleteComment } from "../lib/dev";
+import { SeededTag } from "./SeededTag";
 
 /**
  * The replies under a post.
@@ -167,6 +168,7 @@ export function Comments({
                       >
                         {c.display_name || c.username}
                       </Link>
+                      <SeededTag userId={c.author_id} />
                       <span className="numeric text-[11px] text-muted">
                         {postTime(c.created_at)}
                       </span>

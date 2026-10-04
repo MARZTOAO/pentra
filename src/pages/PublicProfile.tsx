@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { getProfileByUsername, hasPlus, type Profile } from "../lib/profile";
 import { getTopFive, type TopFiveEntry } from "../lib/topFive";
@@ -21,6 +21,8 @@ import { Avatar } from "../components/Avatar";
 import { frameOf } from "../lib/frames";
 import { MotionBackground } from "../components/MotionBackground";
 import { DevProfileTools } from "../components/DevProfileTools";
+import { SeededTag } from "../components/SeededTag";
+import { ProfileFeed } from "../components/ProfileFeed";
 
 /**
  * A player's profile as everyone sees it.
@@ -37,6 +39,10 @@ export default function PublicProfile({ username: fixed }: { username?: string }
   const params = useParams<{ username: string }>();
   const username = fixed ?? params.username;
   const { user } = useAuth();
+  // Which tab: profile (default), stats or achievements. In the URL
+  // (?tab=stats) so a tab can be linked to and survives a refresh.
+  const [search, setSearch] = useSearchParams();
+  const tab = (["profile", "stats", "achievements"] as const).find((t) => t === search.get("tab")) ?? "profile";
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [topFive, setTopFive] = useState<TopFiveEntry[]>([]);
@@ -176,7 +182,10 @@ export default function PublicProfile({ username: fixed }: { username?: string }
             <h1 className="display on-art break-words text-2xl leading-tight">
               {profile.display_name || profile.username}
             </h1>
-            <p className="on-art mb-3 truncate text-sm text-muted">@{profile.username}</p>
+            <p className="on-art mb-3 flex items-center gap-2 text-sm text-muted">
+              <span className="truncate">@{profile.username}</span>
+              <SeededTag userId={profile.id} />
+            </p>
 
             <RatingBadge
               rating={profile.rating}
@@ -263,6 +272,45 @@ export default function PublicProfile({ username: fixed }: { username?: string }
           profile — a percentage against yourself is nonsense. */}
       {!isSelf && <ProfileMatch userId={profile.id} />}
 
+      {/* Stats and achievements get their own tabs (MARZ, 2026-10-03:
+          "so they don't show on the main page of profile"); the
+          profile tab is the player — Top 5, games, platforms, tags —
+          and then their feed. */}
+      <nav className="mb-6 flex gap-1 border-b border-line/70" aria-label="Profile sections">
+        {(
+          [
+            ["profile", "Profile"],
+            ["stats", "Stats"],
+            ["achievements", "Achievements"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              const next = new URLSearchParams(search);
+              if (key === "profile") next.delete("tab");
+              else next.set("tab", key);
+              setSearch(next, { replace: true });
+            }}
+            aria-current={tab === key ? "page" : undefined}
+            className={
+              "on-art -mb-px border-b-2 px-3 py-2 text-sm font-semibold transition " +
+              (tab === key
+                ? "border-accent text-ink"
+                : "border-transparent text-muted hover:text-ink")
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === "stats" && <ProfileStats userId={profile.id} isSelf={isSelf} />}
+      {tab === "achievements" && <Achievements userId={profile.id} isSelf={isSelf} />}
+
+      {tab === "profile" && (
+      <>
       {/* Top 5 */}
       <section className="mb-8">
         <h2 className="on-art mb-4 label-wide text-muted">
@@ -322,10 +370,6 @@ export default function PublicProfile({ username: fixed }: { username?: string }
 
       <GameLibrary userId={profile.id} editable={false} />
 
-      <ProfileStats userId={profile.id} isSelf={isSelf} />
-
-      <Achievements userId={profile.id} isSelf={isSelf} />
-
       {/* Details. One column on a phone — side by side these panels are
           164px wide, and a chip reading "PlayStation 5" does not fit in
           the 124px left after padding. */}
@@ -379,6 +423,11 @@ export default function PublicProfile({ username: fixed }: { username?: string }
           </p>
         )}
       </section>
+
+      {/* Everything they're part of, under everything else. */}
+      <ProfileFeed userId={profile.id} isSelf={isSelf} />
+      </>
+      )}
     </div>
   );
 }

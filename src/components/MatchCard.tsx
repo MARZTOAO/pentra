@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { matchReason, lastSeenLabel, type Match } from "../lib/matching";
 import { formatLocation } from "../lib/constants";
 import { Avatar } from "./Avatar";
+import { SeededTag } from "./SeededTag";
 
 /**
  * One player, and why they're worth your time.
@@ -28,6 +29,7 @@ export function MatchCard({ match }: { match: Match }) {
             {match.display_name || match.username}
           </p>
           <p className="truncate text-xs text-muted">@{match.username}</p>
+          <SeededTag userId={match.id} className="self-center" />
           {seen === "online now" && (
             <span className="flex items-center gap-1 text-xs text-ok">
               <span className="h-1.5 w-1.5 rounded-full bg-ok" />

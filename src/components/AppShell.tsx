@@ -102,8 +102,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { unread } = useNotifications();
   const [query, setQuery] = useState("");
-  // Only decides whether to show the Metrics link. The numbers behind
-  // it are refused by the database to anybody else.
+  // Only decides whether to show the Developer link. Everything behind
+  // it is refused by the database to anybody else.
   const isDev = useIsDeveloper(user?.id);
   // The Pro link, once there's something to buy. Sidebar only: the
   // phone tab bar is full, and Settings has the same door.
@@ -214,7 +214,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           )}
 
           {/* Developers only, and only here: the phone tab bar is full,
-              so on a phone it's reached from Settings → Developer. */}
+              so on a phone it's reached from the link at the foot of
+              Settings. */}
           {isDev && (
             <NavLink
               to="/dev"
@@ -225,8 +226,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                   : "text-accent/80 hover:bg-surface-2 hover:text-accent")
               }
             >
-              <Icon d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
-              <span className="flex-1">Metrics</span>
+              <Icon d="m8 9-3 3 3 3M16 9l3 3-3 3M13.5 7.5l-3 9" />
+              <span className="flex-1">Developer</span>
             </NavLink>
           )}
         </div>

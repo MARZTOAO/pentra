@@ -656,7 +656,15 @@ checks(migration, feature, present) as (
 
     ('89_developer_mode',
      'Developer mode: delete any post/comment, edit any profile',
-     exists (select 1 from fn where fn.name = 'dev_update_profile'))
+     exists (select 1 from fn where fn.name = 'dev_update_profile')),
+
+    ('90_seeded_accounts',
+     'Seeded (fake) accounts listed for developers',
+     exists (select 1 from fn where fn.name = 'dev_test_accounts')),
+
+    ('91_profile_feed',
+     'The feed on a profile: posts, sessions, tags',
+     exists (select 1 from fn where fn.name = 'get_profile_feed'))
 )
 select
   migration,

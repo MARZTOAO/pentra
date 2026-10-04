@@ -17,6 +17,7 @@ import { ProBadge } from "./ProBadge";
 import { useIsPro } from "../lib/frames";
 import { useDevMode } from "../lib/devMode";
 import { devDeletePost } from "../lib/dev";
+import { SeededTag } from "./SeededTag";
 
 /**
  * One post, everywhere a post is shown.
@@ -109,6 +110,7 @@ export function PostCard({
                 <ProBadge />
               </span>
             )}
+            <SeededTag userId={post.author_id} className="self-center" />
             <span className="truncate text-xs text-muted">
               @{post.username} · {postTime(post.created_at)}
             </span>

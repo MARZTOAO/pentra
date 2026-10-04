@@ -97,6 +97,21 @@ export async function getFeed(
   return data as Post[];
 }
 
+/**
+ * A player's own timeline: their posts, the sessions they host or
+ * joined, and the posts they're tagged in. Newest first, twenty at a
+ * time (supabase/91).
+ */
+export async function getProfileFeed(userId: string, beforeId?: number): Promise<Post[]> {
+  const { data, error } = await supabase.rpc("get_profile_feed", {
+    who: userId,
+    max_results: 20,
+    before_id: beforeId ?? null,
+  });
+  if (error || !data) return [];
+  return data as Post[];
+}
+
 export type FeedGame = {
   game_id: number;
   name: string;
