@@ -14,6 +14,10 @@ export type ArcadeGameInfo = {
   slug: string;
   name: string;
   tagline: string;
+  /** "score": one run, one number, leaderboards (ArcadeGame.tsx).
+   *  "levels": progress through levels with a time each, no boards
+   *  (its own page). */
+  kind: "score" | "levels";
   /** How to play, in one line. */
   controls: string;
   /** The same line for a phone. */
@@ -30,6 +34,7 @@ export const GAMES: ArcadeGameInfo[] = [
   {
     slug: "lag-spike",
     name: "Lag Spike",
+    kind: "score",
     tagline: "Keep the signal running. Jump the spikes. It only gets faster.",
     controls: "Space, ↑ or tap to jump. Hold for a higher jump.",
     touchControls: "Tap anywhere up here to jump. Hold for a higher jump.",
@@ -39,9 +44,20 @@ export const GAMES: ArcadeGameInfo[] = [
   {
     slug: "packet-pop",
     name: "Packet Pop",
+    kind: "score",
     tagline: "Match three to pop. Drop what's left hanging. New rows keep coming.",
     controls: "Move the mouse to aim, click or Space to fire. ← → also aim.",
     touchControls: "Drag to aim, let go to fire.",
+    touchPad: false,
+    overlayHud: false,
+  },
+  {
+    slug: "stack-trace",
+    name: "Stack Trace",
+    kind: "levels",
+    tagline: "Clear the stack, one matching pair at a time. Ten levels. No clock but your own.",
+    controls: "Click two free tiles with the same face.",
+    touchControls: "Tap two free tiles with the same face.",
     touchPad: false,
     overlayHud: false,
   },
@@ -131,6 +147,50 @@ export function useBests(userId: string | undefined, refreshKey = 0) {
     };
   }, [userId, refreshKey]);
   return bests;
+}
+
+/* ---- level games (95) -------------------------------------------- */
+
+export type LevelClear = {
+  game: string;
+  level: number;
+  best_ms: number;
+  clears: number;
+  last_cleared_at: string;
+};
+
+export async function getLevels(userId: string): Promise<LevelClear[]> {
+  const { data, error } = await supabase.rpc("arcade_levels_of", { who: userId });
+  if (error || !data) return [];
+  return data as LevelClear[];
+}
+
+/** A player's cleared levels, refetched when `refreshKey` changes. */
+export function useLevels(userId: string | undefined, refreshKey = 0) {
+  const [levels, setLevels] = useState<LevelClear[] | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    let live = true;
+    getLevels(userId).then((rows) => {
+      if (live) setLevels(rows);
+    });
+    return () => {
+      live = false;
+    };
+  }, [userId, refreshKey]);
+  return levels;
+}
+
+/** A level is clear. Returns the best time for it, or a sentence if refused. */
+export async function recordLevelClear(
+  game: string,
+  level: number,
+  ms: number,
+): Promise<{ best_ms: number; new_best: boolean } | string> {
+  const { data, error } = await supabase.rpc("record_level_clear", { game, level, ms: Math.round(ms) });
+  if (error) return error.message;
+  const row = (Array.isArray(data) ? data[0] : data) as { best_ms: number; new_best: boolean } | undefined;
+  return row ?? "No reply.";
 }
 
 export function formatScore(n: number): string {

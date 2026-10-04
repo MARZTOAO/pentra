@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
-import { GAMES, formatScore, useBests } from "../lib/arcade";
+import { GAMES, formatScore, useBests, useLevels } from "../lib/arcade";
+import { LEVEL_COUNT } from "../arcade/stackTrace";
 
 /**
  * The Arcade tab — /arcade. Small games inside Pentra (supabase/93).
@@ -9,6 +10,7 @@ import { GAMES, formatScore, useBests } from "../lib/arcade";
 export default function Arcade() {
   const { user } = useAuth();
   const bests = useBests(user?.id);
+  const levels = useLevels(user?.id);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-8 sm:py-10">
@@ -22,6 +24,7 @@ export default function Arcade() {
       <div className="grid gap-4 sm:grid-cols-2">
         {GAMES.map((g) => {
           const mine = bests?.find((b) => b.game === g.slug) ?? null;
+          const done = levels?.filter((l) => l.game === g.slug).length ?? 0;
           return (
             <Link
               key={g.slug}
@@ -35,7 +38,15 @@ export default function Arcade() {
               <p className="mt-1 text-sm text-muted">{g.tagline}</p>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-xs text-muted">
-                  {mine ? (
+                  {g.kind === "levels" ? (
+                    done > 0 ? (
+                      <>
+                        <span className="numeric font-bold text-ink">{done}</span> of {LEVEL_COUNT} levels cleared
+                      </>
+                    ) : (
+                      "Not played yet"
+                    )
+                  ) : mine ? (
                     <>
                       Your best <span className="numeric font-bold text-ink">{formatScore(mine.best)}</span>
                       {" · "}#{formatScore(mine.rank)}
@@ -62,6 +73,25 @@ export default function Arcade() {
 
 /** A still of each game for its card, drawn in SVG so it's crisp at any size. */
 function Preview({ slug }: { slug: string }) {
+  if (slug === "stack-trace") {
+    const tiles: [number, number, number, string][] = [
+      [40, 20, 0, "#ff7a2f"], [70, 20, 0, "#e9ebee"], [100, 20, 0, "#a66cff"], [130, 20, 0, "#2ad4c8"], [160, 20, 0, "#8bff3a"],
+      [40, 50, 0, "#2ad4c8"], [70, 50, 0, "#8bff3a"], [160, 50, 0, "#ff7a2f"],
+      [85, 35, 1, "#ff7a2f"], [115, 35, 1, "#e9ebee"],
+      [100, 27, 2, "#a66cff"],
+    ];
+    return (
+      <svg viewBox="0 0 240 90" className="h-full w-full" aria-hidden="true">
+        {tiles.map(([x, y, z, c], i) => (
+          <g key={i} transform={`translate(${x - z * 3},${y - z * 3})`}>
+            <rect x="3" y="3" width="26" height="30" rx="3" fill="#0e0f11" />
+            <rect x="0" y="0" width="26" height="30" rx="3" fill="#23262c" stroke="rgba(233,235,238,0.22)" />
+            <circle cx="13" cy="15" r="6" fill={c} />
+          </g>
+        ))}
+      </svg>
+    );
+  }
   if (slug === "packet-pop") {
     const colors = ["#ff7a2f", "#e9ebee", "#a66cff", "#2ad4c8", "#8bff3a"];
     const rows = [

@@ -32,6 +32,7 @@ import Developer from "./pages/Developer";
 import Pro from "./pages/Pro";
 import Arcade from "./pages/Arcade";
 import ArcadeGame from "./pages/ArcadeGame";
+import StackTrace from "./pages/StackTrace";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -229,6 +230,15 @@ export default function App() {
             element={
               <Shell>
                 <Arcade />
+              </Shell>
+            }
+          />
+          {/* Stack Trace has levels, not a score, so its own page (95). */}
+          <Route
+            path="/arcade/stack-trace"
+            element={
+              <Shell>
+                <StackTrace />
               </Shell>
             }
           />

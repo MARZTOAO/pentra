@@ -12,7 +12,7 @@ import type { ArcadeHandle, GameCallbacks, GameState, PointerKind } from "./type
  * Three or more of a colour touching pop, and anything left hanging
  * with no path back to the top falls. Every few shots a new row is
  * pushed in from above, and the gap between pushes shrinks as the
- * score climbs (six shots a row down to four), so the game never
+ * score climbs (six shots a row down to three), so the game never
  * ends until the bubbles reach the line above the shooter.
  *
  * Scoring: 10 a bubble popped, 20 a bubble dropped (drops are the
@@ -40,7 +40,7 @@ const COLORS = [
 const HEIGHT_MIN = 600;
 const HEIGHT_MAX = 960;
 const COLS = 11;
-const START_ROWS = 5;
+const START_ROWS = 6;
 const SHOT_SPEED = 1000; // px/s
 const SHOOTER_ZONE = 86; // px at the bottom for the shooter and HUD
 const RESTART_LOCK_MS = 450;
@@ -363,9 +363,12 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
     if (![...grid.values()].includes(next) && grid.size > 0) next = randomColor(true);
   }
 
-  // Shots between pushes: six to start, down to four as the run goes on.
+  // Shots between pushes: six to start, down to three as the run goes
+  // on, a step every five pushes. (Tuned 2026-10-04: the short board
+  // with 6→3 every four was "way too difficult"; the tall board with
+  // 6→4 every five was "slightly too easy".)
   function pushCadence() {
-    return Math.max(4, 6 - Math.floor(pushes / 5));
+    return Math.max(3, 6 - Math.floor(pushes / 5));
   }
 
   function flood(start: Cell, ok: (c: Cell) => boolean): Cell[] {
