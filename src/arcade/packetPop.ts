@@ -12,8 +12,8 @@ import type { ArcadeHandle, GameCallbacks, GameState, PointerKind } from "./type
  * Three or more of a colour touching pop, and anything left hanging
  * with no path back to the top falls. Every few shots a new row is
  * pushed in from above, and the gap between pushes shrinks as the
- * score climbs, so the game never ends until the bubbles reach the
- * line above the shooter.
+ * score climbs (six shots a row down to four), so the game never
+ * ends until the bubbles reach the line above the shooter.
  *
  * Scoring: 10 a bubble popped, 20 a bubble dropped (drops are the
  * skilled play), and 100 for clearing the board, which also brings
@@ -34,7 +34,11 @@ const COLORS = [
   "#8bff3a", // slime green
 ];
 
-const HEIGHT = 480;
+// Tall on purpose (MARZ, 2026-10-04: "about twice as tall"): the
+// board is as tall as the window allows, between these two, so there
+// is room for rows to come down before the line.
+const HEIGHT_MIN = 600;
+const HEIGHT_MAX = 960;
 const COLS = 11;
 const START_ROWS = 5;
 const SHOT_SPEED = 1000; // px/s
@@ -51,6 +55,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
   if (!ctx) throw new Error("no 2d context");
 
   let width = 360;
+  let height = HEIGHT_MAX;
   let dpr = 1;
   let r = 16; // bubble radius, from the width
   let rowH = r * Math.sqrt(3);
@@ -86,16 +91,19 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
   }
 
   const shooterX = () => width / 2;
-  const shooterY = () => HEIGHT - 42;
-  const deadline = () => HEIGHT - SHOOTER_ZONE;
+  const shooterY = () => height - 42;
+  const deadline = () => height - SHOOTER_ZONE;
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
     width = Math.max(300, Math.round(rect.width));
+    // Fill the window's height, less room for the title above and
+    // the controls line below, within the limits.
+    height = Math.round(Math.max(HEIGHT_MIN, Math.min(HEIGHT_MAX, (window.innerHeight || HEIGHT_MAX) - 200)));
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(HEIGHT * dpr);
-    canvas.style.height = `${HEIGHT}px`;
+    canvas.height = Math.round(height * dpr);
+    canvas.style.height = `${height}px`;
     ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
     r = width / (COLS * 2);
     rowH = r * Math.sqrt(3);
@@ -103,6 +111,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
   }
   const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
   ro?.observe(canvas);
+  window.addEventListener("resize", resize);
   resize();
 
   /* ---- grid geometry ---------------------------------------------- */
@@ -354,9 +363,9 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
     if (![...grid.values()].includes(next) && grid.size > 0) next = randomColor(true);
   }
 
-  // Shots between pushes: six to start, down to three as the run goes on.
+  // Shots between pushes: six to start, down to four as the run goes on.
   function pushCadence() {
-    return Math.max(3, 6 - Math.floor(pushes / 4));
+    return Math.max(4, 6 - Math.floor(pushes / 5));
   }
 
   function flood(start: Cell, ok: (c: Cell) => boolean): Cell[] {
@@ -427,7 +436,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
       f.y += f.vy * dt;
       f.x += f.vx * dt;
     }
-    falls = falls.filter((f) => f.y < HEIGHT + r * 2);
+    falls = falls.filter((f) => f.y < height + r * 2);
     if (banner) {
       banner.t -= dt;
       if (banner.t <= 0) banner = null;
@@ -458,7 +467,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
 
   function draw() {
     const c = ctx!;
-    c.clearRect(0, 0, width, HEIGHT);
+    c.clearRect(0, 0, width, height);
 
     // Grid of bubbles.
     for (const [k, color] of grid) {
@@ -487,7 +496,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
 
     // Shooter zone.
     c.fillStyle = "rgba(14,15,17,0.35)";
-    c.fillRect(0, dl, width, HEIGHT - dl);
+    c.fillRect(0, dl, width, height - dl);
 
     const sx = shooterX();
     const sy = shooterY();
@@ -570,7 +579,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
 
     if (flash > 0) {
       c.fillStyle = `rgba(255,107,107,${flash * 0.8})`;
-      c.fillRect(0, 0, width, HEIGHT);
+      c.fillRect(0, 0, width, height);
     }
   }
 
@@ -588,7 +597,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
         f.vy += 1800 * dt;
         f.y += f.vy * dt;
       }
-      falls = falls.filter((f) => f.y < HEIGHT + r * 2);
+      falls = falls.filter((f) => f.y < height + r * 2);
     }
     if (flash > 0) flash = Math.max(0, flash - dt);
     draw();
@@ -625,6 +634,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
       destroyed = true;
       cancelAnimationFrame(raf);
       ro?.disconnect();
+      window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
     },
   };
