@@ -22,15 +22,20 @@ export const DEFAULT_POSTS_BETWEEN = 4;
 /** The most the ads manager allows; the database enforces the same. */
 export const MAX_POSTS_BETWEEN = 50;
 
+/**
+ * Everything but the sponsor is optional (88): an ad is a picture or
+ * video, or text, or both — with or without a link. The media fields
+ * are all present or all null; the database enforces both rules.
+ */
 export type Ad = {
   id: number;
   sponsor: string;
   body: string | null;
-  media_kind: "image" | "video";
-  media_path: string;
-  width: number;
-  height: number;
-  link_url: string;
+  media_kind: "image" | "video" | null;
+  media_path: string | null;
+  width: number | null;
+  height: number | null;
+  link_url: string | null;
 };
 
 export type FeedItem =
@@ -213,43 +218,49 @@ function contentTypeFor(ext: string): string {
 export type NewAd = {
   sponsor: string;
   body: string;
+  /** Empty for no link: the card isn't clickable. */
   linkUrl: string;
   runFor: number;
   unit: AdUnit;
-  media: PreparedAd;
+  /** Null for a text-only ad. */
+  media: PreparedAd | null;
 };
 
 /**
- * Uploads the file, then creates the ad. If the database turns the ad
- * down, the file is removed again so nothing is left orphaned.
+ * Uploads the file (if there is one), then creates the ad. If the
+ * database turns the ad down, the file is removed again so nothing is
+ * left orphaned.
  *
  * @returns null when it worked, or a sentence saying what went wrong.
  */
 export async function createAd(ad: NewAd): Promise<string | null> {
-  const path = `${crypto.randomUUID()}.${ad.media.extension}`;
+  let path: string | null = null;
 
-  const up = await supabase.storage.from("ads").upload(path, ad.media.blob, {
-    contentType: ad.media.contentType,
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (up.error) return `Upload failed: ${up.error.message}`;
+  if (ad.media) {
+    path = `${crypto.randomUUID()}.${ad.media.extension}`;
+    const up = await supabase.storage.from("ads").upload(path, ad.media.blob, {
+      contentType: ad.media.contentType,
+      cacheControl: "31536000",
+      upsert: false,
+    });
+    if (up.error) return `Upload failed: ${up.error.message}`;
+  }
 
   const { data, error } = await supabase.rpc("dev_ad_create", {
     sponsor: ad.sponsor,
     body: ad.body,
-    media_kind: ad.media.kind,
+    media_kind: ad.media?.kind ?? null,
     media_path: path,
-    width: ad.media.width,
-    height: ad.media.height,
-    link_url: ad.linkUrl,
+    width: ad.media?.width ?? null,
+    height: ad.media?.height ?? null,
+    link_url: ad.linkUrl.trim() || null,
     run_for: ad.runFor,
     unit: ad.unit,
   });
 
   const ok = !error && typeof data === "string" && /^\d+$/.test(data);
   if (!ok) {
-    await supabase.storage.from("ads").remove([path]);
+    if (path) await supabase.storage.from("ads").remove([path]);
     return error ? error.message : (data as string) || "Couldn't create the ad.";
   }
   return null;
@@ -272,7 +283,8 @@ export async function deleteAd(id: number): Promise<string | null> {
 }
 
 /** "example.com" from a link, for the card and the manager. */
-export function linkDomain(url: string): string {
+export function linkDomain(url: string | null): string {
+  if (!url) return "";
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {

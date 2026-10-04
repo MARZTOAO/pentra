@@ -8,7 +8,10 @@ import { openExternal } from "../lib/platform";
  * Shaped like a post so it sits naturally in the feed, but always
  * labelled "Sponsored" so nobody mistakes it for a player's post.
  * Clicking the picture or video (or the link under it) opens the
- * advertiser's site in the person's own browser.
+ * advertiser's site in the person's own browser — when there is a
+ * link. An ad without one is just a sponsored post: nothing on it is
+ * clickable and no clicks are counted. An ad without a picture is the
+ * text alone (88).
  *
  * Counts a VIEW once it has been at least half on screen for a second
  * — once per card, so a feed refresh doesn't count it again — and a
@@ -61,15 +64,21 @@ export function AdCard({ ad }: { ad: Ad }) {
     else v.pause();
   }, [onScreen, reduceMotion]);
 
+  const link = ad.link_url;
+
   function open() {
+    if (!link) return;
     // Open first, while the browser still treats this as the click.
-    void openExternal(ad.link_url);
+    void openExternal(link);
     recordAdEvent(ad.id, "click");
   }
 
-  const url = adMediaUrl(ad.media_path);
-  const domain = linkDomain(ad.link_url);
+  const url = ad.media_path ? adMediaUrl(ad.media_path) : null;
+  const domain = linkDomain(link);
   const initial = ad.sponsor.trim().charAt(0).toUpperCase() || "P";
+  // The picture is a button when it leads somewhere, a plain box when
+  // it doesn't — a cursor that promises a click should keep it.
+  const Media = link ? "button" : "div";
 
   return (
     <article ref={ref} className="notch border border-line bg-surface p-4" aria-label={`Sponsored: ${ad.sponsor}`}>
@@ -92,41 +101,49 @@ export function AdCard({ ad }: { ad: Ad }) {
 
           {/* Sized from the stored width and height, so the space is
               reserved before the file arrives and the feed doesn't jump. */}
-          <button
-            type="button"
-            onClick={open}
-            title={`Opens ${domain} in your browser`}
-            className="group mt-3 block w-full overflow-hidden notch-md bg-surface-2 text-left"
-            style={{ aspectRatio: `${ad.width} / ${ad.height}`, maxHeight: 520 }}
-          >
-            {ad.media_kind === "video" ? (
-              <video
-                ref={video}
-                src={url}
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                className="pointer-events-none h-full w-full object-cover"
-              />
-            ) : (
-              <img
-                src={url}
-                alt={ad.body ?? `Ad for ${ad.sponsor}`}
-                loading="lazy"
-                className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.01]"
-              />
-            )}
-          </button>
+          {url && (
+            <Media
+              {...(link ? { type: "button" as const, onClick: open, title: `Opens ${domain} in your browser` } : {})}
+              className={
+                "group mt-3 block w-full overflow-hidden notch-md bg-surface-2 text-left" +
+                (link ? "" : " cursor-default")
+              }
+              style={{ aspectRatio: `${ad.width ?? 16} / ${ad.height ?? 9}`, maxHeight: 520 }}
+            >
+              {ad.media_kind === "video" ? (
+                <video
+                  ref={video}
+                  src={url}
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  className="pointer-events-none h-full w-full object-cover"
+                />
+              ) : (
+                <img
+                  src={url}
+                  alt={ad.body ?? `Ad for ${ad.sponsor}`}
+                  loading="lazy"
+                  className={
+                    "h-full w-full object-cover" +
+                    (link ? " transition duration-200 group-hover:scale-[1.01]" : "")
+                  }
+                />
+              )}
+            </Media>
+          )}
 
-          <button
-            type="button"
-            onClick={open}
-            className="mt-2 flex w-full items-center justify-between gap-3 text-left text-xs"
-          >
-            <span className="truncate text-muted">{domain}</span>
-            <span className="shrink-0 font-semibold text-accent">Open ↗</span>
-          </button>
+          {link && (
+            <button
+              type="button"
+              onClick={open}
+              className="mt-2 flex w-full items-center justify-between gap-3 text-left text-xs"
+            >
+              <span className="truncate text-muted">{domain}</span>
+              <span className="shrink-0 font-semibold text-accent">Open ↗</span>
+            </button>
+          )}
         </div>
       </div>
     </article>

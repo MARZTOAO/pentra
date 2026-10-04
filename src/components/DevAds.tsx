@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import {
   AD_UNITS,
   DEFAULT_POSTS_BETWEEN,
@@ -227,10 +227,19 @@ function postsLabel(n: number): string {
 
 /* ------------------------------------------------------------------ */
 
+/**
+ * Everything here is optional except the duration (88): a picture or a
+ * video, some text, a link — any one of the first two is enough. The
+ * file can be dropped onto the form from anywhere on the PC as well as
+ * picked. (In the desktop app that needs `dragDropEnabled: false` on
+ * the window in tauri.conf.json, or Tauri swallows the drop before the
+ * page sees it.)
+ */
 function NewAdForm({ onCreated }: { onCreated: () => void }) {
   const [sponsor, setSponsor] = useState("Pentra");
   const [body, setBody] = useState("");
-  const [link, setLink] = useState("https://");
+  const [link, setLink] = useState("");
+  const [dragging, setDragging] = useState(false);
   const [runFor, setRunFor] = useState("7");
   const [unit, setUnit] = useState<AdUnit>("days");
   const [media, setMedia] = useState<PreparedAd | null>(null);
@@ -256,11 +265,32 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
   }
 
   const n = Number(runFor);
-  const linkOk = /^https?:\/\/[^\s]+\.[^\s]+$/i.test(link.trim());
-  const ready = media !== null && linkOk && Number.isInteger(n) && n >= 1 && !busy && !preparing;
+  const linkGiven = link.trim() !== "";
+  const linkOk = !linkGiven || /^https?:\/\/[^\s]+\.[^\s]+$/i.test(link.trim());
+  const hasSomething = media !== null || body.trim() !== "";
+  const ready = hasSomething && linkOk && Number.isInteger(n) && n >= 1 && !busy && !preparing;
+
+  // Dropped anywhere on the form, not just the box: aiming for a
+  // small target while holding a file is the annoying part.
+  function onDrop(e: DragEvent<HTMLElement>) {
+    e.preventDefault();
+    setDragging(false);
+    void pick(e.dataTransfer.files?.[0]);
+  }
+  function onDragOver(e: DragEvent<HTMLElement>) {
+    if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    if (!dragging) setDragging(true);
+  }
+  function onDragLeave(e: DragEvent<HTMLElement>) {
+    // Leaving a child fires this too; only the form's own edge counts.
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setDragging(false);
+  }
 
   async function submit() {
-    if (!media || !ready) return;
+    if (!ready) return;
     setBusy(true);
     setNote(null);
     const error = await createAd({
@@ -278,7 +308,7 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
     }
     setNote({ ok: true, text: "Ad is live. It's in the feed from the next refresh." });
     setBody("");
-    setLink("https://");
+    setLink("");
     setMedia(null);
     if (fileInput.current) fileInput.current.value = "";
     onCreated();
@@ -289,52 +319,94 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
   const field = base + " w-full";
 
   return (
-    <section className="notch-md border border-line p-4">
+    <section
+      className={
+        "relative notch-md border p-4 transition " +
+        (dragging ? "border-accent bg-accent/5" : "border-line")
+      }
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+    >
       <h3 className="label-wide mb-3 text-accent">New ad</h3>
 
       <div className="space-y-3">
-        <label className="block">
-          <span className="mb-1 block text-xs text-muted">Image or video</span>
+        <div>
+          <span className="mb-1 block text-xs text-muted">Image or video (optional)</span>
+
           <input
             ref={fileInput}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm"
             onChange={(e) => pick(e.target.files?.[0])}
-            className="block w-full text-xs text-muted file:mr-3 file:notch-sm file:border-0 file:bg-surface-2 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-ink"
+            className="sr-only"
+            tabIndex={-1}
           />
+
+          {media ? (
+            <div className="flex items-start gap-3">
+              <div
+                className="w-40 shrink-0 overflow-hidden notch-sm bg-surface-2"
+                style={{ aspectRatio: `${media.width} / ${media.height}`, maxHeight: 160 }}
+              >
+                {media.kind === "video" ? (
+                  <video src={media.previewUrl} muted loop autoPlay playsInline className="h-full w-full object-contain" />
+                ) : (
+                  <img src={media.previewUrl} alt="" className="h-full w-full object-contain" />
+                )}
+              </div>
+              <div className="min-w-0 text-xs text-muted">
+                <p className="numeric">
+                  {media.kind === "video" ? "Video" : "Picture"} · {media.width}×{media.height}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInput.current?.click()}
+                    className="notch-sm border border-line px-2.5 py-1 text-[11px] font-semibold text-muted transition hover:text-ink"
+                  >
+                    Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMedia(null);
+                      if (fileInput.current) fileInput.current.value = "";
+                    }}
+                    className="notch-sm border border-line px-2.5 py-1 text-[11px] font-semibold text-muted transition hover:border-danger hover:text-danger"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <p className="mt-2">Or drop another file anywhere on this form.</p>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              className={
+                "flex w-full flex-col items-center justify-center gap-1 notch-sm border border-dashed px-4 py-6 text-center transition " +
+                (dragging
+                  ? "border-accent text-accent"
+                  : "border-line text-muted hover:border-muted hover:text-ink")
+              }
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+              </svg>
+              <span className="text-sm font-semibold">
+                {preparing ? "Reading the file…" : dragging ? "Drop it" : "Drop an image or video here"}
+              </span>
+              <span className="text-[11px]">or click to choose a file</span>
+            </button>
+          )}
+
           <span className="mt-1 block text-[11px] text-muted">
             Pictures are shrunk to 1600px automatically. Videos: MP4 or WebM,
-            up to 50MB, played silently on a loop.
+            up to 50MB, played silently on a loop. Leave it out for a text-only ad.
           </span>
-        </label>
-
-        {preparing && <p className="text-xs text-muted">Reading the file…</p>}
-
-        {media && (
-          <div className="overflow-hidden notch-sm bg-surface-2" style={{ aspectRatio: `${media.width} / ${media.height}`, maxHeight: 220 }}>
-            {media.kind === "video" ? (
-              <video src={media.previewUrl} muted loop autoPlay playsInline className="h-full w-full object-contain" />
-            ) : (
-              <img src={media.previewUrl} alt="" className="h-full w-full object-contain" />
-            )}
-          </div>
-        )}
-
-        <label className="block">
-          <span className="mb-1 block text-xs text-muted">Link — where a click goes</span>
-          <input
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            placeholder="https://example.com"
-            maxLength={2000}
-            className={field}
-          />
-          {link.trim() !== "https://" && link.trim() !== "" && !linkOk && (
-            <span className="mt-1 block text-[11px] text-danger">
-              A full web address, starting with https://
-            </span>
-          )}
-        </label>
+        </div>
 
         <label className="block">
           <span className="mb-1 block text-xs text-muted">Post text (optional)</span>
@@ -346,6 +418,22 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
             placeholder="Shown above the picture, like a post."
             className={field + " resize-none"}
           />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs text-muted">Link — where a click goes (optional)</span>
+          <input
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="https://example.com — leave empty for no link"
+            maxLength={2000}
+            className={field}
+          />
+          {linkGiven && !linkOk && (
+            <span className="mt-1 block text-[11px] text-danger">
+              A full web address, starting with https://
+            </span>
+          )}
         </label>
 
         <div className="grid gap-3 min-[420px]:grid-cols-2">
@@ -423,13 +511,16 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
   }
 
   const ctr = ad.views > 0 ? `${((ad.clicks / ad.views) * 100).toFixed(1)}%` : "—";
-  const url = adMediaUrl(ad.media_path);
+  const url = ad.media_path ? adMediaUrl(ad.media_path) : null;
+  const link = ad.link_url;
 
   return (
     <div className={"notch-md border border-line bg-surface-2 p-3 " + (ad.live ? "" : "opacity-70")}>
       <div className="flex gap-3">
-        <div className="h-16 w-24 shrink-0 overflow-hidden notch-sm bg-bg">
-          {ad.media_kind === "video" ? (
+        <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden notch-sm bg-bg">
+          {!url ? (
+            <span className="label-wide text-[9px] text-muted">Text only</span>
+          ) : ad.media_kind === "video" ? (
             <video src={url} muted preload="metadata" className="h-full w-full object-cover" />
           ) : (
             <img src={url} alt="" loading="lazy" className="h-full w-full object-cover" />
@@ -449,13 +540,17 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
             </span>
           </div>
           {ad.body && <p className="truncate text-xs text-muted">{ad.body}</p>}
-          <button
-            type="button"
-            onClick={() => void openExternal(ad.link_url)}
-            className="block max-w-full truncate text-left text-xs text-accent hover:underline"
-          >
-            {linkDomain(ad.link_url)} ↗
-          </button>
+          {link ? (
+            <button
+              type="button"
+              onClick={() => void openExternal(link)}
+              className="block max-w-full truncate text-left text-xs text-accent hover:underline"
+            >
+              {linkDomain(link)} ↗
+            </button>
+          ) : (
+            <p className="text-xs text-muted">No link</p>
+          )}
           <p className="numeric mt-0.5 text-[11px] text-muted">{timeLine(ad)}</p>
         </div>
       </div>

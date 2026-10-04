@@ -648,7 +648,11 @@ checks(migration, feature, present) as (
      'Pentra Pro subscriptions (Stripe), creator codes, refunds',
      to_regclass('public.billing_subscriptions') is not null
      and exists (select 1 from fn where fn.name = 'billing_apply_payment')
-     and exists (select 1 from fn where fn.name = 'pro_on_sale'))
+     and exists (select 1 from fn where fn.name = 'pro_on_sale')),
+
+    ('88_ads_optional_fields',
+     'Ads: link and picture optional',
+     exists (select 1 from pg_constraint where conname = 'ad_has_something'))
 )
 select
   migration,
