@@ -36,6 +36,7 @@ import {
   type ProMember,
 } from "../lib/dev";
 import { clearFlagCache } from "../lib/flags";
+import { devModeStored, setDevMode } from "../lib/devMode";
 import { Avatar } from "./Avatar";
 import { DevAds } from "./DevAds";
 import { DevCreators } from "./DevCreators";
@@ -62,6 +63,7 @@ export function DevPanel() {
   const [isDev, setIsDev] = useState(false);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("reports");
+  const [master, setMaster] = useState(devModeStored);
 
   useEffect(() => {
     amIDeveloper().then(setIsDev);
@@ -86,6 +88,43 @@ export function DevPanel() {
           Only you can see this. The numbers behind the app, the feature
           flags, and what this build actually is.
         </p>
+
+        {/* Developer mode: the switch for the controls that act on
+            other people's things (lib/devMode.ts, supabase/89). Per
+            machine; the database checks who you are regardless. */}
+        <label className="mb-4 flex cursor-pointer items-start gap-3 notch-md border border-line bg-surface-2/60 px-3 py-2.5">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={master}
+            onClick={() => {
+              const next = !master;
+              setMaster(next);
+              setDevMode(next);
+            }}
+            className={
+              "relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition " +
+              (master ? "bg-accent" : "bg-line")
+            }
+          >
+            <span
+              className={
+                "absolute top-0.5 h-4 w-4 rounded-full bg-bg transition " +
+                (master ? "left-[18px]" : "left-0.5")
+              }
+            />
+          </button>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">
+              Developer mode {master ? "— on" : ""}
+            </span>
+            <span className="block text-xs leading-snug text-muted">
+              Shows the master controls everywhere: delete any post or comment,
+              and warn, ban or edit any player from their profile. Every action
+              is logged. Off, Pentra behaves as it does for everyone else.
+            </span>
+          </span>
+        </label>
 
         <button
           type="button"

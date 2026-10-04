@@ -498,3 +498,40 @@ export async function revokePro(username: string): Promise<string> {
   if (error) return error.message;
   return (data as string) ?? "failed";
 }
+
+/* ------------------------------------------------------------------ */
+/*  Developer mode (supabase/89). Each returns null when it worked, or  */
+/*  a sentence saying what's wrong.                                    */
+/* ------------------------------------------------------------------ */
+
+async function devCall(fn: string, args: Record<string, unknown>, ok: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc(fn, args);
+  if (error) return error.message;
+  return data === ok ? null : (data as string) || "That didn't work.";
+}
+
+/** Delete anyone's post. Logged against the author. */
+export const devDeletePost = (id: number) => devCall("dev_delete_post", { post: id }, "deleted");
+
+/** Delete anyone's comment. Logged against the author. */
+export const devDeleteComment = (id: number) =>
+  devCall("dev_delete_comment", { comment: id }, "deleted");
+
+/** What dev_update_profile accepts. Missing keys are left alone. */
+export type ProfilePatch = Partial<{
+  display_name: string;
+  bio: string;
+  username: string;
+  region: string;
+  location_city: string;
+  location_state: string;
+  location_country: string;
+  clear_avatar: boolean;
+  clear_background: boolean;
+  clear_frame: boolean;
+}>;
+
+/** Edit another player's profile. Logged, with the list of fields. */
+export const devUpdateProfile = (username: string, patch: ProfilePatch) =>
+  devCall("dev_update_profile", { who: username, patch }, "saved");
+

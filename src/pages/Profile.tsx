@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
+import { EditorProvider, useEditor, useEditorSection } from "../lib/editor";
 import { useAuth } from "../lib/AuthContext";
 import {
   getProfile,
@@ -31,6 +33,11 @@ import { ReferralPanel } from "../components/ReferralPanel";
 
 export default function Profile() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  // One Save for the whole page: the Basics form below, plus the Top 5
+  // and gamer tags, which report in through lib/editor.
+  const editor = useEditor();
+  const [leaving, setLeaving] = useState(false);
 
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,12 +89,23 @@ export default function Profile() {
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   }
 
-  async function handleSave() {
-    if (!user) return;
-    setSaving(true);
-    setError(null);
-    setSaved(false);
+  const basicsDirty =
+    profile !== null &&
+    (displayName !== (profile.display_name ?? "") ||
+      bio !== (profile.bio ?? "") ||
+      region !== (profile.region ?? "") ||
+      city !== (profile.location_city ?? "") ||
+      stateCode !== (profile.location_state ?? "") ||
+      country !== (profile.location_country ?? "USA") ||
+      JSON.stringify(platforms) !== JSON.stringify(profile.platforms ?? []) ||
+      primaryPlatform !== (profile.primary_platform ?? "") ||
+      JSON.stringify(availability) !== JSON.stringify(profile.availability ?? []));
 
+  useEditorSection("basics", basicsDirty, saveBasics);
+
+  /** @returns null when saved, or the problem. */
+  async function saveBasics(): Promise<string | null> {
+    if (!user) return null;
     const { data, error } = await updateProfile(user.id, {
       display_name: displayName.trim() || null,
       bio: bio.trim() || null,
@@ -103,21 +121,49 @@ export default function Profile() {
       availability,
     });
 
-    setSaving(false);
-
-    if (error) setError(error.message);
-    else {
-      setProfile(data as ProfileRow);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    }
+    if (error) return error.message;
+    setProfile(data as ProfileRow);
+    return null;
   }
+
+  /** The one Save button: every section with changes, together. */
+  async function handleSave(): Promise<boolean> {
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    const problem = await editor.saveAll();
+    setSaving(false);
+    if (problem) {
+      setError(problem);
+      return false;
+    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+    return true;
+  }
+
+  function done() {
+    if (editor.dirty) setLeaving(true);
+    else navigate("/me");
+  }
+
+  // A browser refresh or tab close with unsaved changes gets the
+  // browser's own "leave this page?" — the Done button has its own.
+  useEffect(() => {
+    if (!editor.dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [editor.dirty]);
 
   if (loading) return <FullScreenLoader />;
 
   const isUS = country.trim().toUpperCase() === "USA";
 
   return (
+    <EditorProvider editor={editor.context}>
     <div className="relative mx-auto max-w-2xl px-4 sm:px-8 py-6 sm:py-10">
       {/* Your background, behind this page too — the same fixed layer
           and scrim as the public profile — so choosing one shows the
@@ -145,12 +191,13 @@ export default function Profile() {
           </p>
         </div>
 
-        <Link
-          to="/me"
+        <button
+          type="button"
+          onClick={done}
           className="notch-md border border-line bg-surface/85 px-4 py-2 text-center text-sm font-medium text-muted backdrop-blur-sm transition hover:border-accent hover:text-accent sm:shrink-0 sm:text-left"
         >
-          Done — view profile
-        </Link>
+          Done
+        </button>
       </header>
 
       {error && <Alert>{error}</Alert>}
@@ -374,17 +421,93 @@ export default function Profile() {
         />
       </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="w-full sm:w-40">
-          <Button onClick={handleSave} disabled={saving}>
+      {/* The only Save on the page. Everything above that has a
+          button saves instantly (avatar, frame, background, games);
+          everything else — basics, Top 5, gamer tags — saves here. */}
+      <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-line bg-bg/90 px-4 py-3 backdrop-blur-sm sm:-mx-8 sm:flex-row sm:items-center sm:px-8">
+        <div className="w-full sm:w-44">
+          <Button onClick={() => void handleSave()} disabled={saving || !editor.dirty}>
             {saving ? "Saving…" : "Save changes"}
           </Button>
         </div>
         <p className="text-xs text-muted">
-          Your Top 5 saves separately, with its own button.
+          {editor.dirty
+            ? "You have unsaved changes."
+            : "Everything is saved. Pictures and games save on their own."}
         </p>
       </div>
     </div>
+
+    {leaving && (
+      <LeaveDialog
+        saving={saving}
+        onSave={async () => {
+          if (await handleSave()) navigate("/me");
+          else setLeaving(false);
+        }}
+        onDiscard={() => navigate("/me")}
+        onStay={() => setLeaving(false)}
+      />
+    )}
+    </EditorProvider>
+  );
+}
+
+/** "You've changed things — save them?" when Done is pressed. */
+function LeaveDialog({
+  saving,
+  onSave,
+  onDiscard,
+  onStay,
+}: {
+  saving: boolean;
+  onSave: () => void;
+  onDiscard: () => void;
+  onStay: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onStay();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onStay]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div role="dialog" aria-modal="true" className="w-full max-w-sm notch border border-line bg-surface p-5">
+        <h2 className="display text-lg">Save your changes?</h2>
+        <p className="mt-2 text-sm text-muted">
+          You've changed things on this page that haven't been saved yet.
+        </p>
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="notch-md bg-accent px-4 py-2 text-sm font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save and leave"}
+          </button>
+          <button
+            type="button"
+            onClick={onDiscard}
+            disabled={saving}
+            className="notch-md border border-line px-4 py-2 text-sm font-medium text-muted transition hover:border-danger hover:text-danger disabled:opacity-50"
+          >
+            Discard changes
+          </button>
+          <button
+            type="button"
+            onClick={onStay}
+            className="px-4 py-2 text-sm text-muted transition hover:text-ink sm:mr-auto"
+          >
+            Keep editing
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

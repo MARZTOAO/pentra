@@ -15,6 +15,8 @@ import { Comments } from "./Comments";
 import { ProCard } from "./ProCard";
 import { ProBadge } from "./ProBadge";
 import { useIsPro } from "../lib/frames";
+import { useDevMode } from "../lib/devMode";
+import { devDeletePost } from "../lib/dev";
 
 /**
  * One post, everywhere a post is shown.
@@ -71,6 +73,22 @@ export function PostCard({
     onChange();
   }
 
+  // Developer mode (lib/devMode): delete anyone's post. Two clicks,
+  // because it is somebody else's and there is no undo.
+  const devMode = useDevMode();
+  const [devConfirm, setDevConfirm] = useState(false);
+  const [devError, setDevError] = useState<string | null>(null);
+
+  async function devRemove() {
+    const problem = await devDeletePost(post.id);
+    if (problem) {
+      setDevError(problem);
+      setDevConfirm(false);
+      return;
+    }
+    onChange();
+  }
+
   return (
     <ProCard pro={pro} className="p-4">
       <div className="flex gap-3">
@@ -103,6 +121,26 @@ export function PostCard({
               >
                 Delete
               </button>
+            ) : devMode ? (
+              devConfirm ? (
+                <span className="ml-auto flex shrink-0 items-center gap-2 text-xs">
+                  <span className="text-muted">Delete their post?</span>
+                  <button onClick={devRemove} className="font-semibold text-danger hover:underline">
+                    Yes
+                  </button>
+                  <button onClick={() => setDevConfirm(false)} className="text-muted hover:text-ink">
+                    No
+                  </button>
+                </span>
+              ) : (
+                <button
+                  onClick={() => setDevConfirm(true)}
+                  title="Developer: delete this post"
+                  className="ml-auto shrink-0 text-xs font-semibold text-accent transition hover:text-danger"
+                >
+                  Delete · dev
+                </button>
+              )
             ) : (
               <button
                 onClick={() => setReporting(true)}
@@ -113,6 +151,7 @@ export function PostCard({
               </button>
             )}
           </div>
+          {devError && <p className="mt-1 text-xs text-danger">{devError}</p>}
 
           {post.body && (
             <p className="mt-1.5 whitespace-pre-wrap break-words text-sm">

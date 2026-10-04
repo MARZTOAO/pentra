@@ -11,6 +11,8 @@ import { useLiveRows } from "../lib/live";
 import { Avatar } from "./Avatar";
 import { Linkify } from "./Linkify";
 import { MentionBox } from "./MentionBox";
+import { useDevMode } from "../lib/devMode";
+import { devDeleteComment } from "../lib/dev";
 
 /**
  * The replies under a post.
@@ -105,12 +107,18 @@ export function Comments({
     load();
   }
 
-  async function remove(id: number) {
+  // Developer mode: the X appears on every comment, and goes through
+  // dev_delete_comment (89) for the ones that aren't yours to delete.
+  const devMode = useDevMode();
+
+  async function remove(id: number, asDeveloper = false) {
     // Optimistic: the row goes now, and comes back if the delete failed.
     const before = comments;
     setComments((current) => current?.filter((c) => c.id !== id) ?? null);
 
-    const { error: problem } = await deleteComment(id);
+    const problem = asDeveloper
+      ? await devDeleteComment(id)
+      : (await deleteComment(id)).error;
     if (problem) {
       setComments(before ?? null);
       setError("Couldn't delete that.");
@@ -168,12 +176,12 @@ export function Comments({
                     </p>
                   </div>
 
-                  {c.can_delete && (
+                  {(c.can_delete || devMode) && (
                     <button
                       type="button"
-                      onClick={() => remove(c.id)}
+                      onClick={() => remove(c.id, !c.can_delete)}
                       aria-label="Delete comment"
-                      title={c.mine ? "Delete" : "Delete from your post"}
+                      title={c.mine ? "Delete" : c.can_delete ? "Delete from your post" : "Developer: delete this comment"}
                       // Visible rather than hover-only: a hover-only
                       // control does not exist on a touch screen.
                       className="shrink-0 p-1 text-muted opacity-60 transition hover:text-danger hover:opacity-100"

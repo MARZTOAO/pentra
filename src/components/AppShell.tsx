@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { useIsDeveloper } from "../lib/dev";
 import { useFlag } from "../lib/flags";
+import { useDevMode, setDevMode } from "../lib/devMode";
 import { heartbeat } from "../lib/friends";
 import { applyTheme } from "../lib/themes";
 import { useNotifications } from "./Notifications";
@@ -107,6 +108,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   // The Pro link, once there's something to buy. Sidebar only: the
   // phone tab bar is full, and Settings has the same door.
   const proSales = useFlag("pro_sales");
+  // A strip under the top bar while developer mode is on, so it's
+  // never on by accident for a week.
+  const devMode = useDevMode();
 
   // Check in every minute while the app is open. This is what drives
   // the online dots and the recency part of match scoring - without it
@@ -357,6 +361,22 @@ export function AppShell({ children }: { children: ReactNode }) {
             </svg>
           </button>
         </header>
+
+        {devMode && (
+          <div className="flex shrink-0 items-center gap-3 border-b border-accent/40 bg-accent/10 px-4 py-1.5 text-xs">
+            <span className="label-wide text-accent">Developer mode</span>
+            <span className="text-muted">
+              You can delete anyone's posts and comments, and edit or ban any player.
+            </span>
+            <button
+              type="button"
+              onClick={() => setDevMode(false)}
+              className="ml-auto font-semibold text-accent hover:underline"
+            >
+              Turn off
+            </button>
+          </div>
+        )}
 
         {/* Keyed on the path so each screen arrives rather than
             appearing — the cheapest thing that makes an app feel built

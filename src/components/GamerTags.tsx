@@ -7,11 +7,13 @@ import {
   type GamerTag,
 } from "../lib/gamerTags";
 import { Button, Alert } from "./ui";
+import { useEditorSection } from "../lib/editor";
 
 export function GamerTags() {
   const { user } = useAuth();
 
   const [handles, setHandles] = useState<Record<string, string>>({});
+  const [committed, setCommitted] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -24,11 +26,13 @@ export function GamerTags() {
       const map: Record<string, string> = {};
       for (const tag of tags) map[tag.network] = tag.handle;
       setHandles(map);
+      setCommitted(fingerprint(map));
       setLoading(false);
     });
   }, [user]);
 
-  async function handleSave() {
+  /** @returns null when saved, or the problem. */
+  async function save(): Promise<string | null> {
     setSaving(true);
     setError(null);
     setSaved(false);
@@ -42,12 +46,23 @@ export function GamerTags() {
 
     setSaving(false);
 
-    if (error) setError(error.message);
-    else {
+    if (error) {
+      setError(error.message);
+      return error.message;
+    }
+    setCommitted(fingerprint(handles));
+    return null;
+  }
+
+  async function handleSave() {
+    if (!(await save())) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     }
   }
+
+  const dirty = !loading && fingerprint(handles) !== committed;
+  const inEditor = useEditorSection("gamerTags", dirty, save);
 
   const filled = Object.values(handles).filter((h) => h.trim()).length;
 
@@ -109,15 +124,18 @@ export function GamerTags() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="w-40">
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving…" : "Save tags"}
-              </Button>
-            </div>
+            {!inEditor && (
+              <div className="w-40">
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving…" : "Save tags"}
+                </Button>
+              </div>
+            )}
             <p className="text-xs text-muted">
               {filled === 0
                 ? "None added — leave blank any you don't use."
                 : `${filled} added.`}
+              {inEditor && dirty && " · unsaved"}
             </p>
           </div>
         </>
@@ -125,3 +143,14 @@ export function GamerTags() {
     </section>
   );
 }
+
+/** Only non-empty handles count — blanks are what "none" looks like. */
+function fingerprint(map: Record<string, string>): string {
+  return JSON.stringify(
+    Object.entries(map)
+      .filter(([, h]) => h.trim())
+      .map(([n, h]) => [n, h.trim()])
+      .sort(),
+  );
+}
+

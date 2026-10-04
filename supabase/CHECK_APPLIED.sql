@@ -652,7 +652,11 @@ checks(migration, feature, present) as (
 
     ('88_ads_optional_fields',
      'Ads: link and picture optional',
-     exists (select 1 from pg_constraint where conname = 'ad_has_something'))
+     exists (select 1 from pg_constraint where conname = 'ad_has_something')),
+
+    ('89_developer_mode',
+     'Developer mode: delete any post/comment, edit any profile',
+     exists (select 1 from fn where fn.name = 'dev_update_profile'))
 )
 select
   migration,

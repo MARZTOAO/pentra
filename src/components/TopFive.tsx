@@ -8,11 +8,14 @@ import {
 } from "../lib/topFive";
 import { GameSearchModal } from "./GameSearchModal";
 import { Button, Alert } from "./ui";
+import { useEditorSection } from "../lib/editor";
 
 export function TopFive() {
   const { user } = useAuth();
 
   const [entries, setEntries] = useState<TopFiveEntry[]>([]);
+  // What's in the database, for "has anything changed".
+  const [committed, setCommitted] = useState<string>("[]");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +26,7 @@ export function TopFive() {
     if (!user) return;
     getTopFive(user.id).then((rows) => {
       setEntries(rows);
+      setCommitted(fingerprint(rows));
       setLoading(false);
     });
   }, [user]);
@@ -62,7 +66,8 @@ export function TopFive() {
     );
   }
 
-  async function handleSave() {
+  /** @returns null when saved, or the problem. */
+  async function save(): Promise<string | null> {
     setSaving(true);
     setError(null);
     setSaved(false);
@@ -71,12 +76,25 @@ export function TopFive() {
 
     setSaving(false);
 
-    if (error) setError(error.message);
-    else {
+    if (error) {
+      setError(error.message);
+      return error.message;
+    }
+    setCommitted(fingerprint(entries));
+    return null;
+  }
+
+  async function handleSave() {
+    if (!(await save())) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     }
   }
+
+  // Inside the profile editor the page's one Save button saves this
+  // too, and the button below is hidden.
+  const dirty = !loading && fingerprint(entries) !== committed;
+  const inEditor = useEditorSection("topFive", dirty, save);
 
   if (loading) {
     return (
@@ -201,14 +219,17 @@ export function TopFive() {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="w-40">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save Top 5"}
-          </Button>
-        </div>
+        {!inEditor && (
+          <div className="w-40">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : "Save Top 5"}
+            </Button>
+          </div>
+        )}
         <p className="text-xs text-muted">
           {entries.length}/5 filled
           {entries.length < 3 && " — three or more makes matching much better."}
+          {inEditor && dirty && " · unsaved"}
         </p>
       </div>
 
@@ -264,3 +285,9 @@ function IconButton({
     </button>
   );
 }
+
+/** The parts of the list that get saved, as one comparable string. */
+function fingerprint(rows: TopFiveEntry[]): string {
+  return JSON.stringify(rows.map((e) => [e.game.id, e.platform, e.note]));
+}
+

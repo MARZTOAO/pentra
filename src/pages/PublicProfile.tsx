@@ -20,6 +20,7 @@ import { FullScreenLoader } from "../components/ui";
 import { Avatar } from "../components/Avatar";
 import { frameOf } from "../lib/frames";
 import { MotionBackground } from "../components/MotionBackground";
+import { DevProfileTools } from "../components/DevProfileTools";
 
 /**
  * A player's profile as everyone sees it.
@@ -43,6 +44,9 @@ export default function PublicProfile({ username: fixed }: { username?: string }
   const [friendCount, setFriendCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  // Bumped to refetch in place — after a developer edits the profile.
+  const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
     if (!username) return;
@@ -71,7 +75,7 @@ export default function PublicProfile({ username: fixed }: { username?: string }
     return () => {
       active = false;
     };
-  }, [username]);
+  }, [username, reloads]);
 
   if (loading) return <FullScreenLoader />;
 
@@ -241,6 +245,19 @@ export default function PublicProfile({ username: fixed }: { username?: string }
           </div>
         )}
       </header>
+
+      {/* Developer mode only (draws nothing otherwise): warn, ban,
+          unban, edit. Not on your own profile. */}
+      {!isSelf && (
+        <DevProfileTools
+          profile={profile}
+          onChanged={(name) => {
+            // Same name: refetch here. New name: the editor has already
+            // navigated to /u/<new>, which refetches on its own.
+            if (name === profile.username) setReloads((n) => n + 1);
+          }}
+        />
+      )}
 
       {/* How well you two match, worked out live. Not for your own
           profile — a percentage against yourself is nonsense. */}
