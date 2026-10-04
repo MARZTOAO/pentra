@@ -106,7 +106,7 @@ function Prompt({
       <p className="text-xs leading-relaxed text-muted">{detail}</p>
       {cta && (
         <Link
-          to="/me"
+          to="/me/edit"
           className="mt-3 inline-block notch-md border border-accent/50 px-3 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/10"
         >
           {cta}

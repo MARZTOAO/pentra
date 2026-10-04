@@ -138,21 +138,19 @@ export default function Profile() {
           button side by side leaves neither enough room. */}
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="display on-art text-2xl">Your profile</h1>
+          <h1 className="display on-art text-2xl">Edit profile</h1>
           <p className="on-art mt-1 text-sm text-muted">
-            This is what other players see. The more you fill in, the better your
-            matches.
+            Everything here is what other players see. The more you fill in,
+            the better your matches.
           </p>
         </div>
 
-        {profile?.username && (
-          <Link
-            to={`/u/${profile.username}`}
-            className="notch-md border border-line bg-surface/85 px-4 py-2 text-center text-sm font-medium text-muted backdrop-blur-sm transition hover:border-accent hover:text-accent sm:shrink-0 sm:text-left"
-          >
-            View as others see it
-          </Link>
-        )}
+        <Link
+          to="/me"
+          className="notch-md border border-line bg-surface/85 px-4 py-2 text-center text-sm font-medium text-muted backdrop-blur-sm transition hover:border-accent hover:text-accent sm:shrink-0 sm:text-left"
+        >
+          Done — view profile
+        </Link>
       </header>
 
       {error && <Alert>{error}</Alert>}

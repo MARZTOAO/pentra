@@ -146,7 +146,7 @@ export function Welcome() {
           <div className="flex flex-col gap-2 border-t border-line px-6 py-4 sm:flex-row-reverse">
             <button
               autoFocus
-              onClick={() => close("/me")}
+              onClick={() => close("/me/edit")}
               className="label-wide notch-sm bg-accent px-5 py-2.5 text-onaccent transition hover:bg-accent-hi"
             >
               Set up my profile

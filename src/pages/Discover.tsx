@@ -199,7 +199,7 @@ export default function Discover() {
         <div className="mt-6 notch-md border border-accent/40 bg-surface bg-[linear-gradient(rgb(255_122_47/0.1),rgb(255_122_47/0.1))] px-4 py-3 text-sm text-accent">
           You haven't picked a Top 5 yet, so matching has almost nothing to go
           on.{" "}
-          <Link to="/me" className="font-medium underline underline-offset-2">
+          <Link to="/me/edit" className="font-medium underline underline-offset-2">
             Pick one
           </Link>{" "}
           and these results will get much better.

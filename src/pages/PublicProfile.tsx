@@ -21,8 +21,20 @@ import { Avatar } from "../components/Avatar";
 import { frameOf } from "../lib/frames";
 import { MotionBackground } from "../components/MotionBackground";
 
-export default function PublicProfile() {
-  const { username } = useParams<{ username: string }>();
+/**
+ * A player's profile as everyone sees it.
+ *
+ * Also YOUR profile: the Profile tab lands here (via MyProfile in
+ * App.tsx, which passes your own username), with a gear in the corner
+ * that opens the editor at /me/edit. Looking at yourself the way
+ * others do is the default; editing is the step you take from there.
+ *
+ * @param username Overrides the one in the URL — how /me reuses this
+ *   page without a redirect through /u/yourname.
+ */
+export default function PublicProfile({ username: fixed }: { username?: string } = {}) {
+  const params = useParams<{ username: string }>();
+  const username = fixed ?? params.username;
   const { user } = useAuth();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -83,20 +95,6 @@ export default function PublicProfile() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-8 py-6 sm:py-10">
-      {isSelf && (
-        <div className="mb-6 flex flex-col gap-2 notch-md border border-accent/40 bg-accent/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-accent">
-            This is how your profile looks to everyone else.
-          </p>
-          <Link
-            to="/me"
-            className="text-sm font-medium text-accent underline underline-offset-2"
-          >
-            Back to editing
-          </Link>
-        </div>
-      )}
-
       {/* Their background fills the whole window, not a strip at the top.
           Fixed rather than absolute so it stays put while the page
           scrolls, and behind everything via a negative z-index. */}
@@ -134,6 +132,34 @@ export default function PublicProfile() {
           Below `sm` the avatar goes above the text instead of beside
           it, for the same reason the buttons went underneath. */}
       <header className="relative mb-8 pt-6 sm:pt-20">
+        {/* Yours: the way in to editing. A gear in the corner rather
+            than a banner across the top — this is your profile, not a
+            preview of it, and the controls shouldn't crowd the page
+            everyone else sees. */}
+        {isSelf && (
+          <Link
+            to="/me/edit"
+            title="Edit profile"
+            aria-label="Edit profile"
+            className="absolute right-0 top-6 z-10 inline-flex items-center gap-2 notch-md border border-line bg-surface/85 px-3 py-2 text-sm font-medium text-muted backdrop-blur-sm transition hover:border-accent hover:text-accent sm:top-20"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+            </svg>
+            <span className="hidden sm:inline">Edit profile</span>
+          </Link>
+        )}
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
           <Avatar
             of={profile}
@@ -142,7 +168,7 @@ export default function PublicProfile() {
             frame={frameOf(profile)}
           />
 
-          <div className="min-w-0 flex-1 sm:pt-1">
+          <div className={"min-w-0 flex-1 sm:pt-1" + (isSelf ? " pr-12 sm:pr-0" : "")}>
             <h1 className="display on-art break-words text-2xl leading-tight">
               {profile.display_name || profile.username}
             </h1>

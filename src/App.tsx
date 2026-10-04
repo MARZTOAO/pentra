@@ -2,6 +2,10 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthContext";
 import { captureReferralFromUrl } from "./lib/referrals";
 import { captureCreatorFromUrl } from "./lib/billing";
+import { useAuth } from "./lib/AuthContext";
+import { useEffect, useState } from "react";
+import { getProfile } from "./lib/profile";
+import { FullScreenLoader } from "./components/ui";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppShell } from "./components/AppShell";
 import { Notifications } from "./components/Notifications";
@@ -33,6 +37,26 @@ function Shell({ children }: { children: React.ReactNode }) {
       <AppShell>{children}</AppShell>
     </ProtectedRoute>
   );
+}
+
+/**
+ * The Profile tab: your own profile exactly as other players see it,
+ * with a gear that opens the editor (/me/edit). Looks up your username
+ * once and hands it to PublicProfile, which does the rest.
+ */
+function MyProfile() {
+  const { user } = useAuth();
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    getProfile(user.id).then(({ data }) => {
+      setUsername((data as { username?: string } | null)?.username ?? null);
+    });
+  }, [user]);
+
+  if (!username) return <FullScreenLoader />;
+  return <PublicProfile username={username} />;
 }
 
 // Before anything renders or routes: an invite link is a plain
@@ -72,8 +96,19 @@ export default function App() {
             }
           />
 
+          {/* Profile tab: yours, as everyone sees it. The gear on it
+              opens the editor. */}
           <Route
             path="/me"
+            element={
+              <Shell>
+                <MyProfile />
+              </Shell>
+            }
+          />
+
+          <Route
+            path="/me/edit"
             element={
               <Shell>
                 <Profile />
