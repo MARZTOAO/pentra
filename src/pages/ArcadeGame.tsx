@@ -33,10 +33,15 @@ export default function ArcadeGame() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const game = useRef<ArcadeHandle | null>(null);
   const [state, setState] = useState<GameState>("ready");
+  const stateRef = useRef<GameState>("ready");
+  stateRef.current = state;
   const [score, setScore] = useState(0);
   const [lastRun, setLastRun] = useState<RunResult | null>(null);
   const [result, setResult] = useState<SubmitResult | string | null>(null);
   const [refresh, setRefresh] = useState(0);
+  // Which way to play, for games that offer more than one.
+  const [modeId, setModeId] = useState<string | null>(null);
+  const mode = info?.modes?.find((m) => m.id === modeId) ?? null;
 
   const bests = useBests(user?.id, refresh);
   const mine = bests?.find((b) => b.game === slug) ?? null;
@@ -60,8 +65,9 @@ export default function ArcadeGame() {
       const g = game.current;
       if (!g) return;
       // On a phone the start screen's button is the only way to start,
-      // so a touch that was meant to scroll can't launch a run.
-      if (touch && state === "ready") return;
+      // so a touch that was meant to scroll can't launch a run; and a
+      // game with modes always starts from its mode buttons.
+      if (state === "ready" && (touch || info?.modes)) return;
       if (g.pointer) {
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
         const p = local(e);
@@ -103,7 +109,8 @@ export default function ArcadeGame() {
     async (run: RunResult) => {
       setLastRun(run);
       setResult(null);
-      if (!info || run.score <= 0) return;
+      // A relaxed mode's score is for the player's eyes only.
+      if (!info || run.score <= 0 || run.ranked === false) return;
       const r = await submitArcadeScore(info.slug, run.score, run.durationMs);
       setResult(r);
       setRefresh((n) => n + 1);
@@ -145,7 +152,15 @@ export default function ArcadeGame() {
       }
       if (!keys.has(e.code)) return;
       e.preventDefault();
-      if (!e.repeat) game.current?.press();
+      if (e.repeat) return;
+      // Space on the start screen of a game with modes takes the first
+      // (ranked) mode, so the keyboard still works end to end.
+      if (stateRef.current === "ready" && info?.modes?.length) {
+        const first = info.modes[0];
+        setModeId(first.id);
+        game.current?.setMode?.(first.id);
+      }
+      game.current?.press();
     }
     function up(e: KeyboardEvent) {
       if (game.current?.key?.(e.code, false)) return;
@@ -248,15 +263,46 @@ export default function ArcadeGame() {
               {/* A real button, so starting is a deliberate tap and not a
                   stray touch while scrolling. It swallows the press so the
                   board underneath doesn't also fire. */}
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => game.current?.press()}
-                className="pointer-events-auto mt-4 notch-md bg-accent px-6 py-2.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi"
-              >
-                Start
-              </button>
-              {!touch && <p className="mt-2 text-xs text-muted">or press Space</p>}
+              {info.modes ? (
+                <div className="pointer-events-auto mt-4 grid gap-2 sm:grid-cols-2">
+                  {info.modes.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => {
+                        setModeId(m.id);
+                        game.current?.setMode?.(m.id);
+                        game.current?.press();
+                      }}
+                      className={
+                        "notch-md border px-4 py-3 text-left transition " +
+                        (m.ranked
+                          ? "border-accent bg-accent/15 hover:bg-accent/25"
+                          : "border-line bg-surface/80 hover:border-accent/60")
+                      }
+                    >
+                      <span className="block text-sm font-semibold text-ink">
+                        {m.name}
+                        {!m.ranked && <span className="ml-1.5 text-xs font-normal text-muted">· not ranked</span>}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted">{m.blurb}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => game.current?.press()}
+                    className="pointer-events-auto mt-4 notch-md bg-accent px-6 py-2.5 text-sm font-semibold text-onaccent transition hover:bg-accent-hi"
+                  >
+                    Start
+                  </button>
+                  {!touch && <p className="mt-2 text-xs text-muted">or press Space</p>}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -266,7 +312,9 @@ export default function ArcadeGame() {
             <div className="text-center">
               <p className="label-wide text-danger">{info.slug === "lag-spike" ? "Signal lost" : "Game over"}</p>
               <p className="numeric mt-1 text-4xl font-bold text-ink">{formatScore(lastRun.score)}</p>
-              {newBest ? (
+              {lastRun.ranked === false ? (
+                <p className="mt-1 text-sm text-muted">{mode?.name ?? "Relaxed"} — not on the leaderboards</p>
+              ) : newBest ? (
                 <p className="mt-1 text-sm font-semibold text-accent">
                   New best! #{formatScore((result as SubmitResult).rank)} of everyone
                 </p>
@@ -276,6 +324,19 @@ export default function ArcadeGame() {
                 <p className="mt-1 text-sm text-muted">Best {formatScore(mine.best)}</p>
               ) : null}
               <p className="mt-3 text-sm text-muted">{touch ? "Tap to go again" : "Click or press Space to go again"}</p>
+              {info.modes && (
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => {
+                    setModeId(null);
+                    game.current?.backToStart?.();
+                  }}
+                  className="pointer-events-auto mt-3 notch-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent hover:text-accent"
+                >
+                  Change mode
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -294,6 +355,18 @@ export default function ArcadeGame() {
         </div>
       ) : (
         <p className="mt-2 text-center text-xs text-muted">{touch ? info.touchControls : info.controls}</p>
+      )}
+
+      {state === "running" && mode && !mode.ranked && (
+        <div className="mt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => game.current?.stop?.()}
+            className="notch-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent hover:text-accent"
+          >
+            End run
+          </button>
+        </div>
       )}
       </div>
 

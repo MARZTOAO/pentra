@@ -23,7 +23,12 @@ import { play } from "./sound";
  * match it clears its whole row (horizontal stripe) or column
  * (vertical). Five in a line, or an L or T, leaves a CROSS chip that
  * clears both its row and its column. A super chip caught in another
- * super chip's blast goes off too. Two minutes on the clock.
+ * super chip's blast goes off too.
+ *
+ * Two modes (MARZ, 2026-10-05): TIMED, two minutes on the clock and
+ * the score goes to the leaderboards; ENDLESS, no clock, stop when
+ * you like, and the score is yours alone (onRunEnd says ranked:
+ * false, so the page never sends it).
  *
  * Scoring: 10 a chip (blasted chips included), ×2 on the second step
  * of a cascade, ×3 on the third and so on; a line of four is +20,
@@ -104,6 +109,7 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
   let beams: Beam[] = [];
   /** The last whole second a countdown beep was played for. */
   let beepedAt = -1;
+  let mode: "timed" | "endless" = "timed";
   /** The two cells of the last swap, so a super chip appears where the
    *  player made the move rather than in the middle of the line. */
   let lastSwap: { r: number; c: number }[] = [];
@@ -273,7 +279,27 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     flash = 0.25;
     play("drop");
     callbacks.onState(state);
-    callbacks.onRunEnd({ score, durationMs: Math.round(diedAt - startedAt) });
+    callbacks.onRunEnd({ score, durationMs: Math.round(diedAt - startedAt), ranked: mode === "timed" });
+  }
+
+  /** Endless: the player calls time. */
+  function stop() {
+    if (state === "running") end();
+  }
+
+  /** Back to the start screen so a different mode can be chosen. */
+  function backToStart() {
+    cancelAnimationFrame(raf);
+    state = "ready";
+    reset();
+    callbacks.onState(state);
+    callbacks.onScore(0);
+    draw();
+  }
+
+  function setMode(id: string) {
+    mode = id === "endless" ? "endless" : "timed";
+    if (state !== "running") draw();
   }
 
   function addScore(n: number) {
@@ -357,19 +383,21 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
   /* ---- simulation --------------------------------------------------- */
 
   function step(dt: number) {
-    timeLeft -= dt * 1000;
-    // A beep on each of the last ten seconds (MARZ, 2026-10-05).
-    const secs = Math.ceil(timeLeft / 1000);
-    if (secs <= 10 && secs >= 1 && secs !== beepedAt) {
-      beepedAt = secs;
-      play("tick", secs === 1 ? 2 : 1);
-    }
-    if (timeLeft <= 0) {
-      timeLeft = 0;
-      // Let a cascade in progress finish before the whistle.
-      if (phase === "idle") {
-        end();
-        return;
+    if (mode === "timed") {
+      timeLeft -= dt * 1000;
+      // A beep on each of the last ten seconds (MARZ, 2026-10-05).
+      const secs = Math.ceil(timeLeft / 1000);
+      if (secs <= 10 && secs >= 1 && secs !== beepedAt) {
+        beepedAt = secs;
+        play("tick", secs === 1 ? 2 : 1);
+      }
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        // Let a cascade in progress finish before the whistle.
+        if (phase === "idle") {
+          end();
+          return;
+        }
       }
     }
 
@@ -663,14 +691,23 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     c.textAlign = "right";
     c.fillStyle = "#8d939c";
     c.font = `700 11px "Archivo", system-ui, sans-serif`;
-    c.fillText("TIME", bx + cell * SIZE - 2, 14);
-    c.fillStyle = state === "running" && secs <= 10 ? "#ff6b6b" : "#e9ebee";
-    c.font = `700 20px "Space Mono", ui-monospace, monospace`;
-    c.fillText(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`, bx + cell * SIZE - 2, 32);
-    c.fillStyle = "#2e3239";
-    c.fillRect(bx, HUD - 8, cell * SIZE, 3);
-    c.fillStyle = secs <= 10 ? "#ff6b6b" : "#ff7a2f";
-    c.fillRect(bx, HUD - 8, (cell * SIZE * timeLeft) / ROUND_MS, 3);
+    if (mode === "timed") {
+      c.fillText("TIME", bx + cell * SIZE - 2, 14);
+      c.fillStyle = state === "running" && secs <= 10 ? "#ff6b6b" : "#e9ebee";
+      c.font = `700 20px "Space Mono", ui-monospace, monospace`;
+      c.fillText(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`, bx + cell * SIZE - 2, 32);
+      c.fillStyle = "#2e3239";
+      c.fillRect(bx, HUD - 8, cell * SIZE, 3);
+      c.fillStyle = secs <= 10 ? "#ff6b6b" : "#ff7a2f";
+      c.fillRect(bx, HUD - 8, (cell * SIZE * timeLeft) / ROUND_MS, 3);
+    } else {
+      c.fillText("MODE", bx + cell * SIZE - 2, 14);
+      c.fillStyle = "#e9ebee";
+      c.font = `700 16px "Archivo", system-ui, sans-serif`;
+      c.fillText("Endless", bx + cell * SIZE - 2, 32);
+      c.fillStyle = "#2e3239";
+      c.fillRect(bx, HUD - 8, cell * SIZE, 3);
+    }
 
     // Board.
     c.fillStyle = "#15171b";
@@ -790,6 +827,9 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     press,
     release,
     pointer,
+    setMode,
+    stop,
+    backToStart,
     destroy() {
       destroyed = true;
       cancelAnimationFrame(raf);

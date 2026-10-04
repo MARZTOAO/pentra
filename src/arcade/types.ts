@@ -13,6 +13,9 @@ export type RunResult = {
   score: number;
   /** Wall-clock length of the run, for the plausibility check (93). */
   durationMs: number;
+  /** False for a relaxed mode whose score stays on the device and off
+   *  the leaderboards. Absent means ranked. */
+  ranked?: boolean;
 };
 
 export type GameCallbacks = {
@@ -35,6 +38,13 @@ export type ArcadeHandle = {
   /** Keys beyond the one button. Return true when handled, so the
    *  page can stop the browser scrolling. */
   key?(code: string, down: boolean): boolean;
+  /** Games with modes (lib/arcade.ts GAMES[].modes): pick one before
+   *  press() starts a run. */
+  setMode?(id: string): void;
+  /** End the current run on purpose (a mode with no clock). */
+  stop?(): void;
+  /** Back to the start screen, so another mode can be picked. */
+  backToStart?(): void;
 };
 
 export type MountGame = (canvas: HTMLCanvasElement, callbacks: GameCallbacks) => ArcadeHandle;

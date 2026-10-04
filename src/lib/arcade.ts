@@ -30,6 +30,9 @@ export type ArcadeGameInfo = {
   /** Draw the score/best in HTML over the canvas. Games that draw
    *  their own HUD (and use the top of the canvas) turn this off. */
   overlayHud: boolean;
+  /** Ways to play, chosen on the start screen. Only ranked modes send
+   *  scores to the leaderboards. Absent: one way, ranked. */
+  modes?: { id: string; name: string; blurb: string; ranked: boolean }[];
 };
 
 export const GAMES: ArcadeGameInfo[] = [
@@ -59,8 +62,12 @@ export const GAMES: ArcadeGameInfo[] = [
     slug: "hot-swap",
     name: "Hot Swap",
     kind: "score",
-    tagline: "Swap two chips to line up three. Cascades pay double. Two minutes.",
-    objective: "Swap neighbouring chips to line up three or more of a colour. Four in a line leaves a striped chip that blasts its whole row or column when matched; five, or an L, makes a cross that blasts both. You have two minutes.",
+    tagline: "Swap two chips to line up three. Cascades pay double. Timed or endless.",
+    objective: "Swap neighbouring chips to line up three or more of a colour. Four in a line leaves a striped chip that blasts its whole row or column when matched; five, or an L, makes a cross that blasts both.",
+    modes: [
+      { id: "timed", name: "Timed", blurb: "Two minutes on the clock. Your score goes on the leaderboards.", ranked: true },
+      { id: "endless", name: "Endless", blurb: "No clock. Play as long as you like; the score is just for you.", ranked: false },
+    ],
     controls: "Click a chip, then a neighbour — or drag it. Space to start.",
     touchControls: "Tap a chip, then a neighbour — or drag it toward one.",
     touchPad: null,
