@@ -1,4 +1,4 @@
-import { isNativeApp } from "./platform";
+import { isNativeApp, openInBrowser } from "./platform";
 
 /**
  * Setup for the iPhone/iPad app (Capacitor). The native-app twin of
@@ -65,10 +65,4 @@ export function initNative(): void {
     },
     true,
   );
-}
-
-/** Opens a web address in a Safari sheet over the app. */
-export async function openInBrowser(url: string): Promise<void> {
-  const { Browser } = await import("@capacitor/browser");
-  await Browser.open({ url });
 }

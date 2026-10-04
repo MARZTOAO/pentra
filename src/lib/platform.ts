@@ -32,6 +32,16 @@ export function isNativeApp(): boolean {
 }
 
 /**
+ * iPhone app only: opens a web address in a Safari sheet over the app,
+ * with a Done button back to Pentra. The plugin is imported only when
+ * it's used, so the website never downloads it.
+ */
+export async function openInBrowser(url: string): Promise<void> {
+  const { Browser } = await import("@capacitor/browser");
+  await Browser.open({ url });
+}
+
+/**
  * Opens a web address in the person's own browser.
  *
  * In a browser that's a new tab. In the desktop app a plain link or
@@ -44,10 +54,9 @@ export function isNativeApp(): boolean {
 export async function openExternal(url: string): Promise<void> {
   if (!/^https?:\/\//i.test(url)) return;
 
-  // The iPhone app: a Safari sheet over the app (see lib/native.ts).
+  // The iPhone app: a Safari sheet over the app.
   if (isNativeApp()) {
     try {
-      const { openInBrowser } = await import("./native");
       await openInBrowser(url);
       return;
     } catch {
