@@ -13,8 +13,8 @@ import { play } from "./sound";
  * fall in, and anything that lines up on the way down clears too —
  * a cascade, worth more each step. A swap that makes nothing slides
  * there and straight back with a dull sound — the board never
- * changes unless something matched (MARZ, 2026-10-05). Sixty seconds
- * on the clock; the score is what you have when it runs out. A board
+ * changes unless something matched (MARZ, 2026-10-05). The score is
+ * what you have when the clock runs out. A board
  * with no moves reshuffles itself.
  *
  * Super chips (MARZ: "larger combos can create a super tile that
@@ -23,7 +23,7 @@ import { play } from "./sound";
  * match it clears its whole row (horizontal stripe) or column
  * (vertical). Five in a line, or an L or T, leaves a CROSS chip that
  * clears both its row and its column. A super chip caught in another
- * super chip's blast goes off too.
+ * super chip's blast goes off too. Two minutes on the clock.
  *
  * Scoring: 10 a chip (blasted chips included), ×2 on the second step
  * of a cascade, ×3 on the third and so on; a line of four is +20,
@@ -36,7 +36,7 @@ import { play } from "./sound";
  */
 
 const SIZE = 8;
-const ROUND_MS = 60_000;
+const ROUND_MS = 120_000; // two minutes (was one; MARZ, 2026-10-05)
 const HUD = 52; // px above the board for score and clock
 const SWAP_MS = 130;
 const CLEAR_MS = 160;
@@ -657,7 +657,7 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     c.fillText("TIME", bx + cell * SIZE - 2, 14);
     c.fillStyle = state === "running" && secs <= 10 ? "#ff6b6b" : "#e9ebee";
     c.font = `700 20px "Space Mono", ui-monospace, monospace`;
-    c.fillText(state === "ready" ? "1:00" : `0:${String(secs).padStart(2, "0")}`, bx + cell * SIZE - 2, 32);
+    c.fillText(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`, bx + cell * SIZE - 2, 32);
     c.fillStyle = "#2e3239";
     c.fillRect(bx, HUD - 8, cell * SIZE, 3);
     c.fillStyle = secs <= 10 ? "#ff6b6b" : "#ff7a2f";
