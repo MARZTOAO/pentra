@@ -686,7 +686,12 @@ checks(migration, feature, present) as (
      'Stack Trace: arcade_levels, record_level_clear, arcade_levels_of',
      to_regclass('public.arcade_levels') is not null
      and exists (select 1 from fn where fn.name = 'record_level_clear')
-     and exists (select 1 from fn where fn.name = 'arcade_levels_of'))
+     and exists (select 1 from fn where fn.name = 'arcade_levels_of')),
+
+    ('96_stack_trace_tiers',
+     'Stack Trace tagline says five tiers',
+     case when to_regclass('public.arcade_games') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.arcade_games where slug = ''stack-trace'' and tagline like ''%Five tiers%''', false, true, '')))[1]::text::int > 0 end)
 )
 select
   migration,

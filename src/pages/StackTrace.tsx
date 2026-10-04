@@ -7,8 +7,13 @@ import {
   HINT_PENALTY_MS,
   LAYOUTS,
   LEVEL_COUNT,
+  levelLabel,
   mountStackTrace,
+  PER_TIER,
   SHUFFLE_PENALTY_MS,
+  TIER_NAMES,
+  TIERS,
+  tierOf,
   type TraceHandle,
 } from "../arcade/stackTrace";
 
@@ -17,10 +22,11 @@ const SLUG = "stack-trace";
 /**
  * Stack Trace at /arcade/stack-trace — supabase/95, src/arcade/stackTrace.ts.
  *
- * Two screens. The level picker: ten levels, the ones you've cleared
- * with your best time, the next one marked as where you left off,
- * the rest locked. And a level: the board, the clock, Hint and
- * Shuffle (each adds to the clock), and a card when it's clear.
+ * Two screens. The level picker: five tiers of five levels, the ones
+ * you've cleared with your best time, the next one marked as where
+ * you left off, the rest locked — a tier opens when the one before
+ * it is clear. And a level: the board, the clock, Hint and Shuffle
+ * (each adds to the clock), and a card when it's clear.
  */
 export default function StackTrace() {
   const info = gameInfo(SLUG)!;
@@ -28,6 +34,7 @@ export default function StackTrace() {
   const [refresh, setRefresh] = useState(0);
   const levels = useLevels(user?.id, refresh);
   const [playing, setPlaying] = useState<number | null>(null);
+  const onCleared = useCallback(() => setRefresh((n) => n + 1), []);
 
   const cleared = new Map<number, LevelClear>();
   for (const l of levels ?? []) if (l.game === SLUG) cleared.set(l.level, l);
@@ -43,7 +50,7 @@ export default function StackTrace() {
         best={cleared.get(playing)?.best_ms ?? null}
         onExit={() => setPlaying(null)}
         onNext={playing < LEVEL_COUNT ? () => setPlaying(playing + 1) : null}
-        onCleared={() => setRefresh((n) => n + 1)}
+        onCleared={onCleared}
       />
     );
   }
@@ -79,7 +86,9 @@ export default function StackTrace() {
           <span>
             <span className="label-wide text-accent">{allDone ? "All clear" : cleared.size ? "Pick up where you left off" : "Start"}</span>
             <span className="mt-0.5 block text-lg font-semibold">
-              {allDone ? `Replay level ${LEVEL_COUNT} — ${LAYOUTS[LEVEL_COUNT - 1].name}` : `Level ${next} — ${LAYOUTS[next - 1].name}`}
+              {allDone
+                ? `Replay ${TIER_NAMES[TIERS - 1]} ${levelLabel(LEVEL_COUNT)} — ${LAYOUTS[LEVEL_COUNT - 1].name}`
+                : `${TIER_NAMES[tierOf(next).tier - 1]} ${levelLabel(next)} — ${LAYOUTS[next - 1].name}`}
             </span>
           </span>
           <span className="shrink-0 notch-md bg-accent px-4 py-2 text-sm font-semibold text-onaccent">
@@ -88,48 +97,69 @@ export default function StackTrace() {
         </button>
       )}
 
-      <ol className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {Array.from({ length: LEVEL_COUNT }, (_, i) => i + 1).map((n) => {
-          const c = cleared.get(n);
-          const locked = levels === null || (!c && n !== next);
-          return (
-            <li key={n}>
-              <button
-                type="button"
-                disabled={locked}
-                onClick={() => setPlaying(n)}
-                className={
-                  "flex w-full flex-col items-start notch-md border p-3 text-left transition " +
-                  (c
-                    ? "border-line bg-surface/85 hover:border-accent/60"
-                    : n === next && !locked
-                      ? "border-accent/60 bg-accent/10 hover:bg-accent/15"
-                      : "border-line/60 bg-surface/40 opacity-60")
-                }
-                title={locked ? "Clear the level before it" : undefined}
-              >
-                <span className="flex w-full items-center justify-between">
-                  <span className="label-wide text-muted">Level {n}</span>
-                  {c ? (
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-ok" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Cleared">
-                      <path d="m5 12 5 5L20 7" />
-                    </svg>
-                  ) : locked ? (
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth="1.8" aria-label="Locked">
-                      <rect x="4" y="11" width="16" height="10" rx="2" />
-                      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                    </svg>
-                  ) : null}
-                </span>
-                <span className="mt-1 text-sm font-semibold">{LAYOUTS[n - 1].name}</span>
-                <span className="numeric mt-1 text-xs text-muted">
-                  {c ? `Best ${formatTime(c.best_ms)}` : locked ? "Locked" : "Up next"}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+      {Array.from({ length: TIERS }, (_, t) => t + 1).map((tier) => {
+        const first = (tier - 1) * PER_TIER + 1;
+        const nums = Array.from({ length: PER_TIER }, (_, i) => first + i);
+        const done = nums.filter((n) => cleared.has(n)).length;
+        const tierLocked = levels === null || first > next;
+        return (
+          <section key={tier} className={"mb-6" + (tierLocked ? " opacity-70" : "")}>
+            <div className="mb-2 flex items-center gap-3">
+              <h2 className="on-art label-wide text-muted">
+                <span className="text-ink">{tier}.</span> {TIER_NAMES[tier - 1]}
+              </h2>
+              <span className="numeric text-xs text-muted">
+                {done}/{PER_TIER}
+              </span>
+              {tierLocked && levels !== null && (
+                <span className="text-xs text-muted">— clear {TIER_NAMES[tier - 2]} to unlock</span>
+              )}
+            </div>
+            <ol className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {nums.map((n) => {
+                const c = cleared.get(n);
+                const locked = levels === null || (!c && n !== next);
+                return (
+                  <li key={n}>
+                    <button
+                      type="button"
+                      disabled={locked}
+                      onClick={() => setPlaying(n)}
+                      className={
+                        "flex w-full flex-col items-start notch-md border p-3 text-left transition " +
+                        (c
+                          ? "border-line bg-surface/85 hover:border-accent/60"
+                          : n === next && !locked
+                            ? "border-accent/60 bg-accent/10 hover:bg-accent/15"
+                            : "border-line/60 bg-surface/40 opacity-60")
+                      }
+                      title={locked ? "Clear the level before it" : undefined}
+                    >
+                      <span className="flex w-full items-center justify-between">
+                        <span className="label-wide text-muted">{levelLabel(n)}</span>
+                        {c ? (
+                          <svg viewBox="0 0 24 24" className="h-4 w-4 text-ok" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="Cleared">
+                            <path d="m5 12 5 5L20 7" />
+                          </svg>
+                        ) : locked ? (
+                          <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth="1.8" aria-label="Locked">
+                            <rect x="4" y="11" width="16" height="10" rx="2" />
+                            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                          </svg>
+                        ) : null}
+                      </span>
+                      <span className="mt-1 text-sm font-semibold">{LAYOUTS[n - 1].name}</span>
+                      <span className="numeric mt-1 text-xs text-muted">
+                        {c ? `Best ${formatTime(c.best_ms)}` : locked ? "Locked" : "Up next"}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        );
+      })}
 
       <p className="mt-6 text-xs text-muted">
         A tile is free when nothing sits on it and one of its long sides is open. Hint adds{" "}
@@ -173,6 +203,12 @@ function Level({
     },
     [level, onCleared],
   );
+  // Read through a ref so a new callback never re-deals the board:
+  // the board is dealt only when the level changes or Play again is
+  // pressed. (The first version re-dealt on every parent render,
+  // which after a win looked like "another level 1".)
+  const onWinRef = useRef(onWin);
+  onWinRef.current = onWin;
 
   useEffect(() => {
     const el = canvas.current;
@@ -185,14 +221,14 @@ function Level({
         setTilesLeft(t);
         setMovesLeft(m);
       },
-      onWin: (ms) => void onWin(ms),
+      onWin: (ms) => void onWinRef.current(ms),
     });
     game.current = handle;
     return () => {
       handle.destroy();
       game.current = null;
     };
-  }, [level, deal, onWin]);
+  }, [level, deal]);
 
   function onPointerDown(e: PointerEvent) {
     const rect = canvas.current?.getBoundingClientRect();
@@ -213,7 +249,8 @@ function Level({
           Levels
         </button>
         <h1 className="display on-art text-xl sm:text-2xl">
-          Level {level} <span className="text-muted">— {LAYOUTS[level - 1].name}</span>
+          {TIER_NAMES[tierOf(level).tier - 1]} {levelLabel(level)}{" "}
+          <span className="text-muted">— {LAYOUTS[level - 1].name}</span>
         </h1>
         <div className="ml-auto flex items-center gap-4">
           <div className="text-right">
@@ -268,7 +305,10 @@ function Level({
         {won && (
           <div className="absolute inset-0 flex items-center justify-center bg-bg/70 p-4">
             <div className="w-full max-w-sm notch border border-accent/50 bg-surface p-6 text-center">
-              <p className="label-wide text-accent">Level {level} clear</p>
+              <p className="label-wide text-accent">
+                {levelLabel(level)} clear
+                {tierOf(level).index === PER_TIER && level < LEVEL_COUNT ? ` — ${TIER_NAMES[tierOf(level).tier]} unlocked` : ""}
+              </p>
               <p className="numeric mt-2 text-4xl font-bold">{formatTime(won.ms)}</p>
               <p className="mt-1 text-sm text-muted">
                 {won.problem

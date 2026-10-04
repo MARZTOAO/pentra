@@ -55,7 +55,7 @@ export const GAMES: ArcadeGameInfo[] = [
     slug: "stack-trace",
     name: "Stack Trace",
     kind: "levels",
-    tagline: "Clear the stack, one matching pair at a time. Ten levels. No clock but your own.",
+    tagline: "Clear the stack, one matching pair at a time. Five tiers, Casual to Brutal. No clock but your own.",
     controls: "Click two free tiles with the same face.",
     touchControls: "Tap two free tiles with the same face.",
     touchPad: null,

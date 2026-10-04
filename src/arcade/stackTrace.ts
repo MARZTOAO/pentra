@@ -7,6 +7,8 @@
  * leaderboard. I just want users to see the levels they've beat and
  * the time each one took."
  *
+ * Twenty-five levels in five tiers of five — Casual to Brutal — and
+ * a tier opens once the one before it is clear (MARZ, 2026-10-04).
  * Tiles are stacked in layers. A tile is free when nothing sits on
  * it and at least one of its long sides is open. Pick two free tiles
  * with the same face and they go; clear the stack to finish the
@@ -42,9 +44,25 @@ export type TraceHandle = {
   destroy(): void;
 };
 
-export const LEVEL_COUNT = 10;
+export const TIERS = 5;
+export const PER_TIER = 5;
+export const LEVEL_COUNT = TIERS * PER_TIER;
 export const HINT_PENALTY_MS = 10_000;
 export const SHUFFLE_PENALTY_MS = 30_000;
+
+/** Difficulty names, tier 1 to 5. */
+export const TIER_NAMES = ["Casual", "Steady", "Tricky", "Hard", "Brutal"];
+
+/** Which tier (1–5) a level belongs to, and its place in it (1–5). */
+export function tierOf(level: number) {
+  const tier = Math.min(TIERS, Math.max(1, Math.ceil(level / PER_TIER)));
+  return { tier, index: level - (tier - 1) * PER_TIER };
+}
+/** "2-3": tier 2, third level. */
+export function levelLabel(level: number) {
+  const { tier, index } = tierOf(level);
+  return `${tier}-${index}`;
+}
 
 type Pos = { x: number; y: number; z: number };
 type Tile = Pos & { id: number; face: number };
@@ -61,6 +79,40 @@ function rect(x0: number, y0: number, cols: number, rows: number, z: number): Po
 }
 function row(x0: number, y: number, cols: number, z: number): Pos[] {
   return rect(x0, y, cols, 1, z);
+}
+/** A rectangle with smaller rectangles stacked on it, each layer one
+ *  tile narrower and shorter, centred (so upper layers sit on seams). */
+function stack(cols: number, rows: number, layers: number): Pos[] {
+  const out: Pos[] = [];
+  for (let z = 0; z < layers; z++) {
+    const c = cols - z;
+    const r = rows - z;
+    if (c < 1 || r < 1) break;
+    out.push(...rect(z, z, c, r, z));
+  }
+  return out;
+}
+/** Rows of growing then shrinking width, like a diamond. */
+function diamond(widths: number[], z = 0): Pos[] {
+  const out: Pos[] = [];
+  const widest = Math.max(...widths);
+  widths.forEach((w, j) => out.push(...row(widest - w, j * 2, w, z)));
+  return out;
+}
+/** Two towers with a walkway between. */
+function bridge(towerCols: number, rows: number, gap: number, layers: number): Pos[] {
+  const out: Pos[] = [];
+  const right = (towerCols + gap) * 2;
+  for (let z = 0; z < layers; z++) {
+    const c = towerCols - z;
+    const r = rows - z;
+    if (c < 1 || r < 1) break;
+    out.push(...rect(z, z, c, r, z), ...rect(right + z, z, c, r, z));
+  }
+  const mid = Math.floor(rows / 2) * 2 - 1;
+  out.push(...row(towerCols * 2, mid, gap, 0), ...row(towerCols * 2, mid + 2, gap, 0));
+  if (gap >= 2) out.push(...row(towerCols * 2 + 1, mid + 1, gap - 1, 1));
+  return out;
 }
 
 /** The classic 144-tile turtle, in these units. */
@@ -84,64 +136,68 @@ function turtle(): Pos[] {
   ];
 }
 
-export const LAYOUTS: { name: string; tiles: () => Pos[] }[] = [
-  // In order of size, which is roughly order of difficulty.
+export type Layout = { name: string; tiles: () => Pos[] };
+
+/**
+ * Five tiers of five. Within a tier the boards grow; across tiers
+ * they also gain layers and, in deal(), more distinct faces, so a
+ * Brutal board is bigger, taller and has fewer easy pairs.
+ */
+export const LAYOUTS: Layout[] = [
+  // 1 — Casual: flat or nearly flat, under fifty tiles.
   { name: "Warm-up", tiles: () => rect(0, 0, 6, 4, 0) }, // 24
-  { name: "Step", tiles: () => [...rect(0, 0, 8, 4, 0), ...rect(2, 2, 6, 2, 1)] }, // 44
-  { name: "Mesa", tiles: () => [...rect(0, 0, 8, 5, 0), ...rect(2, 2, 6, 3, 1), ...rect(6, 4, 2, 1, 2)] }, // 60
-  { name: "Plateau", tiles: () => [...rect(0, 0, 10, 5, 0), ...rect(2, 2, 8, 3, 1), ...rect(6, 4, 4, 1, 2)] }, // 78
-  {
-    name: "Bridge",
-    tiles: () => [
-      ...rect(0, 0, 5, 6, 0),
-      ...rect(14, 0, 5, 6, 0),
-      ...row(10, 4, 2, 0),
-      ...row(10, 6, 2, 0),
-      ...rect(2, 2, 3, 4, 1),
-      ...rect(14, 2, 3, 4, 1),
-      ...row(10, 5, 2, 1),
-    ], // 90
-  },
-  {
-    name: "Pyramid",
-    tiles: () => [...rect(0, 0, 10, 6, 0), ...rect(2, 2, 8, 4, 1), ...rect(4, 4, 6, 2, 2), ...rect(8, 5, 2, 1, 3)], // 106
-  },
-  { name: "Field", tiles: () => [...rect(0, 0, 14, 8, 0), ...rect(10, 6, 4, 2, 1)] }, // 120
+  { name: "Row House", tiles: () => rect(0, 0, 8, 4, 0) }, // 32
+  { name: "Step", tiles: () => [...rect(0, 0, 8, 4, 0), ...rect(2, 2, 4, 2, 1)] }, // 40
+  { name: "Lozenge", tiles: () => diamond([2, 4, 6, 8, 8, 6, 4, 2]) }, // 40
+  { name: "Mesa", tiles: () => [...rect(0, 0, 8, 4, 0), ...rect(2, 2, 6, 2, 1), ...rect(6, 3, 2, 1, 2)] }, // 46
+
+  // 2 — Steady: two to three layers, sixty to ninety.
+  { name: "Terrace", tiles: () => [...rect(0, 0, 10, 4, 0), ...rect(2, 2, 8, 2, 1), ...rect(4, 3, 4, 1, 2)] }, // 60
+  { name: "Kite", tiles: () => [...diamond([2, 4, 6, 8, 10, 8, 6, 4, 2]), ...rect(6, 6, 4, 3, 1)] }, // 50+12 = 62
+  { name: "Plateau", tiles: () => stack(8, 5, 2) }, // 40+28 = 68 → see sizes at runtime
+  { name: "Twin Peaks", tiles: () => bridge(4, 5, 2, 2) }, // 2×(20+12)+4+1 = 69 → evened
+  { name: "Ziggurat", tiles: () => stack(9, 6, 3) }, // 54+40+28 = 122 → too big; replaced below
+
+  // 3 — Tricky: around a hundred, up to four layers.
+  { name: "Field", tiles: () => [...rect(0, 0, 12, 7, 0), ...rect(8, 5, 4, 2, 1)] }, // 84+8 = 92
+  { name: "Courtyard", tiles: () => [...rect(0, 0, 12, 7, 0).filter((p) => !(p.x >= 6 && p.x <= 16 && p.y >= 4 && p.y <= 8)), ...rect(2, 2, 10, 5, 1).filter((p) => !(p.x >= 6 && p.x <= 16 && p.y >= 4 && p.y <= 8))] },
+  { name: "Bridge", tiles: () => bridge(5, 6, 2, 2) }, // 2×(30+20)+4+1 = 105 → evened
+  { name: "Arrowhead", tiles: () => [...diamond([4, 6, 8, 10, 12, 12, 10, 8, 6, 4]), ...diamond([2, 4, 6, 6, 4, 2], 1).map((p) => ({ ...p, x: p.x + 6, y: p.y + 4 }))] }, // 80+24 = 104
+  { name: "Pyramid", tiles: () => [...rect(0, 0, 10, 6, 0), ...rect(2, 2, 8, 4, 1), ...rect(4, 4, 6, 2, 2), ...rect(8, 5, 2, 1, 3)] }, // 108
+
+  // 4 — Hard: a hundred and twenty to a hundred and sixty.
+  { name: "Grid Lock", tiles: () => [...rect(0, 0, 14, 8, 0), ...rect(10, 6, 4, 2, 1)] }, // 120
   { name: "The Turtle", tiles: turtle }, // 144
-  {
-    name: "Terraces",
-    tiles: () => [...rect(0, 0, 12, 6, 0), ...rect(2, 1, 10, 5, 1), ...rect(4, 2, 8, 4, 2), ...rect(6, 3, 6, 3, 3)], // 172, trimmed to 154
-  },
-  {
-    name: "The Crossing",
-    tiles: () => [
-      ...rect(8, 0, 6, 10, 0),
-      ...rect(0, 6, 22, 4, 0),
-      ...rect(9, 2, 4, 6, 1),
-      ...rect(4, 7, 14, 2, 1),
-      ...rect(10, 4, 2, 2, 2),
-      ...rect(10, 7, 2, 1, 3),
-    ], // 182
-  },
+  { name: "Citadel", tiles: () => [...stack(10, 7, 4), ...row(0, 15, 10, 0)] }, // 70+54+40+28+10 = 202 → too big; replaced below
+  { name: "Fortress", tiles: () => bridge(6, 7, 2, 3) }, // 2×(42+30+20)+4+1 = 189 → too big; replaced below
+  { name: "Steps", tiles: () => [...rect(0, 0, 12, 6, 0), ...rect(2, 1, 10, 5, 1), ...rect(4, 2, 8, 4, 2), ...rect(6, 3, 6, 3, 3)].filter((p) => !(p.z === 0 && p.y === 10)) }, // 60+50+32+18 = 160 → evened below
+
+  // 5 — Brutal: the biggest boards, and the fewest spare pairs.
+  { name: "Twin Turtles", tiles: () => [...turtle().filter((p) => p.x < 14), ...turtle().filter((p) => p.x >= 14).map((p) => ({ ...p, x: p.x + 2 }))] }, // 144 split, with a gap
+  { name: "Terraces", tiles: () => [...rect(0, 0, 12, 6, 0), ...rect(2, 1, 10, 5, 1), ...rect(4, 2, 8, 4, 2), ...rect(6, 3, 6, 3, 3)] }, // 172 → trimmed to 154
+  { name: "Great Wall", tiles: () => [...rect(0, 0, 16, 6, 0), ...rect(1, 1, 14, 4, 1), ...rect(2, 2, 12, 2, 2)] }, // 96+56+24 = 176
+  { name: "The Crossing", tiles: () => [...rect(8, 0, 6, 10, 0), ...rect(0, 6, 22, 4, 0), ...rect(9, 2, 4, 6, 1), ...rect(4, 7, 14, 2, 1), ...rect(10, 4, 2, 2, 2), ...rect(10, 7, 2, 1, 3)] }, // 182
+  { name: "Overclock", tiles: () => [...rect(0, 0, 14, 8, 0), ...rect(1, 1, 12, 6, 1), ...rect(2, 2, 10, 4, 2), ...rect(3, 3, 8, 2, 3), ...rect(5, 3.5, 4, 1, 4)] }, // 112+72+40+16+4 = 244 → trimmed below
 ];
 
-/** A level's positions, made even and deduplicated. */
+
+/** A level's positions: deduplicated, trimmed where noted, made even. */
 export function layoutFor(level: number): Pos[] {
   const idx = Math.max(0, Math.min(LAYOUTS.length - 1, level - 1));
   const seen = new Set<string>();
-  const out: Pos[] = [];
+  let out: Pos[] = [];
   for (const p of LAYOUTS[idx].tiles()) {
     const k = `${p.x},${p.y},${p.z}`;
     if (seen.has(k)) continue;
     seen.add(k);
     out.push(p);
   }
-  // Terraces is a 172-tile stack trimmed by dropping the back row of
-  // the base and the top layer's corners, which keeps the shape.
-  if (LAYOUTS[idx].name === "Terraces") {
-    const trimmed = out.filter((p) => !(p.z === 0 && p.y === 10) && !(p.z === 3 && (p.x === 6 || p.x === 16)));
-    return evenOut(trimmed);
-  }
+  const name = LAYOUTS[idx].name;
+  if (name === "Ziggurat") out = stack(8, 5, 3); // 40+28+18 = 86 → evened; sits at the top of Steady
+  if (name === "Fortress") out = bridge(5, 7, 2, 3); // 2×(35+24+15)+4+1 = 153 → evened
+  if (name === "Citadel") out = [...stack(10, 6, 3), ...row(0, 13, 10, 0)]; // 60+45+32+10 = 147 → evened
+  if (name === "Terraces") out = out.filter((p) => !(p.z === 0 && p.y === 10) && !(p.z === 3 && (p.x === 6 || p.x === 16)));
+  if (name === "Overclock") out = out.filter((p) => !(p.z === 0 && (p.y === 0 || p.y === 14)));
   return evenOut(out);
 }
 function evenOut(ps: Pos[]): Pos[] {
@@ -174,11 +230,13 @@ function isFree(t: Pos, others: Iterable<Pos>): boolean {
 /* ---- dealing a solvable board ------------------------------------- */
 
 const FACE_COUNT = 36;
+/** Distinct faces in play per tier: fewer means more pairs to find. */
+const FACES_PER_TIER = [16, 22, 28, 32, 36];
 
-function deal(positions: Pos[], rnd: () => number): Map<Pos, number> | null {
+function deal(positions: Pos[], rnd: () => number, faceCount = FACE_COUNT): Map<Pos, number> | null {
   const pairs = positions.length / 2;
   const faces: number[] = [];
-  for (let i = 0; i < pairs; i++) faces.push(i % FACE_COUNT);
+  for (let i = 0; i < pairs; i++) faces.push(i % faceCount);
   for (let i = faces.length - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
     [faces[i], faces[j]] = [faces[j], faces[i]];
@@ -394,9 +452,11 @@ export function mountStackTrace(
   const maxY = Math.max(...positions.map((p) => p.y)) + 2;
   const maxZ = Math.max(...positions.map((p) => p.z));
 
+  const faceCount = FACES_PER_TIER[tierOf(level).tier - 1];
+
   function deal_() {
     let d: Map<Pos, number> | null = null;
-    for (let tries = 0; tries < 50 && !d; tries++) d = deal(positions, rnd);
+    for (let tries = 0; tries < 50 && !d; tries++) d = deal(positions, rnd, faceCount);
     if (!d) {
       // Should not happen with these layouts; fall back to a plain
       // pairing so the level still loads (it may not be solvable).
@@ -536,7 +596,7 @@ export function mountStackTrace(
     start();
     const remainingPositions = tiles.map((t) => ({ x: t.x, y: t.y, z: t.z }));
     let d: Map<Pos, number> | null = null;
-    for (let tries = 0; tries < 50 && !d; tries++) d = deal(remainingPositions, rnd);
+    for (let tries = 0; tries < 50 && !d; tries++) d = deal(remainingPositions, rnd, faceCount);
     if (!d) return;
     tiles = remainingPositions.map((p, i) => ({ ...p, id: i, face: d!.get(p)! }));
     penalty += SHUFFLE_PENALTY_MS;

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatScore, GAMES, useBests, useLevels } from "../lib/arcade";
-import { LEVEL_COUNT, formatTime } from "../arcade/stackTrace";
+import { LEVEL_COUNT, formatTime, levelLabel } from "../arcade/stackTrace";
 
 /**
  * A player's arcade bests, on their profile (supabase/93). MARZ:
@@ -77,7 +77,7 @@ export function ArcadeCard({ userId, isSelf }: { userId: string; isSelf: boolean
               <ul className="flex w-full flex-wrap gap-1.5">
                 {times.map((t) => (
                   <li key={t.level} className="numeric notch-sm border border-line/70 bg-surface-2/60 px-2 py-0.5 text-2xs text-muted">
-                    <span className="text-ink">L{t.level}</span> {formatTime(t.best_ms)}
+                    <span className="text-ink">{levelLabel(t.level)}</span> {formatTime(t.best_ms)}
                   </li>
                 ))}
               </ul>
