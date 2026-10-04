@@ -340,7 +340,7 @@ export function SessionCard({
                 disabled={busy}
                 aria-label={`Remove ${player.display_name || player.username}`}
                 title={`Remove ${player.display_name || player.username}`}
-                className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white group-hover:flex"
+                className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-danger text-3xs font-bold text-white group-hover:flex"
               >
                 ×
               </button>
@@ -399,7 +399,7 @@ export function SessionCard({
                 disabled={busy}
                 aria-label={`Cancel invite to ${invite.display_name || invite.username}`}
                 title={`Cancel invite to ${invite.display_name || invite.username}`}
-                className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white group-hover:flex"
+                className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-danger text-3xs font-bold text-white group-hover:flex"
               >
                 ×
               </button>

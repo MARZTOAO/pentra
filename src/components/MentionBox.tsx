@@ -179,7 +179,7 @@ export function MentionBox({
                       <span className="block truncate text-xs font-semibold">
                         {friend.display_name || friend.username}
                       </span>
-                      <span className="block truncate text-[11px] text-muted">
+                      <span className="block truncate text-2xs text-muted">
                         @{friend.username}
                       </span>
                     </span>

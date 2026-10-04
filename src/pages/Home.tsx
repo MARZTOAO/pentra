@@ -538,7 +538,7 @@ function Composer({
                 )}
                 <span className="min-w-0 max-w-40 truncate">{game.name}</span>
                 {releaseLabel(game) && (
-                  <span className="shrink-0 whitespace-nowrap rounded-full bg-accent/20 px-1.5 text-[10px] font-semibold">
+                  <span className="shrink-0 whitespace-nowrap rounded-full bg-accent/20 px-1.5 text-3xs font-semibold">
                     {releaseLabel(game)}
                   </span>
                 )}

@@ -72,7 +72,7 @@ export function GamerTags() {
         <h2 className="label-wide text-muted">
           Gamer tags
         </h2>
-        <span className="flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-[10px] font-medium text-muted">
+        <span className="flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-3xs font-medium text-muted">
           <svg
             className="h-3 w-3"
             viewBox="0 0 24 24"

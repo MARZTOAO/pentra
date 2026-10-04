@@ -79,7 +79,7 @@ export function UpdateBanner() {
 
               {upcoming && upcoming.titles.length > 0 && (
                 <div className="mt-3">
-                  <p className="label-wide mb-1.5 text-[10px] text-muted">
+                  <p className="label-wide mb-1.5 text-3xs text-muted">
                     What's in it
                   </p>
                   <ul className="space-y-1">

@@ -187,7 +187,7 @@ export function Prose({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-full bg-bg text-ink">
+    <div className="type-base min-h-full bg-bg text-ink">
       <SiteHeader />
       <main className="mx-auto max-w-2xl px-5 pb-24 pt-8 sm:px-8 sm:pt-14">
         <p className="label-wide mb-4 text-accent">{kicker}</p>

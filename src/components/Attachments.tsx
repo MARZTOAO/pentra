@@ -103,7 +103,7 @@ export function AttachmentThumbs({ attach }: { attach: AttachmentState }) {
                 )}
 
                 {item.kind === "video" && (
-                  <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 py-0.5 text-[9px] font-bold text-white">
+                  <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1 py-0.5 text-4xs font-bold text-white">
                     GIF
                   </span>
                 )}
@@ -121,7 +121,7 @@ export function AttachmentThumbs({ attach }: { attach: AttachmentState }) {
               {/* What the compression actually achieved. Worth showing:
                   it's the difference between trusting the app with a
                   4MB photo and not bothering. */}
-              <figcaption className="px-1.5 py-1 text-[10px] leading-tight text-muted">
+              <figcaption className="px-1.5 py-1 text-3xs leading-tight text-muted">
                 {savingsLabel(item) ?? mb(item.blob.size)}
               </figcaption>
             </figure>
@@ -130,7 +130,7 @@ export function AttachmentThumbs({ attach }: { attach: AttachmentState }) {
           {working > 0 && (
             <div className="flex h-[104px] w-28 flex-col items-center justify-center gap-2 notch-md border border-dashed border-line">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-accent" />
-              <span className="px-1 text-center text-[10px] leading-tight text-muted">
+              <span className="px-1 text-center text-3xs leading-tight text-muted">
                 Compressing…
               </span>
             </div>

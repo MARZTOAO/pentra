@@ -124,7 +124,7 @@ export function PresencePicker({ className = "" }: { className?: string }) {
                         <span className="block text-xs font-semibold">
                           {option.label}
                         </span>
-                        <span className="block text-[11px] leading-snug text-muted">
+                        <span className="block text-2xs leading-snug text-muted">
                           {option.hint}
                         </span>
                       </span>

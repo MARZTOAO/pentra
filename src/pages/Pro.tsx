@@ -405,7 +405,7 @@ function PlanCard({
           <span className="label-wide text-muted">{p.label}</span>
           {plan === "yearly" && (
             <span
-              className="notch-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+              className="notch-sm px-2 py-0.5 text-3xs font-bold uppercase tracking-wider"
               style={{ background: PRO_GOLD, color: ON_GOLD }}
             >
               Save 17%

@@ -116,7 +116,7 @@ export function ReferralPanel() {
           <dd className="numeric text-xl font-bold leading-tight">
             {summary?.qualified ?? 0}
           </dd>
-          <dt className="mt-0.5 text-[11px] leading-tight text-muted">
+          <dt className="mt-0.5 text-2xs leading-tight text-muted">
             Playing
           </dt>
         </div>
@@ -125,7 +125,7 @@ export function ReferralPanel() {
           <dd className="numeric text-xl font-bold leading-tight">
             {summary?.total ?? 0}
           </dd>
-          <dt className="mt-0.5 text-[11px] leading-tight text-muted">
+          <dt className="mt-0.5 text-2xs leading-tight text-muted">
             Signed up
           </dt>
         </div>
@@ -148,7 +148,7 @@ export function ReferralPanel() {
       {/* Said out loud rather than left in a title attribute. A
           tooltip does not exist on a touch screen, so a disabled
           button with the reason hidden in one is just a dead button. */}
-      <p className="mt-1.5 text-[11px] text-muted">
+      <p className="mt-1.5 text-2xs text-muted">
         {summary?.can_roll
           ? "A new link stops the old one working. Anyone who already joined still counts."
           : "You've changed it recently — you can change it again in an hour."}

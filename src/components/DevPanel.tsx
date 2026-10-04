@@ -124,7 +124,7 @@ function Seeded() {
       <p className="text-xs leading-relaxed text-muted">
         The {rows.length} account{rows.length === 1 ? "" : "s"} made by the seed
         scripts (every <span className="numeric">@example.test</span> sign-up).
-        They carry a dashed <span className="label-wide text-[9px]">Seeded</span>{" "}
+        They carry a dashed <span className="label-wide text-4xs">Seeded</span>{" "}
         tag everywhere their name appears — on posts, comments, profiles and
         match cards — and only developers see it. Metrics leave them out
         unless you tick "include test accounts".
@@ -140,7 +140,7 @@ function Seeded() {
                 className="flex items-center justify-between gap-2 notch-sm border border-line px-2.5 py-1.5 text-sm transition hover:border-accent hover:text-accent"
               >
                 <span className="truncate">@{r.username}</span>
-                <span className="numeric shrink-0 text-[11px] text-muted">
+                <span className="numeric shrink-0 text-2xs text-muted">
                   {new Date(r.created_at).toLocaleDateString()}
                 </span>
               </Link>
@@ -197,7 +197,7 @@ function Reports() {
       {/* Counts, not names. Enough to tell a quiet week from a bar
           set too high. */}
       {backlog && backlog.below_threshold > 0 && (
-        <p className="border-t border-line pt-3 text-[11px] leading-relaxed text-muted">
+        <p className="border-t border-line pt-3 text-2xs leading-relaxed text-muted">
           {backlog.below_threshold} report
           {backlog.below_threshold === 1 ? " is" : "s are"} below the
           threshold and not shown. A person appears here once three
@@ -249,17 +249,17 @@ function Case({ r, onDone }: { r: ReportedUser; onDone: () => void }) {
 
         <div className="ml-auto flex flex-wrap items-center gap-1.5">
           {r.severe && (
-            <span className="notch-sm bg-danger px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+            <span className="notch-sm bg-danger px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-white">
               Severe
             </span>
           )}
           {banned && (
-            <span className="notch-sm border border-danger/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-danger">
+            <span className="notch-sm border border-danger/50 px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-danger">
               Banned
             </span>
           )}
           {r.warn_count > 0 && (
-            <span className="notch-sm border border-accent/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+            <span className="notch-sm border border-accent/50 px-2 py-0.5 text-3xs font-bold uppercase tracking-wide text-accent">
               {r.warn_count} warning{r.warn_count === 1 ? "" : "s"}
             </span>
           )}
@@ -283,14 +283,14 @@ function Case({ r, onDone }: { r: ReportedUser; onDone: () => void }) {
               key={i}
               className="break-words notch-sm border-l-2 border-danger bg-danger/5 px-2 py-1 text-xs leading-relaxed text-ink"
             >
-              <span className="mr-1.5 text-[10px] uppercase tracking-wide text-danger">
+              <span className="mr-1.5 text-3xs uppercase tracking-wide text-danger">
                 said
               </span>
               {q}
             </p>
           ))}
           {r.quotes.length > 5 && (
-            <p className="text-[11px] text-muted">
+            <p className="text-2xs text-muted">
               and {r.quotes.length - 5} more
             </p>
           )}
@@ -311,7 +311,7 @@ function Case({ r, onDone }: { r: ReportedUser; onDone: () => void }) {
       )}
 
       {r.last_action && (
-        <p className="mb-2 text-[11px] text-muted">
+        <p className="mb-2 text-2xs text-muted">
           Last action: {r.last_action}
           {r.last_action_at &&
             ` · ${new Date(r.last_action_at).toLocaleDateString()}`}
@@ -515,7 +515,7 @@ function News() {
             <option value={3}>Footnote</option>
           </select>
 
-          <span className="numeric text-[11px] text-muted">
+          <span className="numeric text-2xs text-muted">
             {body.length}/300
           </span>
 
@@ -532,7 +532,7 @@ function News() {
       </div>
 
       {status && (
-        <p className="text-[11px] text-muted">
+        <p className="text-2xs text-muted">
           {status.entries} entries. Everyone who has been away since an
           entry went up sees it next time they sign in.
         </p>
@@ -544,7 +544,7 @@ function News() {
             <div className="mb-1 flex items-baseline gap-2">
               <span
                 className={
-                  "notch-sm px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide " +
+                  "notch-sm px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wide " +
                   (e.kind === "fix"
                     ? "border border-line text-muted"
                     : e.weight === 1
@@ -571,7 +571,7 @@ function News() {
             <p className="break-words text-xs leading-relaxed text-muted">
               {e.body}
             </p>
-            <p className="mt-1 text-[10px] text-muted">
+            <p className="mt-1 text-3xs text-muted">
               {new Date(e.shipped_at).toLocaleDateString()}
             </p>
           </div>
@@ -668,13 +668,13 @@ export function Numbers({ onPage = false }: { onPage?: boolean }) {
         >
           Refresh
         </button>
-        <span className="text-[11px] text-muted">
+        <span className="text-2xs text-muted">
           {new Date(m.generated_at).toLocaleString()}
         </span>
       </div>
 
       {/* Said once, here, because the absence is the point. */}
-      <p className="text-[11px] leading-relaxed text-muted">
+      <p className="text-2xs leading-relaxed text-muted">
         Counts only. Nothing here reads anybody's messages or shows what
         an individual is doing — that was left out on purpose, not
         forgotten.
@@ -699,7 +699,7 @@ function Group({
   return (
     <section>
       <h3 className="mb-1 label-wide text-muted">{title}</h3>
-      {note && <p className="mb-2 text-[11px] text-muted">{note}</p>}
+      {note && <p className="mb-2 text-2xs text-muted">{note}</p>}
       {/* One column below 360px. Two columns there leaves about 144px
           a cell, and a label like "Month-old, active" pushes its
           number clean off the right edge — measured at 320, not
@@ -948,14 +948,14 @@ function Pro() {
                   : "forever"}
               </span>
               {m.granted && (
-                <span className="notch-sm border border-line px-1.5 text-[10px] text-muted">
+                <span className="notch-sm border border-line px-1.5 text-3xs text-muted">
                   granted
                 </span>
               )}
               <button
                 onClick={() => revoke(m.username)}
                 disabled={busy}
-                className="text-[11px] text-muted transition hover:text-danger disabled:opacity-40"
+                className="text-2xs text-muted transition hover:text-danger disabled:opacity-40"
               >
                 Revoke
               </button>
@@ -992,7 +992,7 @@ function FlagRow({ flag, onChanged }: { flag: DevFlag; onChanged: () => void }) 
           }
           disabled={busy}
           className={
-            "notch-sm px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide transition disabled:opacity-40 " +
+            "notch-sm px-2 py-0.5 text-2xs font-bold uppercase tracking-wide transition disabled:opacity-40 " +
             (flag.enabled_for_all
               ? "bg-ok text-bg"
               : "border border-line text-muted hover:text-ink")
@@ -1004,7 +1004,7 @@ function FlagRow({ flag, onChanged }: { flag: DevFlag; onChanged: () => void }) 
         <button
           onClick={() => run(() => dropFlag(flag.key))}
           disabled={busy}
-          className="ml-auto text-[11px] text-muted transition hover:text-danger disabled:opacity-40"
+          className="ml-auto text-2xs text-muted transition hover:text-danger disabled:opacity-40"
         >
           Delete
         </button>
@@ -1110,7 +1110,7 @@ function Build() {
       )}
 
       {env && (
-        <p className="break-words text-[11px] leading-relaxed text-muted">
+        <p className="break-words text-2xs leading-relaxed text-muted">
           {env.postgres}
         </p>
       )}

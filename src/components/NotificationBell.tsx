@@ -185,7 +185,7 @@ export function NotificationBell() {
         </svg>
 
         {unread > 0 && (
-          <span className="numeric absolute right-0.5 top-0.5 bg-accent px-1 text-[9px] font-bold text-onaccent">
+          <span className="numeric absolute right-0.5 top-0.5 bg-accent px-1 text-4xs font-bold text-onaccent">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -242,7 +242,7 @@ export function NotificationBell() {
                           >
                             {notificationText(n)}
                           </span>
-                          <span className="numeric mt-0.5 block text-[11px] text-muted">
+                          <span className="numeric mt-0.5 block text-2xs text-muted">
                             {notificationAge(n.created_at)}
                           </span>
                         </span>

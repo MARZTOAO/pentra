@@ -172,7 +172,7 @@ export function GameSearchModal({
                   catalogue entry — no ratings, no posts, no reason to
                   be there. The date explains it. */}
               {releaseLabel(game) && (
-                <span className="shrink-0 rounded-full border border-accent/50 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                <span className="shrink-0 rounded-full border border-accent/50 bg-accent/10 px-2 py-0.5 text-3xs font-semibold text-accent">
                   {releaseLabel(game)}
                 </span>
               )}

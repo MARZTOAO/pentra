@@ -61,7 +61,7 @@ export function WarningBanner() {
           {busy ? "…" : "I understand"}
         </button>
 
-        <p className="mt-3 text-center text-[11px] text-muted">
+        <p className="mt-3 text-center text-2xs text-muted">
           {new Date(warning.created_at).toLocaleDateString()}
         </p>
       </div>

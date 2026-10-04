@@ -148,7 +148,7 @@ export function AchievementToast() {
               )}
             </p>
             {shown.extra === 0 && shown.detail && (
-              <p className="truncate text-[11px] text-muted">{shown.detail}</p>
+              <p className="truncate text-2xs text-muted">{shown.detail}</p>
             )}
           </div>
         </div>

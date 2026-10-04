@@ -142,14 +142,14 @@ export function GameLibrary({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-full w-full items-center justify-center p-1 text-center text-[10px] leading-tight text-muted">
+                  <span className="flex h-full w-full items-center justify-center p-1 text-center text-3xs leading-tight text-muted">
                     {game.name}
                   </span>
                 )}
               </div>
 
               {releaseLabel(game) && (
-                <span className="pointer-events-none absolute bottom-1 left-1 right-1 truncate rounded bg-black/75 px-1 py-0.5 text-center text-[9px] font-semibold text-white">
+                <span className="pointer-events-none absolute bottom-1 left-1 right-1 truncate rounded bg-black/75 px-1 py-0.5 text-center text-4xs font-semibold text-white">
                   {releaseLabel(game)}
                 </span>
               )}

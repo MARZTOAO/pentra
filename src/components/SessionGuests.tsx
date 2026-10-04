@@ -100,7 +100,7 @@ export function SessionGuests({
         <span className="text-xs font-medium text-muted">Already playing</span>
 
         {selected.length > 0 && (
-          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
+          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-3xs font-semibold text-accent">
             {selected.length} added
           </span>
         )}
@@ -155,7 +155,7 @@ export function SessionGuests({
         })}
       </div>
 
-      <p className="mt-1.5 text-[11px] text-muted">
+      <p className="mt-1.5 text-2xs text-muted">
         {full
           ? "Every slot is spoken for. Raise the player count to add more."
           : "They'll be shown as playing straight away, and can leave if plans change."}

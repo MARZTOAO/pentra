@@ -353,12 +353,12 @@ export default function PublicProfile({ username: fixed }: { username?: string }
                   {entry.game.name}
                 </p>
                 {entry.platform && (
-                  <p className="on-art truncate text-[11px] text-muted">
+                  <p className="on-art truncate text-2xs text-muted">
                     {entry.platform}
                   </p>
                 )}
                 {entry.note && (
-                  <p className="mt-1 text-[11px] leading-snug text-muted">
+                  <p className="mt-1 text-2xs leading-snug text-muted">
                     “{entry.note}”
                   </p>
                 )}

@@ -114,7 +114,7 @@ export function ChangelogDialog() {
                 <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                   <Tag kind={entry.kind} />
                   <h3 className="text-sm font-semibold">{entry.title}</h3>
-                  <span className="numeric ml-auto text-[11px] text-muted">
+                  <span className="numeric ml-auto text-2xs text-muted">
                     {shippedAgo(entry.shipped_at)}
                   </span>
                 </div>
@@ -127,7 +127,7 @@ export function ChangelogDialog() {
 
           <div className="border-t border-line p-4">
             {overflow > 0 && (
-              <p className="mb-2 text-[11px] text-muted">
+              <p className="mb-2 text-2xs text-muted">
                 And {overflow} smaller {overflow === 1 ? "change" : "changes"}{" "}
                 not listed.
               </p>
@@ -160,7 +160,7 @@ function Tag({ kind }: { kind: ChangeKind }) {
 
   return (
     <span
-      className={`label-wide shrink-0 rounded-full px-2 py-0.5 text-[10px] ${tone}`}
+      className={`label-wide shrink-0 rounded-full px-2 py-0.5 text-3xs ${tone}`}
     >
       {kindLabel(kind)}
     </span>

@@ -124,7 +124,7 @@ function FrameOption({
       }
     >
       {children}
-      <span className={"text-[11px] " + (active ? "text-accent" : "text-muted")}>
+      <span className={"text-2xs " + (active ? "text-accent" : "text-muted")}>
         {label}
       </span>
     </button>

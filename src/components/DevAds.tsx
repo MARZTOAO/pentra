@@ -59,12 +59,12 @@ export function DevAds() {
           <h3 className="label-wide text-muted">Running now ({live.length})</h3>
           <button
             onClick={load}
-            className="text-[11px] font-semibold text-muted transition hover:text-ink"
+            className="text-2xs font-semibold text-muted transition hover:text-ink"
           >
             Refresh
           </button>
         </div>
-        <p className="mb-3 text-[11px] text-muted">
+        <p className="mb-3 text-2xs text-muted">
           {live.length === 0
             ? "No ads running, so the feed shows none."
             : live.length === 1
@@ -98,7 +98,7 @@ export function DevAds() {
         </section>
       )}
 
-      <p className="text-[11px] leading-relaxed text-muted">
+      <p className="text-2xs leading-relaxed text-muted">
         Views count once an ad has been half on screen for a second; clicks
         count every click. Totals only — nothing records who saw or clicked.
         Only developers can see these numbers.
@@ -158,7 +158,7 @@ function Spacing({
   return (
     <section className="notch-md border border-line p-4">
       <h3 className="label-wide mb-1 text-accent">Feed spacing</h3>
-      <p className="mb-3 text-[11px] text-muted">
+      <p className="mb-3 text-2xs text-muted">
         How many posts people scroll past between ads.
       </p>
 
@@ -188,7 +188,7 @@ function Spacing({
                 setNote(null);
               }}
               className={
-                "numeric notch-sm px-2 py-1 text-[11px] font-semibold transition " +
+                "numeric notch-sm px-2 py-1 text-2xs font-semibold transition " +
                 (n === p ? "bg-accent/15 text-accent" : "text-muted hover:text-ink")
               }
             >
@@ -207,7 +207,7 @@ function Spacing({
         </button>
       </div>
 
-      <p className="mt-2 text-[11px] text-muted">
+      <p className="mt-2 text-2xs text-muted">
         {!valid
           ? `Pick a number from 1 to ${MAX_POSTS_BETWEEN}.`
           : liveCount === 0
@@ -215,7 +215,7 @@ function Spacing({
             : `${postsLabel(n)}, then an ad — up to ${slots} ${slots === 1 ? "ad" : "ads"} in a full feed of ${FEED_PAGE} posts, so with ${liveCount} running each one shows about ${perAd} ${perAd === 1 ? "time" : "times"}.`}
       </p>
       {note && (
-        <p className={"mt-1 text-[11px] " + (note.ok ? "text-ok" : "text-danger")}>{note.text}</p>
+        <p className={"mt-1 text-2xs " + (note.ok ? "text-ok" : "text-danger")}>{note.text}</p>
       )}
     </section>
   );
@@ -363,7 +363,7 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
                   <button
                     type="button"
                     onClick={() => fileInput.current?.click()}
-                    className="notch-sm border border-line px-2.5 py-1 text-[11px] font-semibold text-muted transition hover:text-ink"
+                    className="notch-sm border border-line px-2.5 py-1 text-2xs font-semibold text-muted transition hover:text-ink"
                   >
                     Replace
                   </button>
@@ -373,7 +373,7 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
                       setMedia(null);
                       if (fileInput.current) fileInput.current.value = "";
                     }}
-                    className="notch-sm border border-line px-2.5 py-1 text-[11px] font-semibold text-muted transition hover:border-danger hover:text-danger"
+                    className="notch-sm border border-line px-2.5 py-1 text-2xs font-semibold text-muted transition hover:border-danger hover:text-danger"
                   >
                     Remove
                   </button>
@@ -398,11 +398,11 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
               <span className="text-sm font-semibold">
                 {preparing ? "Reading the file…" : dragging ? "Drop it" : "Drop an image or video here"}
               </span>
-              <span className="text-[11px]">or click to choose a file</span>
+              <span className="text-2xs">or click to choose a file</span>
             </button>
           )}
 
-          <span className="mt-1 block text-[11px] text-muted">
+          <span className="mt-1 block text-2xs text-muted">
             Pictures are shrunk to 1600px automatically. Videos: MP4 or WebM,
             up to 50MB, played silently on a loop. Leave it out for a text-only ad.
           </span>
@@ -430,7 +430,7 @@ function NewAdForm({ onCreated }: { onCreated: () => void }) {
             className={field}
           />
           {linkGiven && !linkOk && (
-            <span className="mt-1 block text-[11px] text-danger">
+            <span className="mt-1 block text-2xs text-danger">
               A full web address, starting with https://
             </span>
           )}
@@ -519,7 +519,7 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
       <div className="flex gap-3">
         <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden notch-sm bg-bg">
           {!url ? (
-            <span className="label-wide text-[9px] text-muted">Text only</span>
+            <span className="label-wide text-4xs text-muted">Text only</span>
           ) : ad.media_kind === "video" ? (
             <video src={url} muted preload="metadata" className="h-full w-full object-cover" />
           ) : (
@@ -532,7 +532,7 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
             <span className="truncate text-sm font-semibold">{ad.sponsor}</span>
             <span
               className={
-                "label-wide shrink-0 px-1.5 py-px text-[9px] " +
+                "label-wide shrink-0 px-1.5 py-px text-4xs " +
                 (ad.live ? "bg-ok/15 text-ok" : "bg-line text-muted")
               }
             >
@@ -551,31 +551,31 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
           ) : (
             <p className="text-xs text-muted">No link</p>
           )}
-          <p className="numeric mt-0.5 text-[11px] text-muted">{timeLine(ad)}</p>
+          <p className="numeric mt-0.5 text-2xs text-muted">{timeLine(ad)}</p>
         </div>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line/60 pt-2">
         <Num label="Views" value={ad.views} today={ad.views_today} />
         <Num label="Clicks" value={ad.clicks} today={ad.clicks_today} />
-        <span className="text-[11px] text-muted">
+        <span className="text-2xs text-muted">
           Click rate <b className="numeric text-ink">{ctr}</b>
         </span>
 
         <div className="ml-auto flex items-center gap-2">
           {confirming ? (
             <>
-              <span className="text-[11px] text-muted">Delete it and its numbers?</span>
+              <span className="text-2xs text-muted">Delete it and its numbers?</span>
               <button
                 disabled={busy}
                 onClick={() => run(() => deleteAd(ad.id))}
-                className="notch-sm bg-danger px-2.5 py-1 text-[11px] font-semibold text-bg disabled:opacity-50"
+                className="notch-sm bg-danger px-2.5 py-1 text-2xs font-semibold text-bg disabled:opacity-50"
               >
                 Delete
               </button>
               <button
                 onClick={() => setConfirming(false)}
-                className="px-1.5 py-1 text-[11px] text-muted hover:text-ink"
+                className="px-1.5 py-1 text-2xs text-muted hover:text-ink"
               >
                 Keep
               </button>
@@ -586,7 +586,7 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
                 <button
                   disabled={busy}
                   onClick={() => run(() => endAd(ad.id))}
-                  className="notch-sm border border-line px-2.5 py-1 text-[11px] font-semibold text-muted transition hover:text-ink disabled:opacity-50"
+                  className="notch-sm border border-line px-2.5 py-1 text-2xs font-semibold text-muted transition hover:text-ink disabled:opacity-50"
                 >
                   End now
                 </button>
@@ -594,7 +594,7 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
               <button
                 disabled={busy}
                 onClick={() => setConfirming(true)}
-                className="notch-sm border border-line px-2.5 py-1 text-[11px] font-semibold text-muted transition hover:border-danger hover:text-danger disabled:opacity-50"
+                className="notch-sm border border-line px-2.5 py-1 text-2xs font-semibold text-muted transition hover:border-danger hover:text-danger disabled:opacity-50"
               >
                 Delete
               </button>
@@ -602,14 +602,14 @@ function AdRow({ ad, onChanged }: { ad: DevAd; onChanged: () => void }) {
           )}
         </div>
       </div>
-      {error && <p className="mt-1 text-[11px] text-danger">{error}</p>}
+      {error && <p className="mt-1 text-2xs text-danger">{error}</p>}
     </div>
   );
 }
 
 function Num({ label, value, today }: { label: string; value: number; today: number }) {
   return (
-    <span className="text-[11px] text-muted">
+    <span className="text-2xs text-muted">
       {label} <b className="numeric text-ink">{value.toLocaleString()}</b>
       {today > 0 && <span className="numeric"> (+{today.toLocaleString()} today)</span>}
     </span>

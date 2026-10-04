@@ -384,7 +384,7 @@ function Dashboard({
         </ChartCard>
       </div>
 
-      <p className="numeric text-[11px] text-muted">
+      <p className="numeric text-2xs text-muted">
         Updated {new Date(d.generated_at).toLocaleString()} · days in {d.tz}
         {d.real_only ? " · test accounts left out" : ""}
       </p>
@@ -407,11 +407,11 @@ function Tile({
 }) {
   return (
     <div className="notch-md flex flex-col border border-line bg-surface p-3">
-      <span className="label-wide truncate text-[10px] text-muted">{label}</span>
+      <span className="label-wide truncate text-3xs text-muted">{label}</span>
       <span className="numeric mt-1 text-2xl font-bold leading-none text-ink">
         {value}
       </span>
-      {sub && <span className="mt-1 truncate text-[11px] text-muted">{sub}</span>}
+      {sub && <span className="mt-1 truncate text-2xs text-muted">{sub}</span>}
       <div className="mt-auto pt-2">{spark ? <Sparkline values={spark} color={color} /> : <div className="h-7" />}</div>
     </div>
   );

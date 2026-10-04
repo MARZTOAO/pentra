@@ -191,7 +191,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {/* Unread count, so a message isn't missed while you're
                   on another screen. */}
               {item.to === "/messages" && unread > 0 && (
-                <span className="numeric bg-ink px-1.5 py-0.5 text-[10px] font-bold text-bg">
+                <span className="numeric bg-ink px-1.5 py-0.5 text-3xs font-bold text-bg">
                   {unread > 99 ? "99+" : unread}
                 </span>
               )}
@@ -413,7 +413,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             to={item.to}
             title={item.label}
             className={({ isActive }) =>
-              "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[9px] font-bold uppercase tracking-wider transition " +
+              "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-4xs font-bold uppercase tracking-wider transition " +
               (isActive ? "text-accent" : "text-muted")
             }
           >
@@ -431,7 +431,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span className="leading-none">{item.short}</span>
 
                 {item.to === "/messages" && unread > 0 && (
-                  <span className="numeric absolute right-1/2 top-1 -mr-3 bg-accent px-1 text-[9px] font-bold text-onaccent">
+                  <span className="numeric absolute right-1/2 top-1 -mr-3 bg-accent px-1 text-4xs font-bold text-onaccent">
                     {unread > 9 ? "9+" : unread}
                   </span>
                 )}

@@ -11,7 +11,7 @@
  */
 export function IgdbCredit({ className = "" }: { className?: string }) {
   return (
-    <p className={"text-[11px] text-muted " + className}>
+    <p className={"text-2xs text-muted " + className}>
       Game data powered by{" "}
       <a
         href="https://www.igdb.com"

@@ -90,7 +90,7 @@ export function AdCard({ ad }: { ad: Ad }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-semibold">{ad.sponsor}</span>
-            <span className="label-wide shrink-0 border border-line px-1.5 py-px text-[9px] text-muted">
+            <span className="label-wide shrink-0 border border-line px-1.5 py-px text-4xs text-muted">
               Sponsored
             </span>
           </div>

@@ -104,12 +104,12 @@ function Badge({ item }: { item: Achievement }) {
         {locked ? "Secret" : item.name}
       </p>
 
-      <p className="mt-0.5 text-[11px] leading-snug text-muted">
+      <p className="mt-0.5 text-2xs leading-snug text-muted">
         {locked ? "Earn it to find out." : item.description}
       </p>
 
       {earned && item.earned_at && (
-        <p className="numeric mt-1.5 text-[11px] text-accent/80">
+        <p className="numeric mt-1.5 text-2xs text-accent/80">
           {earnedMonth(item.earned_at)}
         </p>
       )}
@@ -124,7 +124,7 @@ function Badge({ item }: { item: Achievement }) {
               style={{ width: `${Math.round(ratio * 100)}%` }}
             />
           </div>
-          <p className="numeric mt-1 text-[11px] text-muted">
+          <p className="numeric mt-1 text-2xs text-muted">
             {item.progress} / {item.threshold}
           </p>
         </div>
@@ -214,7 +214,7 @@ export function Achievements({
     <section className="mb-4 notch border border-line bg-surface/85 p-4 backdrop-blur-sm sm:p-5">
       <div className="mb-3 flex items-baseline gap-2">
         <h2 className="label-wide text-muted">Achievements</h2>
-        <span className="numeric text-[11px] text-muted">
+        <span className="numeric text-2xs text-muted">
           {earned.length}/{items.length}
         </span>
       </div>

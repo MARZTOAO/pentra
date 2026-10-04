@@ -127,12 +127,12 @@ export default function Messages() {
             >
               {label}
               {key === "archived" && archived.length > 0 && (
-                <span className="numeric text-[10px] opacity-70">
+                <span className="numeric text-3xs opacity-70">
                   {archived.length}
                 </span>
               )}
               {count > 0 && (
-                <span className="rounded-full bg-accent px-1.5 py-px text-[10px] font-bold text-onaccent">
+                <span className="rounded-full bg-accent px-1.5 py-px text-3xs font-bold text-onaccent">
                   {count}
                 </span>
               )}
@@ -214,7 +214,7 @@ export default function Messages() {
               </div>
 
               {c.unread > 0 && (
-                <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-onaccent">
+                <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-2xs font-bold text-onaccent">
                   {c.unread}
                 </span>
               )}
@@ -503,7 +503,7 @@ function Thread({
                 </p>
                 <p
                   className={
-                    "mt-1 text-[10px] " +
+                    "mt-1 text-3xs " +
                     (gone ? "text-muted" : mine ? "opacity-70" : "text-muted")
                   }
                 >

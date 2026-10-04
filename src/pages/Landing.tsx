@@ -49,7 +49,7 @@ export default function Landing() {
   const signedIn = Boolean(session);
 
   return (
-    <div className="min-h-full overflow-x-clip bg-bg text-ink">
+    <div className="type-base min-h-full overflow-x-clip bg-bg text-ink">
       <SiteHeader sections pricing={proOnSale} />
       <Hero signedIn={signedIn} />
       <PlatformStrip />
@@ -204,17 +204,17 @@ function Stage() {
             <Ring value={92} />
             <div>
               <p className="text-sm font-semibold">NightOwl</p>
-              <p className="text-[11px] text-muted">3 games in common · PC</p>
+              <p className="text-2xs text-muted">3 games in common · PC</p>
             </div>
           </div>
         </FloatCard>
 
         <FloatCard className="right-0 top-[58%] hidden w-56 sm:block xl:-right-12" delay="0.45s">
-          <p className="label-wide text-[9px] text-accent">Session · Tonight 9:00 PM</p>
+          <p className="label-wide text-4xs text-accent">Session · Tonight 9:00 PM</p>
           <p className="mt-1 text-sm font-semibold">Ranked, need 2 more</p>
           <div className="mt-2.5 flex items-center justify-between">
             <Slots filled={3} total={5} />
-            <span className="notch-sm bg-accent px-2.5 py-1 text-[11px] font-bold text-onaccent">Join</span>
+            <span className="notch-sm bg-accent px-2.5 py-1 text-2xs font-bold text-onaccent">Join</span>
           </div>
         </FloatCard>
 
@@ -224,7 +224,7 @@ function Stage() {
               <Trophy />
             </span>
             <div>
-              <p className="label-wide text-[9px] text-muted">Achievement</p>
+              <p className="label-wide text-4xs text-muted">Achievement</p>
               <p className="text-sm font-semibold">Showed Up</p>
             </div>
           </div>
@@ -333,12 +333,12 @@ function Features() {
                 ["Zara", 64, "Same hours · North America"],
               ].map(([name, pct, why]) => (
                 <div key={name as string} className="flex items-center gap-3 notch-sm border border-line bg-bg/60 px-3 py-2">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-[11px] font-bold text-muted">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-2 text-2xs font-bold text-muted">
                     {(name as string).charAt(0).toUpperCase()}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold">{name}</span>
-                    <span className="block truncate text-[11px] text-muted">{why}</span>
+                    <span className="block truncate text-2xs text-muted">{why}</span>
                   </span>
                   <span className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-surface-2 sm:block">
                     <span className="block h-full bg-accent" style={{ width: `${pct}%` }} />
@@ -355,11 +355,11 @@ function Features() {
             body="Set the time and the slots. Invite friends straight in — their seat is held until they answer."
           >
             <div className="notch-sm border border-accent/40 bg-accent/5 p-3">
-              <p className="numeric text-[11px] text-accent">TODAY · 21:00</p>
+              <p className="numeric text-2xs text-accent">TODAY · 21:00</p>
               <p className="mt-1 text-sm font-semibold">Co-op night, mics on</p>
               <div className="mt-3 flex items-center justify-between">
                 <Slots filled={4} total={5} />
-                <span className="numeric text-[11px] text-muted">4 / 5</span>
+                <span className="numeric text-2xs text-muted">4 / 5</span>
               </div>
             </div>
           </Tile>
@@ -386,7 +386,7 @@ function Features() {
                 <span
                   key={f}
                   className={
-                    "notch-sm px-2.5 py-1 text-[11px] " +
+                    "notch-sm px-2.5 py-1 text-2xs " +
                     (i === 0 ? "bg-surface-2 text-muted" : "bg-accent/15 font-semibold text-accent")
                   }
                 >
@@ -407,7 +407,7 @@ function Features() {
               </span>
               <span>
                 <span className="numeric block text-lg font-bold">+1 commendation</span>
-                <span className="block text-[11px] text-muted">from your last session</span>
+                <span className="block text-2xs text-muted">from your last session</span>
               </span>
             </div>
           </Tile>
@@ -444,9 +444,9 @@ function Features() {
               </span>
               <span className="min-w-0">
                 <span className="block text-xs font-semibold">Pentra</span>
-                <span className="block truncate text-[11px] text-muted">NightOwl joined your session</span>
+                <span className="block truncate text-2xs text-muted">NightOwl joined your session</span>
               </span>
-              <span className="numeric ml-auto text-[10px] text-muted">now</span>
+              <span className="numeric ml-auto text-3xs text-muted">now</span>
             </div>
           </Tile>
         </div>
@@ -577,7 +577,7 @@ function Pricing({ signedIn }: { signedIn: boolean }) {
               <div className="flex items-center justify-between gap-3">
                 <p className="label-wide" style={{ color: "#f7b733" }}>Pentra Pro</p>
                 <span
-                  className="notch-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  className="notch-sm px-2 py-0.5 text-3xs font-bold uppercase tracking-wider"
                   style={{ background: PRO_GOLD, color: ON_GOLD }}
                 >
                   Save 17% yearly
@@ -779,7 +779,7 @@ function Ring({ value }: { value: number }) {
           strokeDasharray={`${(c * value) / 100} ${c}`}
         />
       </svg>
-      <span className="numeric text-[11px] font-bold">{value}%</span>
+      <span className="numeric text-2xs font-bold">{value}%</span>
     </span>
   );
 }

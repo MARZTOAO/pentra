@@ -95,7 +95,7 @@ export function MatchScore({ score, max }: { score: number; max: number }) {
         />
       </div>
 
-      <span className="mt-1 text-[10px] uppercase tracking-wide text-muted">
+      <span className="mt-1 text-3xs uppercase tracking-wide text-muted">
         match
       </span>
     </div>

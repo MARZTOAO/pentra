@@ -169,7 +169,7 @@ export function Comments({
                         {c.display_name || c.username}
                       </Link>
                       <SeededTag userId={c.author_id} />
-                      <span className="numeric text-[11px] text-muted">
+                      <span className="numeric text-2xs text-muted">
                         {postTime(c.created_at)}
                       </span>
                     </p>

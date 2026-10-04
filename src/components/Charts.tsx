@@ -104,7 +104,7 @@ export function ChartCard({
         {readout && <div className="numeric text-xs text-ink">{readout}</div>}
       </header>
       {children}
-      {note && <p className="mt-3 text-[11px] leading-relaxed text-muted">{note}</p>}
+      {note && <p className="mt-3 text-2xs leading-relaxed text-muted">{note}</p>}
     </section>
   );
 }
@@ -191,7 +191,7 @@ export function TimeChart({
 
   return (
     <div>
-      <div className="numeric mb-1.5 h-4 truncate text-[11px] text-muted">
+      <div className="numeric mb-1.5 h-4 truncate text-2xs text-muted">
         {hp ? (
           <>
             <span className="text-ink">{weekly ? `Week of ${fmtDay(hp.day)}` : fmtDay(hp.day, true)}</span>
@@ -446,7 +446,7 @@ export function Funnel({ steps }: { steps: { label: string; n: number }[] }) {
         return (
           <li key={s.label}>
             {kept !== null && (
-              <p className="numeric pl-1 text-[10px] text-muted">↓ {kept}% of the step above</p>
+              <p className="numeric pl-1 text-3xs text-muted">↓ {kept}% of the step above</p>
             )}
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
               <div className="relative h-7 bg-surface-2">

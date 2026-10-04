@@ -56,7 +56,7 @@ export function DevCreators() {
             Partners {rows ? `(${rows.length})` : ""}
             {owed > 0 && <span className="ml-2 text-accent">{money(owed)} owed</span>}
           </h3>
-          <button onClick={load} className="text-[11px] font-semibold text-muted transition hover:text-ink">
+          <button onClick={load} className="text-2xs font-semibold text-muted transition hover:text-ink">
             Refresh
           </button>
         </div>
@@ -190,7 +190,7 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
         <span className="numeric font-bold tracking-wider">{row.code}</span>
         <span className="min-w-0 flex-1 truncate text-sm">{row.creator_name}</span>
         {!row.active && (
-          <span className="notch-sm border border-line px-1.5 text-[10px] text-muted">off</span>
+          <span className="notch-sm border border-line px-1.5 text-3xs text-muted">off</span>
         )}
         <span className={"text-sm font-semibold " + (row.owed_cents > 0 ? "text-accent" : "text-muted")}>
           {money(row.owed_cents)} owed
@@ -218,14 +218,14 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
         <button
           onClick={() => setPaying((v) => !v)}
           disabled={busy}
-          className="notch-sm border border-line px-2 py-1 text-[11px] font-semibold text-muted transition hover:text-ink"
+          className="notch-sm border border-line px-2 py-1 text-2xs font-semibold text-muted transition hover:text-ink"
         >
           {paying ? "Cancel" : "Record a payout"}
         </button>
         <button
           onClick={toggle}
           disabled={busy}
-          className="notch-sm border border-line px-2 py-1 text-[11px] font-semibold text-muted transition hover:text-ink"
+          className="notch-sm border border-line px-2 py-1 text-2xs font-semibold text-muted transition hover:text-ink"
         >
           {row.active ? "Switch code off" : "Switch code on"}
         </button>
@@ -279,7 +279,7 @@ function RefundLookup() {
   return (
     <section>
       <h3 className="label-wide mb-2 text-muted">Refund check</h3>
-      <p className="mb-2 text-[11px] text-muted">
+      <p className="mb-2 text-2xs text-muted">
         Someone asks for a refund: look them up. "Refundable" means their
         first payment, within {REFUND_DAYS} days, and no refund on the account
         before. If so, refund that payment in full in the Stripe Dashboard

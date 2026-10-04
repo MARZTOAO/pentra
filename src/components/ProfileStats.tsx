@@ -132,11 +132,11 @@ export function ProfileStats({
             <dd className="numeric text-xl font-bold leading-tight">
               {tile.value}
             </dd>
-            <dt className="mt-0.5 text-[11px] leading-tight text-muted">
+            <dt className="mt-0.5 text-2xs leading-tight text-muted">
               {tile.label}
             </dt>
             {tile.sub && (
-              <p className="mt-0.5 text-[11px] leading-tight text-muted/70">
+              <p className="mt-0.5 text-2xs leading-tight text-muted/70">
                 {tile.sub}
               </p>
             )}
@@ -145,14 +145,14 @@ export function ProfileStats({
       </dl>
 
       {stats.invites_sent > 0 && (
-        <p className="mt-3 text-[11px] text-muted">
+        <p className="mt-3 text-2xs text-muted">
           {tally(stats.invites_accepted)} of {tally(stats.invites_sent)} session{" "}
           {stats.invites_sent === 1 ? "invite" : "invites"} accepted.
         </p>
       )}
 
       {isSelf && stats.days_member < 3 && (
-        <p className="mt-3 text-[11px] text-muted">
+        <p className="mt-3 text-2xs text-muted">
           Most of these start counting from the day you joined — they'll
           fill in as you use the app.
         </p>

@@ -40,7 +40,7 @@ export function DevProfileTools({
   }
 
   const small =
-    "notch-sm border border-line px-2.5 py-1 text-[11px] font-semibold text-muted transition hover:text-ink disabled:opacity-50";
+    "notch-sm border border-line px-2.5 py-1 text-2xs font-semibold text-muted transition hover:text-ink disabled:opacity-50";
 
   return (
     <section className="mb-6 notch-md border border-accent/40 bg-surface bg-[linear-gradient(rgb(255_122_47/0.06),rgb(255_122_47/0.06))] p-3">
@@ -68,7 +68,7 @@ export function DevProfileTools({
         >
           Unban
         </button>
-        {status && <span className="text-[11px] text-muted">{status}</span>}
+        {status && <span className="text-2xs text-muted">{status}</span>}
       </div>
 
       {(mode === "warn" || mode === "ban") && (
@@ -225,7 +225,7 @@ function ProfileEditor({
               onChange={(e) => setUsername(e.target.value.replace(/[^A-Za-z0-9_]/g, "").slice(0, 20))}
               className={field + " numeric"}
             />
-            <span className="mt-1 block text-[11px] text-muted">
+            <span className="mt-1 block text-2xs text-muted">
               3–20 letters, numbers or underscores. Their old links to /u/{profile.username} stop working.
             </span>
           </label>

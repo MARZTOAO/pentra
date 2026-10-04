@@ -198,7 +198,7 @@ export function InviteFriends({
                         </span>
 
                         {already ? (
-                          <span className="shrink-0 text-[11px] text-muted">
+                          <span className="shrink-0 text-2xs text-muted">
                             In
                           </span>
                         ) : on ? (

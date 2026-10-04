@@ -101,7 +101,7 @@ function Tile({
             aria-hidden="true"
             className="h-full w-full object-cover"
           />
-          <span className="pointer-events-none absolute bottom-1.5 left-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
+          <span className="pointer-events-none absolute bottom-1.5 left-1.5 rounded bg-black/70 px-1.5 py-0.5 text-3xs font-bold tracking-wide text-white">
             GIF
           </span>
         </>
