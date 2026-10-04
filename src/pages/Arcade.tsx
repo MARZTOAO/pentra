@@ -73,6 +73,27 @@ export default function Arcade() {
 
 /** A still of each game for its card, drawn in SVG so it's crisp at any size. */
 function Preview({ slug }: { slug: string }) {
+  if (slug === "hot-swap") {
+    const cols = ["#ff7a2f", "#e9ebee", "#a66cff", "#2ad4c8", "#8bff3a", "#ff4fa3"];
+    const grid = [
+      [0, 1, 2, 3, 4, 5, 0, 1],
+      [2, 2, 2, 5, 1, 0, 3, 4],
+      [4, 3, 0, 1, 5, 5, 5, 2],
+      [1, 0, 4, 2, 3, 1, 0, 3],
+    ];
+    return (
+      <svg viewBox="0 0 240 90" className="h-full w-full" aria-hidden="true">
+        {grid.map((row, r) =>
+          row.map((t, c) => (
+            <g key={`${r}-${c}`} transform={`translate(${30 + c * 26},${12 + r * 22})`}>
+              {r === 1 && c <= 2 && <rect x="-12" y="-10" width="24" height="20" fill="rgba(255,122,47,0.18)" />}
+              <circle r="8" fill={cols[t]} stroke="rgba(14,15,17,0.6)" strokeWidth="1.5" />
+            </g>
+          )),
+        )}
+      </svg>
+    );
+  }
   if (slug === "stack-trace") {
     const tiles: [number, number, number, string][] = [
       [40, 20, 0, "#ff7a2f"], [70, 20, 0, "#e9ebee"], [100, 20, 0, "#a66cff"], [130, 20, 0, "#2ad4c8"], [160, 20, 0, "#8bff3a"],

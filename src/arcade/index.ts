@@ -1,5 +1,6 @@
 import { mountLagSpike } from "./lagSpike";
 import { mountPacketPop } from "./packetPop";
+import { mountHotSwap } from "./hotSwap";
 import type { MountGame } from "./types";
 
 export type { ArcadeHandle, GameCallbacks, GameState, RunResult } from "./types";
@@ -8,6 +9,7 @@ export type { ArcadeHandle, GameCallbacks, GameState, RunResult } from "./types"
 const ENGINES: Record<string, MountGame> = {
   "lag-spike": mountLagSpike,
   "packet-pop": mountPacketPop,
+  "hot-swap": mountHotSwap,
 };
 
 export function engineFor(slug: string): MountGame | null {

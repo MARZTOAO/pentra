@@ -691,7 +691,12 @@ checks(migration, feature, present) as (
     ('96_stack_trace_tiers',
      'Stack Trace tagline says five tiers',
      case when to_regclass('public.arcade_games') is null then false
-          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.arcade_games where slug = ''stack-trace'' and tagline like ''%Five tiers%''', false, true, '')))[1]::text::int > 0 end)
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.arcade_games where slug = ''stack-trace'' and tagline like ''%Five tiers%''', false, true, '')))[1]::text::int > 0 end),
+
+    ('97_hot_swap',
+     'Hot Swap in arcade_games',
+     case when to_regclass('public.arcade_games') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.arcade_games where slug = ''hot-swap''', false, true, '')))[1]::text::int > 0 end)
 )
 select
   migration,

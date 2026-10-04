@@ -56,6 +56,17 @@ export const GAMES: ArcadeGameInfo[] = [
     overlayHud: false,
   },
   {
+    slug: "hot-swap",
+    name: "Hot Swap",
+    kind: "score",
+    tagline: "Swap two chips to line up three. Cascades pay double. Sixty seconds.",
+    objective: "Swap neighbouring chips to line up three or more of a colour. Chains that fall into place on their own score more each step. You have sixty seconds.",
+    controls: "Click a chip, then a neighbour — or drag it. Space to start.",
+    touchControls: "Tap a chip, then a neighbour — or drag it toward one.",
+    touchPad: null,
+    overlayHud: false,
+  },
+  {
     slug: "stack-trace",
     name: "Stack Trace",
     kind: "levels",
