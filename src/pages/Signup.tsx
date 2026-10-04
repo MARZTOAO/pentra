@@ -16,6 +16,7 @@ export default function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,6 +45,12 @@ export default function Signup() {
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    // Typed twice so a slip of the finger doesn't lock someone out of
+    // a brand-new account (MARZ, 2026-10-03).
+    if (confirm !== password) {
+      setError("The two passwords don't match.");
       return;
     }
 
@@ -225,7 +232,28 @@ export default function Signup() {
           />
         </Field>
 
-        <Button type="submit" disabled={busy}>
+        <Field
+          label="Confirm password"
+          hint={
+            confirm && confirm !== password
+              ? "These don't match yet."
+              : confirm && confirm === password
+                ? "Passwords match."
+                : "Type it again to be sure."
+          }
+        >
+          <Input
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            required
+            aria-invalid={confirm !== "" && confirm !== password}
+          />
+        </Field>
+
+        <Button type="submit" disabled={busy || (confirm !== "" && confirm !== password)}>
           {busy ? "Creating account…" : "Create account"}
         </Button>
       </form>
