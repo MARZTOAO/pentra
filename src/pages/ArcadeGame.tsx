@@ -93,7 +93,7 @@ export default function ArcadeGame() {
     onContextMenu: (e: MouseEvent) => e.preventDefault(),
   };
   // The page-wide tap zone is for one-button games on touch screens.
-  const zone = touch && info?.touchPad === true;
+  const zone = touch && !!info?.touchPad;
 
   const onRunEnd = useCallback(
     async (run: RunResult) => {
@@ -258,12 +258,12 @@ export default function ArcadeGame() {
 
       {zone ? (
         <div
-          className="mt-3 flex h-24 items-center justify-center notch border border-accent/40 bg-surface-2/80 text-center active:bg-accent/15"
-          aria-label="Jump"
+          className="mt-3 flex h-28 items-center justify-center notch border border-accent/40 bg-surface-2/80 text-center active:bg-accent/15"
+          aria-label={info.touchPad ?? undefined}
           role="button"
         >
           <div>
-            <p className="display text-xl text-accent">JUMP</p>
+            <p className="display text-xl text-accent">{info.touchPad}</p>
             <p className="text-xs text-muted">{info.touchControls}</p>
           </div>
         </div>

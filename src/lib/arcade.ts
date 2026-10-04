@@ -22,9 +22,9 @@ export type ArcadeGameInfo = {
   controls: string;
   /** The same line for a phone. */
   touchControls: string;
-  /** One-button game: on touch screens the page adds a big pad under
-   *  the canvas so a thumb never covers the game. */
-  touchPad: boolean;
+  /** On touch screens the page adds a big pad under the canvas so a
+   *  thumb never covers the game; this is the word on it. Null: no pad. */
+  touchPad: string | null;
   /** Draw the score/best in HTML over the canvas. Games that draw
    *  their own HUD (and use the top of the canvas) turn this off. */
   overlayHud: boolean;
@@ -38,7 +38,7 @@ export const GAMES: ArcadeGameInfo[] = [
     tagline: "Keep the signal running. Jump the spikes. It only gets faster.",
     controls: "Space, ↑ or tap to jump. Hold for a higher jump.",
     touchControls: "Tap anywhere up here to jump. Hold for a higher jump.",
-    touchPad: true,
+    touchPad: "JUMP",
     overlayHud: true,
   },
   {
@@ -47,8 +47,8 @@ export const GAMES: ArcadeGameInfo[] = [
     kind: "score",
     tagline: "Match three to pop. Drop what's left hanging. New rows keep coming.",
     controls: "Move the mouse to aim, click or Space to fire. ← → also aim.",
-    touchControls: "Drag to aim, let go to fire.",
-    touchPad: false,
+    touchControls: "Drag left or right anywhere to aim. Tap to fire.",
+    touchPad: "AIM",
     overlayHud: false,
   },
   {
@@ -58,7 +58,7 @@ export const GAMES: ArcadeGameInfo[] = [
     tagline: "Clear the stack, one matching pair at a time. Ten levels. No clock but your own.",
     controls: "Click two free tiles with the same face.",
     touchControls: "Tap two free tiles with the same face.",
-    touchPad: false,
+    touchPad: null,
     overlayHud: false,
   },
 ];

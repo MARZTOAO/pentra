@@ -22,8 +22,13 @@ import type { ArcadeHandle, GameCallbacks, GameState, PointerKind } from "./type
  * hundred points, so that is well clear of honest play.
  *
  * Controls: move the pointer to aim and click (or press Space) to
- * fire; on a phone, drag to aim and let go to fire. ← → rotate the
- * aim on a keyboard.
+ * fire. ← → rotate the aim on a keyboard. On a phone the finger
+ * never needs to be near the shooter: dragging left or right
+ * ANYWHERE on the board, or on the pad under it, swings the aim a
+ * little at a time, and a tap fires (MARZ, 2026-10-04: aiming from
+ * the finger's position was "jumpy … too sensitive"). The aim eases
+ * toward where it's been pointed rather than snapping, on every
+ * input.
  */
 
 const COLORS = [
@@ -45,6 +50,9 @@ const SHOT_SPEED = 1000; // px/s
 const SHOOTER_ZONE = 86; // px at the bottom for the shooter and HUD
 const RESTART_LOCK_MS = 450;
 const MIN_SIN = 0.17; // never fire flatter than ~10° above horizontal
+const TOUCH_SWING = Math.PI * 0.9; // radians of aim per screen-width of drag
+const TAP_SLOP = 10; // px a touch may move and still count as a tap
+const EASE = 16; // how quickly the aim catches up (per second)
 
 type Cell = { row: number; col: number };
 type Pop = { x: number; y: number; color: string; t: number };
@@ -76,9 +84,12 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
   let shotsUntilPush = 6;
   let current = COLORS[0];
   let next = COLORS[1];
-  let angle = Math.PI / 2; // radians, from +x, upward
+  let angle = Math.PI / 2; // radians, from +x, upward — what's drawn
+  let target = Math.PI / 2; // where the aim is heading
   let rotate = 0; // -1, 0, 1 from the arrow keys
   let aiming = false;
+  let touchLastX = 0;
+  let touchMoved = 0;
   let shot: { x: number; y: number; dx: number; dy: number; color: string } | null = null;
   let pops: Pop[] = [];
   let falls: Fall[] = [];
@@ -180,6 +191,7 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
     flash = 0;
     banner = null;
     angle = Math.PI / 2;
+    target = Math.PI / 2;
     for (let i = 0; i < START_ROWS; i++) addRowOnTop();
     current = randomColor(true);
     next = randomColor(true);
@@ -242,12 +254,11 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
   }
 
   function aimAt(x: number, y: number) {
-    const a = Math.atan2(shooterY() - y, x - shooterX());
-    setAngle(a);
+    setTarget(Math.atan2(shooterY() - y, x - shooterX()));
   }
-  function setAngle(a: number) {
+  function setTarget(a: number) {
     const lo = Math.asin(MIN_SIN);
-    angle = Math.max(lo, Math.min(Math.PI - lo, a));
+    target = Math.max(lo, Math.min(Math.PI - lo, a));
   }
 
   function pointer(kind: PointerKind, x: number, y: number) {
@@ -255,16 +266,40 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
       if (kind === "down") press();
       return;
     }
+    if (isTouch) {
+      // Relative: the finger's travel swings the aim; where the finger
+      // is doesn't matter, so it can stay down by the pad.
+      if (kind === "down") {
+        aiming = true;
+        touchLastX = x;
+        touchMoved = 0;
+      } else if (kind === "move" && aiming) {
+        const dx = x - touchLastX;
+        touchLastX = x;
+        touchMoved += Math.abs(dx);
+        setTarget(target - (dx / Math.max(width, 1)) * TOUCH_SWING);
+      } else if (kind === "up") {
+        if (aiming && touchMoved <= TAP_SLOP) {
+          // A tap: fire where it's pointing now, not mid-ease.
+          angle = target;
+          fire();
+        }
+        aiming = false;
+      } else {
+        aiming = false;
+      }
+      return;
+    }
+    // Mouse: the aim follows the pointer; a click fires.
     if (kind === "down") {
       aiming = true;
       aimAt(x, y);
     } else if (kind === "move") {
-      // Aim follows the pointer whether or not it's pressed, so a
-      // mouse works like a mouse; a finger only aims while down.
-      if (aiming || !isTouch) aimAt(x, y);
+      aimAt(x, y);
     } else if (kind === "up") {
       if (aiming) {
         aimAt(x, y);
+        angle = target;
         aiming = false;
         fire();
       }
@@ -391,7 +426,9 @@ export function mountPacketPop(canvas: HTMLCanvasElement, callbacks: GameCallbac
   /* ---- simulation --------------------------------------------------- */
 
   function step(dt: number) {
-    if (rotate !== 0) setAngle(angle + rotate * 1.9 * dt);
+    if (rotate !== 0) setTarget(target + rotate * 1.9 * dt);
+    // Ease toward the target so the aim glides rather than snaps.
+    angle += (target - angle) * Math.min(1, dt * EASE);
 
     if (shot) {
       // Sub-steps so a fast bubble can't pass through a gap.
