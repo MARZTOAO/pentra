@@ -102,6 +102,8 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
   let drag: { r: number; c: number; x: number; y: number } | null = null;
   let flash = 0;
   let beams: Beam[] = [];
+  /** The last whole second a countdown beep was played for. */
+  let beepedAt = -1;
   /** The two cells of the last swap, so a super chip appears where the
    *  player made the move rather than in the middle of the line. */
   let lastSwap: { r: number; c: number }[] = [];
@@ -248,6 +250,7 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
     flash = 0;
     beams = [];
     lastSwap = [];
+    beepedAt = -1;
     phase = "idle";
     fillBoard();
   }
@@ -355,6 +358,12 @@ export function mountHotSwap(canvas: HTMLCanvasElement, callbacks: GameCallbacks
 
   function step(dt: number) {
     timeLeft -= dt * 1000;
+    // A beep on each of the last ten seconds (MARZ, 2026-10-05).
+    const secs = Math.ceil(timeLeft / 1000);
+    if (secs <= 10 && secs >= 1 && secs !== beepedAt) {
+      beepedAt = secs;
+      play("tick", secs === 1 ? 2 : 1);
+    }
     if (timeLeft <= 0) {
       timeLeft = 0;
       // Let a cascade in progress finish before the whistle.
