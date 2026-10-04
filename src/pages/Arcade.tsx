@@ -60,8 +60,35 @@ export default function Arcade() {
   );
 }
 
-/** A still of the game for its card, drawn in SVG so it's crisp at any size. */
+/** A still of each game for its card, drawn in SVG so it's crisp at any size. */
 function Preview({ slug }: { slug: string }) {
+  if (slug === "packet-pop") {
+    const colors = ["#ff7a2f", "#e9ebee", "#a66cff", "#2ad4c8", "#8bff3a"];
+    const rows = [
+      [0, 1, 2, 3, 4, 0, 1, 2, 3],
+      [2, 2, 4, 1, 1, 3, 0, 4],
+      [4, 0, 3, 3, 2, 1, 1, 0, 4],
+    ];
+    return (
+      <svg viewBox="0 0 240 90" className="h-full w-full" aria-hidden="true">
+        {rows.map((row, ri) =>
+          row.map((ci, i) => (
+            <circle
+              key={`${ri}-${i}`}
+              cx={16 + i * 26 + (ri % 2 ? 13 : 0)}
+              cy={12 + ri * 22}
+              r="11"
+              fill={colors[ci]}
+              stroke="rgba(14,15,17,0.6)"
+              strokeWidth="1.5"
+            />
+          )),
+        )}
+        <line x1="120" y1="84" x2="150" y2="62" stroke="rgba(233,235,238,0.5)" strokeDasharray="2 4" />
+        <circle cx="120" cy="84" r="11" fill="#ff7a2f" stroke="rgba(14,15,17,0.6)" strokeWidth="1.5" />
+      </svg>
+    );
+  }
   if (slug !== "lag-spike") return null;
   return (
     <svg viewBox="0 0 240 90" className="h-full w-full" aria-hidden="true">

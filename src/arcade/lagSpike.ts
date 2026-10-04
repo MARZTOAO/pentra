@@ -6,8 +6,8 @@
  * them. The run speeds up until it doesn't matter how good you are.
  *
  * No framework in here on purpose. This file owns the canvas, the
- * loop, the physics and the drawing, and talks to React through three
- * callbacks. ArcadeGame.tsx mounts it, draws the overlays (score,
+ * loop, the physics and the drawing, and talks to React through the
+ * callbacks in ./types. ArcadeGame.tsx mounts it, draws the overlays (score,
  * start / game-over screens, leaderboards) in ordinary HTML on top,
  * and sends the finished run to the database.
  *
@@ -17,20 +17,7 @@
  * inside that if they are ever retuned.
  */
 
-export type GameState = "ready" | "running" | "over";
-
-export type RunResult = {
-  score: number;
-  /** Wall-clock length of the run, for the plausibility check. */
-  durationMs: number;
-};
-
-export type LagSpikeHandle = {
-  /** Space / tap: starts a run, jumps, or restarts after a death. */
-  press(): void;
-  release(): void;
-  destroy(): void;
-};
+import type { ArcadeHandle, GameCallbacks, GameState } from "./types";
 
 type Spike = { x: number; w: number; h: number; hit?: boolean };
 
@@ -60,14 +47,7 @@ const C = {
   grid: "rgba(141,147,156,0.10)",
 };
 
-export function mountLagSpike(
-  canvas: HTMLCanvasElement,
-  callbacks: {
-    onState: (state: GameState) => void;
-    onScore: (score: number) => void;
-    onRunEnd: (run: RunResult) => void;
-  },
-): LagSpikeHandle {
+export function mountLagSpike(canvas: HTMLCanvasElement, callbacks: GameCallbacks): ArcadeHandle {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("no 2d context");
 

@@ -11,7 +11,7 @@ import {
   type BoardScope,
   type SubmitResult,
 } from "../lib/arcade";
-import { mountLagSpike, type GameState, type LagSpikeHandle, type RunResult } from "../arcade/lagSpike";
+import { engineFor, type ArcadeHandle, type GameState, type RunResult } from "../arcade";
 import { Avatar } from "../components/Avatar";
 
 /**
@@ -30,7 +30,7 @@ export default function ArcadeGame() {
   const { user } = useAuth();
 
   const canvas = useRef<HTMLCanvasElement>(null);
-  const game = useRef<LagSpikeHandle | null>(null);
+  const game = useRef<ArcadeHandle | null>(null);
   const [state, setState] = useState<GameState>("ready");
   const [score, setScore] = useState(0);
   const [lastRun, setLastRun] = useState<RunResult | null>(null);
@@ -47,16 +47,53 @@ export default function ArcadeGame() {
     () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches,
   );
 
+  // Pointer input. A game that aims gets positions relative to its
+  // canvas; a one-button game gets press on down and release on up.
+  function local(e: PointerEvent) {
+    const rect = canvas.current?.getBoundingClientRect();
+    return rect ? { x: e.clientX - rect.left, y: e.clientY - rect.top } : { x: 0, y: 0 };
+  }
   const pressHandlers = {
     onPointerDown: (e: PointerEvent) => {
       e.preventDefault();
-      game.current?.press();
+      const g = game.current;
+      if (!g) return;
+      if (g.pointer) {
+        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+        const p = local(e);
+        g.pointer("down", p.x, p.y);
+      } else g.press();
     },
-    onPointerUp: () => game.current?.release(),
-    onPointerCancel: () => game.current?.release(),
-    onPointerLeave: () => game.current?.release(),
+    onPointerMove: (e: PointerEvent) => {
+      const g = game.current;
+      if (!g?.pointer) return;
+      const p = local(e);
+      g.pointer("move", p.x, p.y);
+    },
+    onPointerUp: (e: PointerEvent) => {
+      const g = game.current;
+      if (!g) return;
+      if (g.pointer) {
+        const p = local(e);
+        g.pointer("up", p.x, p.y);
+      } else g.release();
+    },
+    onPointerCancel: (e: PointerEvent) => {
+      const g = game.current;
+      if (!g) return;
+      if (g.pointer) {
+        const p = local(e);
+        g.pointer("cancel", p.x, p.y);
+      } else g.release();
+    },
+    onPointerLeave: () => {
+      const g = game.current;
+      if (g && !g.pointer) g.release();
+    },
     onContextMenu: (e: MouseEvent) => e.preventDefault(),
   };
+  // The page-wide tap zone is for one-button games on touch screens.
+  const zone = touch && info?.touchPad === true;
 
   const onRunEnd = useCallback(
     async (run: RunResult) => {
@@ -73,8 +110,13 @@ export default function ArcadeGame() {
   // Mount the game once per canvas.
   useEffect(() => {
     const el = canvas.current;
-    if (!el || !info) return;
-    const handle = mountLagSpike(el, {
+    const mount = info ? engineFor(info.slug) : null;
+    if (!el || !mount) return;
+    setState("ready");
+    setScore(0);
+    setLastRun(null);
+    setResult(null);
+    const handle = mount(el, {
       onState: setState,
       onScore: setScore,
       onRunEnd: (run) => void onRunEnd(run),
@@ -87,16 +129,22 @@ export default function ArcadeGame() {
   }, [info, onRunEnd]);
 
   // Keyboard, for the whole page: Space would otherwise scroll it.
+  // The one button is Space / ↑ / W; a game can claim other keys.
   useEffect(() => {
     const keys = new Set(["Space", "ArrowUp", "KeyW"]);
     function down(e: KeyboardEvent) {
-      if (!keys.has(e.code)) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      if (game.current?.key?.(e.code, true)) {
+        e.preventDefault();
+        return;
+      }
+      if (!keys.has(e.code)) return;
       e.preventDefault();
       if (!e.repeat) game.current?.press();
     }
     function up(e: KeyboardEvent) {
+      if (game.current?.key?.(e.code, false)) return;
       if (keys.has(e.code)) game.current?.release();
     }
     window.addEventListener("keydown", down);
@@ -134,8 +182,8 @@ export default function ArcadeGame() {
       {/* On touch screens everything from here to the jump pad is one
           tap target (touch-action none so a tap is never a scroll). */}
       <div
-        className={touch ? "select-none [touch-action:none]" : undefined}
-        {...(touch ? pressHandlers : {})}
+        className={zone ? "select-none [touch-action:none]" : undefined}
+        {...(zone ? pressHandlers : {})}
       >
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -159,17 +207,19 @@ export default function ArcadeGame() {
           select-none so a double-tap doesn't highlight the overlay. */}
       <section
         className="relative select-none overflow-hidden notch border border-line bg-surface [touch-action:none]"
-        {...(touch ? {} : pressHandlers)}
+        {...(zone ? {} : pressHandlers)}
         aria-label={`${info.name} game`}
         role="application"
       >
         <canvas ref={canvas} className="block w-full" />
 
-        <div className="pointer-events-none absolute left-4 top-3">
-          <p className="label-wide text-muted">Score</p>
-          <p className="numeric text-xl font-bold leading-none text-ink">{formatScore(score)}</p>
-        </div>
-        {mine && (
+        {info.overlayHud && (
+          <div className="pointer-events-none absolute left-4 top-3">
+            <p className="label-wide text-muted">Score</p>
+            <p className="numeric text-xl font-bold leading-none text-ink">{formatScore(score)}</p>
+          </div>
+        )}
+        {info.overlayHud && mine && (
           <div className="pointer-events-none absolute right-4 top-3 text-right">
             <p className="label-wide text-muted">Best</p>
             <p className="numeric text-xl font-bold leading-none text-muted">{formatScore(mine.best)}</p>
@@ -180,10 +230,8 @@ export default function ArcadeGame() {
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <p className="display text-2xl text-ink">Ready?</p>
-              <p className="mt-1 text-sm text-muted">
-                <span className="hidden sm:inline">Press Space or tap to start</span>
-                <span className="sm:hidden">Tap to start</span>
-              </p>
+              <p className="mt-1 text-sm text-muted">{touch ? "Tap to start" : "Click or press Space to start"}</p>
+              <p className="mt-2 text-xs text-muted">{touch ? info.touchControls : info.controls}</p>
             </div>
           </div>
         )}
@@ -191,7 +239,7 @@ export default function ArcadeGame() {
         {state === "over" && lastRun && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-bg/55">
             <div className="text-center">
-              <p className="label-wide text-danger">Signal lost</p>
+              <p className="label-wide text-danger">{info.slug === "lag-spike" ? "Signal lost" : "Game over"}</p>
               <p className="numeric mt-1 text-4xl font-bold text-ink">{formatScore(lastRun.score)}</p>
               {newBest ? (
                 <p className="mt-1 text-sm font-semibold text-accent">
@@ -202,16 +250,13 @@ export default function ArcadeGame() {
               ) : mine ? (
                 <p className="mt-1 text-sm text-muted">Best {formatScore(mine.best)}</p>
               ) : null}
-              <p className="mt-3 text-sm text-muted">
-                <span className="hidden sm:inline">Space or tap to go again</span>
-                <span className="sm:hidden">Tap to go again</span>
-              </p>
+              <p className="mt-3 text-sm text-muted">{touch ? "Tap to go again" : "Click or press Space to go again"}</p>
             </div>
           </div>
         )}
       </section>
 
-      {touch ? (
+      {zone ? (
         <div
           className="mt-3 flex h-24 items-center justify-center notch border border-accent/40 bg-surface-2/80 text-center active:bg-accent/15"
           aria-label="Jump"
@@ -219,11 +264,11 @@ export default function ArcadeGame() {
         >
           <div>
             <p className="display text-xl text-accent">JUMP</p>
-            <p className="text-xs text-muted">Tap anywhere up here. Hold for a higher jump.</p>
+            <p className="text-xs text-muted">{info.touchControls}</p>
           </div>
         </div>
       ) : (
-        <p className="mt-2 text-center text-xs text-muted">{info.controls}</p>
+        <p className="mt-2 text-center text-xs text-muted">{touch ? info.touchControls : info.controls}</p>
       )}
       </div>
 

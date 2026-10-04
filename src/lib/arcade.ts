@@ -6,8 +6,8 @@ import { supabase } from "./supabase";
  *
  * The games live in src/arcade/. This file is the list of them and
  * the calls that record scores and read leaderboards. Adding a game:
- * a row in arcade_games (a migration), an entry in GAMES below, and a
- * page that mounts it (ArcadeGame.tsx switches on the slug).
+ * a row in arcade_games (a migration), an entry in GAMES below, and
+ * an engine registered in src/arcade/index.ts.
  */
 
 export type ArcadeGameInfo = {
@@ -16,6 +16,14 @@ export type ArcadeGameInfo = {
   tagline: string;
   /** How to play, in one line. */
   controls: string;
+  /** The same line for a phone. */
+  touchControls: string;
+  /** One-button game: on touch screens the page adds a big pad under
+   *  the canvas so a thumb never covers the game. */
+  touchPad: boolean;
+  /** Draw the score/best in HTML over the canvas. Games that draw
+   *  their own HUD (and use the top of the canvas) turn this off. */
+  overlayHud: boolean;
 };
 
 export const GAMES: ArcadeGameInfo[] = [
@@ -24,6 +32,18 @@ export const GAMES: ArcadeGameInfo[] = [
     name: "Lag Spike",
     tagline: "Keep the signal running. Jump the spikes. It only gets faster.",
     controls: "Space, ↑ or tap to jump. Hold for a higher jump.",
+    touchControls: "Tap anywhere up here to jump. Hold for a higher jump.",
+    touchPad: true,
+    overlayHud: true,
+  },
+  {
+    slug: "packet-pop",
+    name: "Packet Pop",
+    tagline: "Match three to pop. Drop what's left hanging. New rows keep coming.",
+    controls: "Move the mouse to aim, click or Space to fire. ← → also aim.",
+    touchControls: "Drag to aim, let go to fire.",
+    touchPad: false,
+    overlayHud: false,
   },
 ];
 

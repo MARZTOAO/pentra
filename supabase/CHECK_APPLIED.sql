@@ -675,7 +675,12 @@ checks(migration, feature, present) as (
      'The Arcade: arcade_games, arcade_scores, leaderboards, Lag Spike',
      to_regclass('public.arcade_scores') is not null
      and exists (select 1 from fn where fn.name = 'submit_arcade_score')
-     and exists (select 1 from fn where fn.name = 'arcade_leaderboard'))
+     and exists (select 1 from fn where fn.name = 'arcade_leaderboard')),
+
+    ('94_packet_pop',
+     'Packet Pop in arcade_games',
+     case when to_regclass('public.arcade_games') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.arcade_games where slug = ''packet-pop''', false, true, '')))[1]::text::int > 0 end)
 )
 select
   migration,
