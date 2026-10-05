@@ -35,8 +35,15 @@ const env = (k: string) => Deno.env.get(k) ?? "";
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
-/** The answer Supabase understands as "don't create this account". */
-const refuse = (message: string) => json({ error: { http_code: 400, message } }, 400);
+/**
+ * The answer Supabase understands as "don't create this account".
+ *
+ * Sent with status 200 on purpose: Supabase only reads the error (and
+ * shows our message to the person) when the hook call itself
+ * succeeded. Any 4xx reply is treated as the hook failing, and the
+ * person sees a generic "Invalid payload sent to hook" instead.
+ */
+const refuse = (message: string) => json({ error: { http_code: 400, message } }, 200);
 
 /**
  * Throwaway inbox services. Not every one in existence — the common
