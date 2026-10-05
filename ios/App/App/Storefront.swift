@@ -33,22 +33,22 @@ public class StorefrontPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func getCountryCode(_ call: CAPPluginCall) {
         Task {
-            var code = await Storefront.current?.countryCode ?? ""
-
             #if DEBUG
-            // The Simulator usually has no App Store account, so there's
-            // no storefront to read. Debug builds (Xcode's Play button)
-            // fall back to the phone's region setting so checkout can be
-            // tested. Builds for TestFlight and the App Store never do.
-            if code.isEmpty {
-                let region: String?
-                if #available(iOS 16, *) {
-                    region = Locale.current.region?.identifier
-                } else {
-                    region = Locale.current.regionCode
-                }
-                code = region == "US" ? "USA" : (region ?? "")
+            // Debug builds (Xcode's Play button) go by the phone's
+            // Region setting instead, so both cases can be tested in
+            // the Simulator: Settings → General → Language & Region.
+            // The Simulator's own App Store country can't be changed,
+            // and usually says USA. Builds for TestFlight and the App
+            // Store never do this; they only trust the App Store.
+            let region: String?
+            if #available(iOS 16, *) {
+                region = Locale.current.region?.identifier
+            } else {
+                region = Locale.current.regionCode
             }
+            let code = region == "US" ? "USA" : (region ?? "")
+            #else
+            let code = await Storefront.current?.countryCode ?? ""
             #endif
 
             call.resolve(["countryCode": code])
