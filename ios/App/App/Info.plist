@@ -66,5 +66,15 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Pentra uses the camera when you take a photo or video to post or share in chat.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pentra opens your photo library when you choose a photo or video to post or share in chat.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Pentra saves images to your photo library when you ask it to.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Pentra uses the microphone when you record a video to post or share in chat.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
