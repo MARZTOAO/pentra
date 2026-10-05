@@ -35,6 +35,11 @@ export function GameSearchModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // The ids as one string, so the search below only re-runs when the
+  // list actually changes — not every time the screen behind redraws
+  // and hands over a new (but identical) array.
+  const excludeKey = excludeIds.join(",");
+
   // Wait until typing pauses before searching, so a five-letter word
   // doesn't fire five separate queries.
   useEffect(() => {
@@ -49,12 +54,13 @@ export function GameSearchModal({
     setSearching(true);
     const timer = setTimeout(async () => {
       const found = await searchGames(query);
-      setResults(found.filter((g) => !excludeIds.includes(g.id)));
+      const skip = new Set(excludeKey ? excludeKey.split(",").map(Number) : []);
+      setResults(found.filter((g) => !skip.has(g.id)));
       setSearching(false);
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [query, excludeIds]);
+  }, [query, excludeKey]);
 
   /**
    * Ask for a game the catalogue doesn't have. The daily sync picks

@@ -721,7 +721,12 @@ checks(migration, feature, present) as (
     ('102_push_notifications',
      'Push notifications to phones',
      exists (select 1 from fn where fn.name = 'push_claim')
-     and exists (select 1 from pg_trigger where tgname = 'push_after_insert'))
+     and exists (select 1 from pg_trigger where tgname = 'push_after_insert')),
+
+    ('103_changelog_privacy_update',
+     'What''s New line for the privacy policy update',
+     case when to_regclass('public.changelog_entries') is null then false
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Privacy policy updated''', false, true, '')))[1]::text::int > 0 end)
 )
 select
   migration,

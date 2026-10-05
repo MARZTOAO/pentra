@@ -15,7 +15,7 @@ import { PRICES, REFUND_DAYS } from "../lib/billing";
  * Not reviewed by a lawyer. Before this is relied on, it should be.
  */
 
-const UPDATED = "October 2, 2026";
+const UPDATED = "October 5, 2026";
 
 /**
  * Where someone writes with a question.
@@ -74,7 +74,8 @@ export function Privacy() {
           <strong>Your profile.</strong> Whatever you choose to fill in:
           a username, display name, avatar, bio, the region you play from,
           your time zone, the platforms you play on, when you're usually
-          free, and an optional city or country. Some of this is shown to
+          free, the gamer tags you add (your name on Steam, PlayStation,
+          Xbox, Discord and so on), and an optional city or country. Some of this is shown to
           other people; that's what a profile is for. Your email address
           never is.
         </p>
@@ -88,11 +89,15 @@ export function Privacy() {
         </p>
         <p>
           <strong>Your games.</strong> Your Top 5 and your library. This is
-          what matching runs on, and it's visible on your profile.
+          what matching runs on, and it's visible on your profile. If you
+          play the games in the Arcade, your best scores are kept for the
+          leaderboards.
         </p>
         <p>
           <strong>What you do in the app.</strong> Posts, comments, likes,
           sessions you host or join, friend requests, and direct messages.
+          Photos and videos you attach to a post are stored with it and
+          can be seen by anyone who can see the post.
           Messages are private between the people in the conversation;
           they are stored so that the conversation is there when you come
           back.
@@ -109,12 +114,25 @@ export function Privacy() {
         </p>
       </Section>
 
+      <Section title="On your phone">
+        <p>
+          <strong>Push notifications (iPhone app).</strong> If you allow
+          notifications, your phone gives Pentra a push token — an
+          address Apple uses to deliver notifications to that one app on
+          that one phone. We keep it so we can tell you about messages,
+          friend requests and sessions, and for nothing else. It's
+          removed when you sign out on that phone or delete your
+          account, and you can turn notifications off at any time in
+          your phone's settings.
+        </p>
+      </Section>
+
       <Section title="What we don't collect">
         <ul>
           <li>Your real name, unless you choose to put it in your profile.</li>
           <li>Your precise location. Region and time zone are what you tell us, not what we detect.</li>
-          <li>Anything from your computer or game accounts. The desktop app is the same app as the website, in a window.</li>
-          <li>Payment details. If paid features arrive, payment will be handled by a payment provider and card numbers will never touch Pentra.</li>
+          <li>Anything from your computer, phone or game accounts beyond what's described here. The desktop and iPhone apps are the same app as the website.</li>
+          <li>Your card details. Pentra Pro is paid for on Stripe's own page; card numbers never touch Pentra.</li>
         </ul>
       </Section>
 
@@ -128,6 +146,8 @@ export function Privacy() {
           <li><strong>Supabase</strong> hosts the database and handles sign-in.</li>
           <li><strong>Vercel</strong> serves the website.</li>
           <li><strong>GitHub</strong> hosts the desktop app downloads and updates. Checking for an update tells GitHub your IP address, as any download does.</li>
+          <li><strong>Apple</strong> delivers notifications to the iPhone app. Apple receives the push token and the notification itself (for example, "Sam sent you a friend request") so it can show it on your phone.</li>
+          <li><strong>Cloudflare</strong> runs the check on the sign-up page that tells people from bots. It looks at your browser and your IP address at that moment, and only on that page.</li>
           <li><strong>Stripe</strong> takes payment for Pentra Pro. Your card details go to Stripe, on Stripe's own page, and never to us; we keep Stripe's reference for your subscription, what plan you're on, and a record of each payment and refund. Stripe's <a href="https://stripe.com/privacy" target="_blank" rel="noreferrer" className="text-accent hover:underline">privacy policy</a> covers what Stripe does with the card.</li>
         </ul>
         <p>
@@ -166,7 +186,8 @@ export function Privacy() {
         <p>
           Settings → Delete account. It removes your account and
           everything keyed to it: your profile, posts, comments,
-          sessions, friendships, and the messages you sent — they
+          sessions, friendships, phone push tokens, and the messages you
+          sent — they
           disappear from the other person's conversation too. Deletion
           is immediate and cannot be undone.
         </p>
