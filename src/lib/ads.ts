@@ -96,7 +96,13 @@ export function withAds(
  * Nothing about who is sent or stored.
  */
 export function recordAdEvent(id: number, what: "view" | "click") {
-  void supabase.rpc("record_ad_event", { ad: id, what });
+  // .then() is what actually sends it: a Supabase request isn't made
+  // until something asks for its answer. Failures are ignored on
+  // purpose — a lost count must never get in the way of the page.
+  supabase.rpc("record_ad_event", { ad: id, what }).then(
+    () => {},
+    () => {},
+  );
 }
 
 /* ------------------------------------------------------------------ */

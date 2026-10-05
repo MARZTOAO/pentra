@@ -716,7 +716,12 @@ checks(migration, feature, present) as (
     ('101_rate_limits',
      'Rate limits on messages, friend requests, posts and more',
      exists (select 1 from fn where fn.name = 'enforce_rate_limit')
-     and exists (select 1 from pg_trigger where tgname = 'rate_limit_new_chats'))
+     and exists (select 1 from pg_trigger where tgname = 'rate_limit_new_chats')),
+
+    ('102_push_notifications',
+     'Push notifications to phones',
+     exists (select 1 from fn where fn.name = 'push_claim')
+     and exists (select 1 from pg_trigger where tgname = 'push_after_insert'))
 )
 select
   migration,

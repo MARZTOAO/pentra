@@ -9,6 +9,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { claimStoredReferral } from "./referrals";
+import { startPush, stopPush } from "./push";
 
 type AuthState = {
   session: Session | null;
@@ -71,7 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     claimStoredReferral();
   }, [session]);
 
+  // iPhone app: push notifications for whoever is signed in
+  // (lib/push.ts). Keyed on the user id, so a token refresh doesn't
+  // re-run it but switching accounts does.
+  const userId = session?.user?.id ?? null;
+  useEffect(() => {
+    if (userId) void startPush();
+  }, [userId]);
+
   const signOut = async () => {
+    await stopPush();
     await supabase.auth.signOut();
   };
 

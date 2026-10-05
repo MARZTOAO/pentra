@@ -27,6 +27,10 @@ const config: CapacitorConfig = {
     // The keyboard shrinks the app rather than covering it, so the chat
     // box stays visible above it.
     Keyboard: { resize: "native" },
+
+    // While Pentra is open, a push doesn't also drop a banner over it:
+    // the bell and the chat list already update live.
+    PushNotifications: { presentationOptions: [] },
   },
 };
 
