@@ -36,7 +36,9 @@ export function DevCreators() {
 
   useEffect(load, [load]);
 
-  const owed = rows?.reduce((sum, r) => sum + r.owed_cents, 0) ?? 0;
+  // Only what's actually owed: a partner who's overpaid (a dispute
+  // after their payout) shouldn't cancel out what someone else is owed.
+  const owed = rows?.reduce((sum, r) => sum + Math.max(0, r.owed_cents), 0) ?? 0;
 
   return (
     <div className="space-y-6">
@@ -192,9 +194,20 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
         {!row.active && (
           <span className="notch-sm border border-line px-1.5 text-3xs text-muted">off</span>
         )}
-        <span className={"text-sm font-semibold " + (row.owed_cents > 0 ? "text-accent" : "text-muted")}>
-          {money(row.owed_cents)} owed
-        </span>
+        {row.owed_cents < 0 ? (
+          // Earned less than they've been paid: a signup was disputed
+          // after the payout. Take it off the next one.
+          <span
+            className="text-sm font-semibold text-danger"
+            title="A signup was disputed after they were paid. Take this off their next payout."
+          >
+            {money(-row.owed_cents)} overpaid
+          </span>
+        ) : (
+          <span className={"text-sm font-semibold " + (row.owed_cents > 0 ? "text-accent" : "text-muted")}>
+            {money(row.owed_cents)} owed
+          </span>
+        )}
       </div>
 
       {row.contact && <p className="mt-1 truncate text-xs text-muted">{row.contact}</p>}
@@ -206,6 +219,11 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
           {row.pending} pending
         </span>
         <span className={stat}>{row.refunded} refunded</span>
+        {(row.disputed ?? 0) > 0 && (
+          <span className={stat} title="Disputed with the bank — earns nothing unless the dispute is won">
+            {row.disputed} disputed
+          </span>
+        )}
         <span className={stat}>{row.payable} payable</span>
         <span className={stat}>earned {money(row.earned_cents)}</span>
         <span className={stat}>

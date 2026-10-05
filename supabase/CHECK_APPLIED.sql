@@ -706,13 +706,18 @@ checks(migration, feature, present) as (
     ('99_changelog_phone_sign_out',
      'What''s New line for signing out on phones',
      case when to_regclass('public.changelog_entries') is null then false
-          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Sign out on phones''', false, true, '')))[1]::text::int > 0 end)
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Sign out on phones''', false, true, '')))[1]::text::int > 0 end),
+
+    ('100_creator_disputes',
+     'Bank disputes don''t earn creators money',
+     exists (select 1 from cols where cols.t = 'billing_payments' and cols.c = 'disputed_at')
+     and exists (select 1 from fn where fn.name = 'billing_apply_dispute'))
 )
 select
   migration,
   feature,
   case when present then 'ok' else '>>> MISSING — RUN IT' end as status
 from checks
--- Text order. Every migration name starts with two digits, so this is
--- also numeric order; it stops being true at 100.
-order by migration;
+-- Numeric order: the digits before the first underscore (100 comes
+-- after 99, not after 10).
+order by split_part(migration, '_', 1)::int, migration;

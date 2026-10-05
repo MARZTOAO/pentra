@@ -5,7 +5,12 @@
 //
 //    POST { action: "checkout", plan, code }  → { url }   a Stripe Checkout page
 //    POST { action: "portal" }                → { url }   Stripe's "manage billing" page
-//    POST /pro/webhook  (from Stripe)                     turns Pro on, off, back
+//    POST /pro/webhook  (from Stripe)                     turns Pro on, off, back;
+//                                                         marks disputed payments
+//
+//  Stripe webhook events it needs: invoice.paid, charge.refunded,
+//  charge.dispute.created, charge.dispute.closed,
+//  customer.subscription.created / .updated / .deleted.
 //
 //  The app calls the first two with the signed-in player's token; the
 //  webhook is called by Stripe and proves itself with a signature. So
@@ -324,6 +329,23 @@ async function onChargeRefunded(chargeId: string) {
   }
 }
 
+/**
+ * A subscriber disputed a charge with their bank (a chargeback, or an
+ * inquiry that might become one). The payment stops counting for the
+ * creator whose code it carried until the dispute is closed in
+ * Pentra's favour — see supabase/100_creator_disputes.sql.
+ */
+async function onDispute(disputeId: string, open: boolean) {
+  const d = await stripe("GET", `/v1/disputes/${disputeId}`);
+  let pi: string | null = d.payment_intent ?? null;
+  if (!pi && d.charge) pi = (await stripe("GET", `/v1/charges/${d.charge}`)).payment_intent ?? null;
+  if (!pi) return;
+  // Closed: only "won" (and an inquiry closed with no chargeback,
+  // "warning_closed") clears the mark. "lost" keeps it.
+  if (!open && d.status !== "won" && d.status !== "warning_closed") return;
+  await rpc("billing_apply_dispute", { p_pi: pi, p_open: open });
+}
+
 async function webhook(req: Request) {
   const raw = await req.text();
   const ok = await verifyStripeSignature(raw, req.headers.get("stripe-signature"), env("STRIPE_WEBHOOK_SECRET"));
@@ -339,6 +361,12 @@ async function webhook(req: Request) {
       break;
     case "charge.refunded":
       await onChargeRefunded(id);
+      break;
+    case "charge.dispute.created":
+      await onDispute(id, true);
+      break;
+    case "charge.dispute.closed":
+      await onDispute(id, false);
       break;
     case "customer.subscription.created":
     case "customer.subscription.updated":

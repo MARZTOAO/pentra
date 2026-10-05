@@ -249,6 +249,8 @@ export type CreatorRow = {
   yearly: number;
   pending: number;
   refunded: number;
+  /** Disputed with the bank (supabase/100); missing before 100 is run. */
+  disputed?: number;
   payable: number;
   earned_cents: number;
   paid_cents: number;
