@@ -711,7 +711,12 @@ checks(migration, feature, present) as (
     ('100_creator_disputes',
      'Bank disputes don''t earn creators money',
      exists (select 1 from cols where cols.t = 'billing_payments' and cols.c = 'disputed_at')
-     and exists (select 1 from fn where fn.name = 'billing_apply_dispute'))
+     and exists (select 1 from fn where fn.name = 'billing_apply_dispute')),
+
+    ('101_rate_limits',
+     'Rate limits on messages, friend requests, posts and more',
+     exists (select 1 from fn where fn.name = 'enforce_rate_limit')
+     and exists (select 1 from pg_trigger where tgname = 'rate_limit_new_chats'))
 )
 select
   migration,

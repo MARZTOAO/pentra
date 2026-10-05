@@ -361,7 +361,11 @@ function Thread({
     if (error) {
       // Put it back rather than losing what they typed.
       setDraft(body);
-      setSendError("That didn't send. Try again.");
+      // A rate limit (supabase/101) says what to do, so show it as it
+      // is; anything else gets the general line.
+      setSendError(
+        /^Slow down/.test(error.message ?? "") ? error.message : "That didn't send. Try again.",
+      );
       // The likeliest reason in a session chat is that it has just
       // been archived while open; refreshing the list flips it to the
       // read-only view.

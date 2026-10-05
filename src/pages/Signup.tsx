@@ -9,6 +9,8 @@ import {
   todayIso,
 } from "../lib/birthday";
 import { AuthCard, Field, Input, Button, Alert } from "../components/ui";
+import { BotCheck, botCheckOn } from "../components/BotCheck";
+import { SITE_URL, isDesktopApp, isNativeApp, openExternal } from "../lib/platform";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -29,6 +31,11 @@ export default function Signup() {
   // returns no session - the account isn't usable until the link is clicked.
   // We store the address here to switch the screen into "check your inbox" mode.
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  // The bot check (components/BotCheck.tsx). A token is good for one
+  // try; bumping `round` fetches a new one after a failed attempt.
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaRound, setCaptchaRound] = useState(0);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -123,6 +130,9 @@ export default function Signup() {
           // and stored somewhere nothing else can read. See
           // supabase/69_birthdays.sql.
           birth_date: birthDate,
+          // Checked with Cloudflare by the sign-up hook before the
+          // account exists (supabase/functions/signup-guard).
+          ...(captcha ? { captcha_token: captcha } : {}),
         },
       },
     });
@@ -130,6 +140,8 @@ export default function Signup() {
     setBusy(false);
 
     if (signUpError) {
+      // The token has been used either way; get a fresh one.
+      setCaptchaRound((r) => r + 1);
       // Every check the database makes has already been made above, so
       // this is rare — but it's what a refusal from inside the signup
       // looks like, and it reads as the site being broken.
@@ -152,6 +164,29 @@ export default function Signup() {
 
   if (pendingEmail) {
     return <CheckYourEmail email={pendingEmail} />;
+  }
+
+  // The iPhone and Windows apps: the bot check can't run inside them,
+  // so new accounts are made on pentra.gg (in a Safari sheet on iPhone,
+  // the browser on Windows). Signing in stays in the app.
+  if (botCheckOn && (isNativeApp() || isDesktopApp())) {
+    return (
+      <AuthCard title="Create your account" subtitle="Find people worth playing with">
+        <p className="mb-5 text-center text-sm text-muted">
+          New accounts are made on pentra.gg. It takes a minute — then
+          come back here and log in.
+        </p>
+        <Button type="button" onClick={() => void openExternal(`${SITE_URL}/#/signup`)}>
+          Sign up on pentra.gg
+        </Button>
+        <p className="mt-5 text-center text-sm text-muted">
+          Already have an account?{" "}
+          <Link to="/login" className="font-medium text-accent hover:underline">
+            Log in
+          </Link>
+        </p>
+      </AuthCard>
+    );
   }
 
   // Deliberately says nothing about age or when to come back: a
@@ -253,7 +288,20 @@ export default function Signup() {
           />
         </Field>
 
-        <Button type="submit" disabled={busy || (confirm !== "" && confirm !== password)}>
+        <BotCheck
+          round={captchaRound}
+          onToken={setCaptcha}
+          onUnavailable={() =>
+            setError("Couldn't load the check that you're a real person. Check your connection, or turn off an ad blocker for pentra.gg, then reload.")
+          }
+        />
+
+        <Button
+          type="submit"
+          disabled={
+            busy || (confirm !== "" && confirm !== password) || (botCheckOn && !captcha)
+          }
+        >
           {busy ? "Creating account…" : "Create account"}
         </Button>
       </form>

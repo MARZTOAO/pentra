@@ -146,6 +146,10 @@ async function seed() {
         email,
         password: PASSWORD,
         email_confirm: true, // skip the verification step for fakes
+        // Lets the sign-up hook (supabase/functions/signup-guard) wave
+        // it through without a bot check. Only the service role can set
+        // app_metadata, so a real sign-up can't claim this.
+        app_metadata: { seeded: true },
         user_metadata: {
           username: player.username,
           display_name: player.username,
