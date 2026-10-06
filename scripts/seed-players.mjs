@@ -30,7 +30,11 @@ const supabase = createClient(VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 const EMAIL_DOMAIN = "example.test";
-const PASSWORD = "seedplayer123";
+// Never a fixed password: this repo is public, so one written here is
+// one anybody can use to sign in as every test player. Set
+// SEED_PASSWORD in .env to choose one (kept off GitHub); otherwise
+// each run makes up a random one and prints it once.
+const PASSWORD = process.env.SEED_PASSWORD || `${crypto.randomUUID()}-Aa1!`;
 
 // ---- the cast ------------------------------------------------------
 
@@ -220,7 +224,11 @@ async function seed() {
     console.log(`created with ${rows.length} games (${player.theme}).`);
   }
 
-  console.log(`\nDone. All test accounts use the password: ${PASSWORD}`);
+  console.log(
+    process.env.SEED_PASSWORD
+      ? "\nDone. New test accounts use SEED_PASSWORD from .env."
+      : `\nDone. New test accounts use this password (shown once, not saved): ${PASSWORD}`,
+  );
   console.log(`Log in as any of them with <username>@${EMAIL_DOMAIN}\n`);
 }
 
