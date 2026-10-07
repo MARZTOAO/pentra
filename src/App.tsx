@@ -30,6 +30,8 @@ import Forgot from "./pages/Forgot";
 import DevMetrics from "./pages/DevMetrics";
 import Developer from "./pages/Developer";
 import Pro from "./pages/Pro";
+import Ambassador from "./pages/Ambassador";
+import GiveawayRoute, { GiveawayRulesRoute } from "./pages/Giveaway";
 import Arcade from "./pages/Arcade";
 import ArcadeGame from "./pages/ArcadeGame";
 import StackTrace from "./pages/StackTrace";
@@ -81,6 +83,11 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+
+          {/* Giveaways (supabase/105). Open signed out too, for the
+              link in a TikTok bio; inside the app frame once signed in. */}
+          <Route path="/giveaway" element={<GiveawayRoute />} />
+          <Route path="/giveaway/rules/:id" element={<GiveawayRulesRoute />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -218,6 +225,17 @@ export default function App() {
             element={
               <Shell>
                 <Pro />
+              </Shell>
+            }
+          />
+
+          {/* Creator partners' own numbers (supabase/104). The page
+              shows nothing to anyone the database doesn't say is one. */}
+          <Route
+            path="/ambassador"
+            element={
+              <Shell>
+                <Ambassador />
               </Shell>
             }
           />

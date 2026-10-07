@@ -15,7 +15,7 @@ import { PRICES, REFUND_DAYS } from "../lib/billing";
  * Not reviewed by a lawyer. Before this is relied on, it should be.
  */
 
-const UPDATED = "October 5, 2026";
+const UPDATED = "October 7, 2026";
 
 /**
  * Where someone writes with a question.
@@ -81,8 +81,9 @@ export function Privacy() {
         </p>
         <p>
           <strong>Your date of birth.</strong> Asked when you sign up, to
-          check you're old enough to use Pentra, and used for one other
-          thing: a happy-birthday message on the day. It's kept apart
+          check you're old enough to use Pentra, and used for two other
+          things: a happy-birthday message on the day, and checking you're
+          18 or over if you enter a giveaway. It's kept apart
           from your profile and never shown to anyone else; you can see
           it in Settings, and correct it there once if you entered it
           wrong. After that, email us and we'll correct it.
@@ -111,6 +112,19 @@ export function Privacy() {
           <strong>Reports.</strong> If you report someone, or someone
           reports you, the report is kept so that it can be acted on.
           People are never told who reported them.
+        </p>
+        <p>
+          <strong>Giveaways.</strong> If you enter one, we keep your entry,
+          the TikTok username you give us, and how many bonus entries your
+          invites earned, so the draw can be run and the winners checked.
+          A winner's TikTok username may be announced. If you enter by
+          email instead, we keep your name, email address and TikTok
+          username for the same reason.
+        </p>
+        <p>
+          <strong>Creator links.</strong> If you sign up through a creator's
+          link, we note which creator sent you, so they can be credited.
+          They see a count of sign-ups, never who you are.
         </p>
       </Section>
 

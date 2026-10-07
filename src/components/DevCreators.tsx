@@ -3,6 +3,7 @@ import {
   CREATOR_DISCOUNT,
   REFUND_DAYS,
   addCreator,
+  linkCreator,
   listCreators,
   lookupBilling,
   money,
@@ -46,8 +47,10 @@ export function DevCreators() {
         Partners share a code; their viewers get {CREATOR_DISCOUNT.monthly}% off a
         first month or {CREATOR_DISCOUNT.yearly}% off a first year. A signup counts
         for the partner {REFUND_DAYS} days after it's paid (the refund window)
-        and pays $0.50 / $10 for their first 1,000, then $1.00 / $15. Link to
-        share: <span className="numeric text-ink">pentra.gg/?creator=CODE</span>
+        and pays $1.00 / $10 for their first 100, then $1.50 / $15. Link to
+        share: <span className="numeric text-ink">pentra.gg/?creator=CODE</span>.
+        Link a code to the creator's own account and they get an
+        Ambassador page in Settings with these numbers for their code only.
       </p>
 
       <NewCreator onAdded={load} />
@@ -153,6 +156,8 @@ function NewCreator({ onAdded }: { onAdded: () => void }) {
 
 function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
   const [paying, setPaying] = useState(false);
+  const [linking, setLinking] = useState(false);
+  const [who, setWho] = useState(row.username ?? "");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -165,6 +170,20 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
     setBusy(false);
     if (err) setStatus(err);
     else onChange();
+  }
+
+  async function link(username: string) {
+    if (busy) return;
+    setBusy(true);
+    const err = await linkCreator(row.code, username);
+    setBusy(false);
+    if (err) {
+      setStatus(err);
+      return;
+    }
+    setStatus(username.trim() ? `Linked to @${username.trim().replace(/^@/, "")}.` : "Unlinked.");
+    setLinking(false);
+    onChange();
   }
 
   async function pay() {
@@ -211,8 +230,20 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
       </div>
 
       {row.contact && <p className="mt-1 truncate text-xs text-muted">{row.contact}</p>}
+      <p className="mt-1 text-xs text-muted">
+        {row.username ? (
+          <>Ambassador account: <span className="text-ink">@{row.username}</span></>
+        ) : (
+          "No account linked, so they can't see their numbers in the app."
+        )}
+      </p>
 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+        {row.signups !== undefined && (
+          <span className={stat} title="New accounts through their link / of those, started playing">
+            {row.signups} signed up ({row.signups_playing ?? 0} playing)
+          </span>
+        )}
         <span className={stat}>{row.monthly} monthly</span>
         <span className={stat}>{row.yearly} yearly</span>
         <span className={stat} title={`Paid less than ${REFUND_DAYS} days ago — not payable yet`}>
@@ -241,6 +272,13 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
           {paying ? "Cancel" : "Record a payout"}
         </button>
         <button
+          onClick={() => setLinking((v) => !v)}
+          disabled={busy}
+          className="notch-sm border border-line px-2 py-1 text-2xs font-semibold text-muted transition hover:text-ink"
+        >
+          {linking ? "Cancel" : row.username ? "Change account" : "Link account"}
+        </button>
+        <button
           onClick={toggle}
           disabled={busy}
           className="notch-sm border border-line px-2 py-1 text-2xs font-semibold text-muted transition hover:text-ink"
@@ -248,6 +286,41 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
           {row.active ? "Switch code off" : "Switch code on"}
         </button>
       </div>
+
+      {linking && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            link(who);
+          }}
+          className="mt-2 flex flex-wrap gap-2"
+        >
+          <input
+            value={who}
+            onChange={(e) => setWho(e.target.value)}
+            placeholder="Their Pentra username"
+            spellCheck={false}
+            className="min-w-0 flex-1 notch-md border border-line bg-surface px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+          />
+          <button
+            type="submit"
+            disabled={busy || !who.trim()}
+            className="notch-md bg-accent px-3 py-1.5 text-xs font-semibold text-onaccent transition hover:bg-accent-hi disabled:opacity-40"
+          >
+            Link
+          </button>
+          {row.username && (
+            <button
+              type="button"
+              onClick={() => link("")}
+              disabled={busy}
+              className="notch-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:text-danger"
+            >
+              Unlink
+            </button>
+          )}
+        </form>
+      )}
 
       {paying && (
         <div className="mt-2 flex flex-wrap gap-2">

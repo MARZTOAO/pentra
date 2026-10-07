@@ -256,6 +256,11 @@ export type CreatorRow = {
   paid_cents: number;
   owed_cents: number;
   last_paid_at: string | null;
+  /** The creator's own Pentra account, if linked (supabase/104). */
+  username?: string | null;
+  /** New accounts through their link, and how many started playing (104). */
+  signups?: number;
+  signups_playing?: number;
 };
 
 export async function listCreators(): Promise<CreatorRow[] | null> {
@@ -275,6 +280,10 @@ export const addCreator = (code: string, name: string, contact: string) =>
 
 export const setCreatorActive = (code: string, active: boolean) =>
   devText("dev_creator_set_active", { p_code: code, p_active: active }, "saved");
+
+/** Link a code to the creator's account by username; "" unlinks (supabase/104). */
+export const linkCreator = (code: string, username: string) =>
+  devText("dev_creator_link", { p_code: code, p_username: username }, "saved");
 
 export const recordPayout = (code: string, cents: number, note: string) =>
   devText("dev_creator_payout", { p_code: code, p_amount_cents: cents, p_note: note || null }, "recorded");

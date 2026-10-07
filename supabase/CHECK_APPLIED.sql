@@ -726,7 +726,18 @@ checks(migration, feature, present) as (
     ('103_changelog_privacy_update',
      'What''s New line for the privacy policy update',
      case when to_regclass('public.changelog_entries') is null then false
-          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Privacy policy updated''', false, true, '')))[1]::text::int > 0 end)
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''Privacy policy updated''', false, true, '')))[1]::text::int > 0 end),
+
+    ('104_ambassadors',
+     'Ambassador page for creator partners, new payout rates',
+     exists (select 1 from cols where cols.t = 'creator_codes' and cols.c = 'user_id')
+     and exists (select 1 from fn where fn.name = 'my_ambassador')
+     and exists (select 1 from fn where fn.name = 'creator_rate_cents' and fn.def like '%<= 100%')),
+
+    ('105_giveaways',
+     'Giveaways: entering, bonus entries and the draw',
+     to_regclass('public.giveaway_entries') is not null
+     and exists (select 1 from fn where fn.name = 'dev_giveaway_draw'))
 )
 select
   migration,

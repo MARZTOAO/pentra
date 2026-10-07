@@ -9,6 +9,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { claimStoredReferral } from "./referrals";
+import { claimCreatorSignup } from "./ambassador";
 import { startPush, stopPush } from "./push";
 
 type AuthState = {
@@ -70,6 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!session || claimed.current) return;
     claimed.current = true;
     claimStoredReferral();
+    // Arrived on a creator's link: credit the creator (supabase/104).
+    claimCreatorSignup();
   }, [session]);
 
   // iPhone app: push notifications for whoever is signed in

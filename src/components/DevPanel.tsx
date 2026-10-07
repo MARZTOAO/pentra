@@ -39,9 +39,10 @@ import { listSeeded, type SeededAccount } from "../lib/seeded";
 import { Avatar } from "./Avatar";
 import { DevAds } from "./DevAds";
 import { DevCreators } from "./DevCreators";
+import { DevGiveaways } from "./DevGiveaways";
 
 /**
- * The developer tools: one tab strip, eight tabs. Lives on the
+ * The developer tools: one tab strip, ten tabs. Lives on the
  * Developer page (/dev, src/pages/Developer.tsx), reached from the
  * sidebar. It used to be a dialog opened from a Settings card; the
  * page has the width the ads and creators tabs wanted, and a page in
@@ -90,6 +91,7 @@ export function DevTools() {
         {tab === "flags" && <Flags />}
         {tab === "pro" && <Pro />}
         {tab === "creators" && <DevCreators />}
+        {tab === "giveaways" && <DevGiveaways />}
         {tab === "seeded" && <Seeded />}
         {tab === "build" && <Build />}
       </div>
@@ -97,7 +99,7 @@ export function DevTools() {
   );
 }
 
-const TABS = ["reports", "news", "numbers", "ads", "flags", "pro", "creators", "seeded", "build"] as const;
+const TABS = ["reports", "news", "numbers", "ads", "flags", "pro", "creators", "giveaways", "seeded", "build"] as const;
 type Tab = (typeof TABS)[number];
 
 /* ------------------------------------------------------------------ */

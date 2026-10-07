@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { GiveawayBanner } from "../components/GiveawayBanner";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { getProfile, hasPlus, type Profile } from "../lib/profile";
@@ -120,6 +121,9 @@ export default function Home() {
     <div className="relative mx-auto max-w-2xl px-4 sm:px-8 py-8">
       {/* The Cipher background behind this screen is drawn by
           AppShell — see components/HouseBackground.tsx. */}
+      {/* While a giveaway is taking entries (supabase/105). */}
+      <GiveawayBanner />
+
       <header className="mb-4 flex items-center justify-between">
         <h1 className="display on-art text-2xl">Home</h1>
 

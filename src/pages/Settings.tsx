@@ -12,12 +12,15 @@ import { Link } from "react-router-dom";
 import { useIsDeveloper } from "../lib/dev";
 import { DesktopSection } from "../components/DesktopSection";
 import { ProSection } from "../components/ProSection";
+import { useIsAmbassador } from "../lib/ambassador";
 
 export default function Settings() {
   const { user, signOut } = useAuth();
   // For the link at the foot of the page: on a phone there is no
   // sidebar, so this is how a developer reaches /dev.
   const isDev = useIsDeveloper(user?.id);
+  // Creator partners linked to this account (supabase/104).
+  const isAmbassador = useIsAmbassador(user?.id);
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,6 +68,18 @@ export default function Settings() {
       </header>
 
       {error && <Alert>{error}</Alert>}
+
+      {isAmbassador && (
+        <Link
+          to="/ambassador"
+          className="mb-8 block notch border border-accent/60 bg-accent/10 p-5 transition hover:bg-accent/15"
+        >
+          <h2 className="mb-1 label-wide text-accent">Ambassador</h2>
+          <p className="text-sm text-ink">
+            Your link, your sign-ups and Pro subscribers, and what you've earned →
+          </p>
+        </Link>
+      )}
 
       <ProSection />
 
