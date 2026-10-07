@@ -737,7 +737,11 @@ checks(migration, feature, present) as (
     ('105_giveaways',
      'Giveaways: entering, bonus entries and the draw',
      to_regclass('public.giveaway_entries') is not null
-     and exists (select 1 from fn where fn.name = 'dev_giveaway_draw'))
+     and exists (select 1 from fn where fn.name = 'dev_giveaway_draw')),
+
+    ('106_creator_loyalty_bonus',
+     'Creators earn a bonus when their subscribers stay',
+     exists (select 1 from fn where fn.name = 'creator_loyalty_cents'))
 )
 select
   migration,

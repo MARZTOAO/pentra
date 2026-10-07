@@ -100,7 +100,7 @@ export default function Ambassador() {
             { n: money(me.earned_cents), label: "Earned" },
             { n: money(me.paid_cents), label: "Paid to you" },
             { n: money(me.owed_cents), label: "Owed", accent: me.owed_cents > 0 },
-            { n: me.payable, label: "Counted subscribers" },
+            { n: me.loyalty_count ?? 0, label: "Loyalty bonuses" },
           ]}
         />
         <p className="mt-3 text-2xs leading-relaxed text-muted">
@@ -111,6 +111,13 @@ export default function Ambassador() {
           {toNext > 0
             ? `${toNext} more to reach the higher rate.`
             : "You're on the higher rate."}{" "}
+          {me.loyalty && (
+            <>
+              Loyalty bonus: {money(me.loyalty.monthly)} more when a monthly
+              subscriber pays for the {ordinal(me.loyalty.monthly_after)} time,
+              and {money(me.loyalty.yearly)} when a yearly subscriber renews.{" "}
+            </>
+          )}
           Payouts go out monthly once you're owed $25 or more.
         </p>
 
@@ -135,6 +142,10 @@ export default function Ambassador() {
 }
 
 /* ------------------------------------------------------------------ */
+
+function ordinal(n: number): string {
+  return n === 2 ? "2nd" : n === 3 ? "3rd" : `${n}th`;
+}
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (

@@ -261,6 +261,8 @@ export type CreatorRow = {
   /** New accounts through their link, and how many started playing (104). */
   signups?: number;
   signups_playing?: number;
+  /** Loyalty bonuses earned (supabase/106). */
+  loyalty_count?: number;
 };
 
 export async function listCreators(): Promise<CreatorRow[] | null> {

@@ -19,6 +19,8 @@ export type MyAmbassador = {
   active: boolean;
   tier_size: number;
   rates: { monthly: number; yearly: number; monthly_after: number; yearly_after: number };
+  /** One-time bonus when a subscriber stays (supabase/106). */
+  loyalty?: { monthly: number; yearly: number; monthly_after: number; yearly_after: number };
   refund_days: number;
   payouts: { amount_cents: number; paid_at: string }[];
   /** New accounts through their link. */
@@ -37,6 +39,9 @@ export type MyAmbassador = {
   disputed: number;
   pro_this_month: number;
   pro_last_month: number;
+  /** Subscribers who stayed long enough to earn the bonus (106). */
+  loyalty_count?: number;
+  loyalty_cents?: number;
   earned_cents: number;
   paid_cents: number;
   owed_cents: number;

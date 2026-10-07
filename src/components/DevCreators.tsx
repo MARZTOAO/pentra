@@ -47,7 +47,9 @@ export function DevCreators() {
         Partners share a code; their viewers get {CREATOR_DISCOUNT.monthly}% off a
         first month or {CREATOR_DISCOUNT.yearly}% off a first year. A signup counts
         for the partner {REFUND_DAYS} days after it's paid (the refund window)
-        and pays $1.00 / $10 for their first 100, then $1.50 / $15. Link to
+        and pays $1.00 / $10 for their first 100, then $1.50 / $15, plus a
+        loyalty bonus of $2 when a monthly subscriber pays a 3rd time and $10
+        when a yearly one renews. Link to
         share: <span className="numeric text-ink">pentra.gg/?creator=CODE</span>.
         Link a code to the creator's own account and they get an
         Ambassador page in Settings with these numbers for their code only.
@@ -256,6 +258,11 @@ function Creator({ row, onChange }: { row: CreatorRow; onChange: () => void }) {
           </span>
         )}
         <span className={stat}>{row.payable} payable</span>
+        {(row.loyalty_count ?? 0) > 0 && (
+          <span className={stat} title="Subscribers who stayed long enough for the loyalty bonus">
+            {row.loyalty_count} loyalty
+          </span>
+        )}
         <span className={stat}>earned {money(row.earned_cents)}</span>
         <span className={stat}>
           paid {money(row.paid_cents)}
