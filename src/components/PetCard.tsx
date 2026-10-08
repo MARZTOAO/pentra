@@ -91,8 +91,8 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
           <button
             type="button"
             onClick={() => {
-              if (pet.is_egg && isSelf) void act("warm");
-              else if (!isSelf && !pet.is_egg) void cheer();
+              if (pet.is_egg && isSelf && !pet.warmed_today) void act("warm");
+              else if (!isSelf && !pet.is_egg && !pet.cheered_today) void cheer();
               else void reload();
             }}
             disabled={busy !== null}

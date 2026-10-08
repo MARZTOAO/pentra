@@ -153,6 +153,8 @@ create table if not exists public.pets (
   created_at     timestamptz not null default now()
 );
 
+alter table public.pets add column if not exists sessions_at_egg int not null default 0;
+
 create table if not exists public.pet_cheers (
   pet_user_id uuid not null references public.profiles(id) on delete cascade,
   by_user_id  uuid not null references public.profiles(id) on delete cascade,
@@ -576,6 +578,80 @@ revoke all on function public.pet_on_session()  from public, anon, authenticated
 revoke all on function public.pet_on_commend()  from public, anon, authenticated;
 revoke all on function public.pet_on_arcade()   from public, anon, authenticated;
 revoke all on function public.pet_on_referral() from public, anon, authenticated;
+
+-- ------------------------------------------------------------
+--  7. Developer controls (DevPanel / the Developer row on the pet
+--     card). For testing: skip the waiting. Works on anyone's pet.
+--       give    — make an egg for someone who hasn't got one
+--       hatch   — hatch the egg now
+--       evolve  — jump to the next stage (XP set to the threshold)
+--       fill    — hunger, mood, energy to 100, snacks to the cap,
+--                 cooldowns cleared
+--       starve  — hunger and mood to 0 (to see the napping state)
+--       reset   — delete the pet; a fresh egg next time they look
+-- ------------------------------------------------------------
+create or replace function public.dev_pet(p_user uuid, p_action text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  rules jsonb := public.pet_rules();
+  p     public.pets;
+begin
+  if not public.am_i_developer() then
+    raise exception 'not a developer';
+  end if;
+
+  if p_action = 'give' then
+    insert into pets (user_id, sessions_at_egg)
+    values (p_user, coalesce((select s.sessions_joined from profile_stats s where s.user_id = p_user), 0))
+    on conflict do nothing;
+  elsif p_action = 'reset' then
+    delete from pets where user_id = p_user;
+    return null;
+  end if;
+
+  p := public.pet_settle(p_user);
+  if p.user_id is null then
+    return jsonb_build_object('error', 'They don''t have a pet.');
+  end if;
+
+  if p_action = 'hatch' then
+    if p.hatched_at is null then
+      update pets set egg_at = now() - make_interval(hours => (rules->>'hatch_hours')::int + 1)
+       where user_id = p_user;
+      p := public.pet_settle(p_user);
+    end if;
+  elsif p_action = 'evolve' then
+    if p.hatched_at is null then
+      return jsonb_build_object('error', 'Hatch it first.');
+    end if;
+    update pets
+       set xp = case public.pet_stage(xp)
+                  when 1 then (rules->>'stage2_xp')::int
+                  when 2 then (rules->>'stage3_xp')::int
+                  else xp end
+     where user_id = p_user returning * into p;
+  elsif p_action = 'fill' then
+    update pets
+       set hunger = 100, mood = 100, energy = 100,
+           snacks = greatest(snacks, (rules->>'snack_cap')::int),
+           played_at = null, rested_at = null, care_on = null, arcade_on = null, warmed_on = null
+     where user_id = p_user returning * into p;
+  elsif p_action = 'starve' then
+    update pets set hunger = 0, mood = 0 where user_id = p_user returning * into p;
+  elsif p_action not in ('give') then
+    return jsonb_build_object('error', 'Unknown action.');
+  end if;
+
+  return public.pet_json(p, auth.uid());
+end;
+$$;
+
+revoke all on function public.dev_pet(uuid, text) from public, anon;
+grant execute on function public.dev_pet(uuid, text) to authenticated;
 
 -- ============================================================
 --  Done. No What's New line here: the feature is off. See 111.
