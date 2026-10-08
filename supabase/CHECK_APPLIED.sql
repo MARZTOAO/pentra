@@ -770,7 +770,11 @@ checks(migration, feature, present) as (
 
     ('112_more_pets',
      'Ten more pet species (20 total)',
-     (select count(*) from public.pet_species) >= 20)
+     (select count(*) from public.pet_species) >= 20),
+
+    ('113_player_level',
+     'Player levels on profiles',
+     exists (select 1 from fn where fn.name = 'player_level'))
 )
 select
   migration,
