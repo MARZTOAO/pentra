@@ -70,9 +70,10 @@ const SHAPES: Record<string, (r: number) => string> = {
 
 export function PetSprite({ species, shape, color, edge, stage, napping, isEgg, size = 96, className }: Props) {
   const src = !ART_READY ? null : isEgg ? "/pets/egg.png" : species ? `/pets/${species}-${stage}.png` : null;
-  const [imgFailed, setImgFailed] = useState(false);
+  // Which image failed to load, so a new stage's image still gets tried.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
-  if (src && !imgFailed) {
+  if (src && failedSrc !== src) {
     return (
       <img
         src={src}
@@ -80,7 +81,7 @@ export function PetSprite({ species, shape, color, edge, stage, napping, isEgg, 
         height={size}
         alt=""
         draggable={false}
-        onError={() => setImgFailed(true)}
+        onError={() => setFailedSrc(src)}
         className={`${napping ? "opacity-50 grayscale" : ""} ${className ?? ""}`}
         style={{ width: size, height: size, objectFit: "contain" }}
       />
