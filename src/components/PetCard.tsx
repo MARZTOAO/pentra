@@ -1,12 +1,16 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { PetSprite } from "./PetSprite";
+import { useDevMode } from "../lib/devMode";
 import {
   agoText,
+  devPet,
   petAct,
   petCheer,
   petMoodText,
   untilText,
   usePet,
+  type DevPetAction,
   type Pet,
   type PetAction,
 } from "../lib/pets";
@@ -22,9 +26,11 @@ import {
  */
 export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean }) {
   const { pet, setPet, reload } = usePet(userId, true);
-  const [busy, setBusy] = useState<PetAction | "cheer" | null>(null);
+  const dev = useDevMode();
+  const [busy, setBusy] = useState<PetAction | "cheer" | "dev" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const [name, setName] = useState("");
   // Re-render each minute so countdowns move without a refetch.
   const [, setTick] = useState(0);
@@ -39,7 +45,42 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
     return () => window.clearTimeout(t);
   }, [note]);
 
-  if (!pet) return null;
+  async function devAct(action: DevPetAction) {
+    if (busy) return;
+    setBusy("dev");
+    const res = await devPet(userId, action);
+    setBusy(null);
+    if (res.error) {
+      setNote(res.error);
+      return;
+    }
+    if (action === "reset") {
+      // Gone; the next look makes a fresh egg (yours) or nothing (theirs).
+      await reload();
+      setNote("Reset.");
+      return;
+    }
+    if (res.pet) setPet(res.pet);
+    else await reload();
+    setNote(`Developer: ${action}.`);
+  }
+
+  if (!pet) {
+    if (!dev) return null;
+    return (
+      <section className="mb-8">
+        <h2 className="on-art mb-4 label-wide text-muted">Pet</h2>
+        <div className="notch border border-accent/40 bg-surface/85 p-3 text-xs text-muted backdrop-blur-sm">
+          <span className="label-wide mr-2 text-accent">Developer</span>
+          No pet yet.{" "}
+          <button type="button" disabled={busy !== null} onClick={() => void devAct("give")} className="font-semibold text-ink underline-offset-2 hover:underline">
+            Give an egg
+          </button>
+          {note && <span className="ml-2 text-accent">{note}</span>}
+        </div>
+      </section>
+    );
+  }
 
   async function act(action: PetAction, value?: string) {
     if (busy) return;
@@ -58,6 +99,10 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
     if (action === "rename") {
       setRenaming(false);
       setNote("Renamed.");
+    }
+    if (action === "new_egg") {
+      setConfirmNew(false);
+      setNote("A new egg. Nobody knows what's inside.");
     }
   }
 
@@ -80,6 +125,7 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
   }
 
   const playIn = untilText(pet.can_play_at);
+  const newEggIn = untilText(pet.can_new_egg_at);
   const restIn = untilText(pet.can_rest_at);
   const r = pet.rules;
 
@@ -242,10 +288,76 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
           <p className="mt-3 text-xs text-muted">Fully grown. {pet.xp} XP and counting.</p>
         )}
 
+        {isSelf && (
+          <div className="mt-3 border-t border-line/60 pt-3 text-xs text-muted">
+            {confirmNew ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-ink">
+                  {pet.is_egg ? "Swap this egg for a different one?" : `${pet.name} will be gone for good. Sure?`}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void act("new_egg")}
+                  className="label-wide notch-sm bg-danger px-3 py-1.5 text-onaccent transition hover:brightness-110 disabled:opacity-40"
+                >
+                  Yes, new egg
+                </button>
+                <button type="button" onClick={() => setConfirmNew(false)} className="label-wide text-muted">
+                  Keep it
+                </button>
+              </div>
+            ) : newEggIn ? (
+              <span>
+                Want a different pet? Free members get a new egg once every {r.new_egg_days} days (next {newEggIn}).{" "}
+                <Link to="/pro" className="text-accent">
+                  Pentra Pro
+                </Link>{" "}
+                members can any time.
+              </span>
+            ) : (
+              <span>
+                Want a different pet?{" "}
+                <button type="button" onClick={() => setConfirmNew(true)} className="font-semibold text-ink underline-offset-2 hover:underline">
+                  Get a new egg
+                </button>
+                {pet.pro ? " (Pro: any time)" : ` (once every ${r.new_egg_days} days)`}. The old pet is gone for good.
+              </span>
+            )}
+          </div>
+        )}
+
         {note && (
           <p className="mt-3 text-xs font-medium text-accent" role="status">
             {note}
           </p>
+        )}
+
+        {dev && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-accent/40 pt-3">
+            <span className="label-wide mr-1 text-accent">Developer</span>
+            {(
+              [
+                ["hatch", "Hatch now", pet.is_egg],
+                ["evolve", "Evolve", !pet.is_egg && pet.stage < 3],
+                ["fill", "Fill meters", !pet.is_egg],
+                ["starve", "Starve", !pet.is_egg],
+                ["reset", "Reset to egg", true],
+              ] as [DevPetAction, string, boolean][]
+            )
+              .filter(([, , show]) => show)
+              .map(([action, label]) => (
+                <button
+                  key={action}
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void devAct(action)}
+                  className="notch-sm border border-line px-2.5 py-1 text-2xs font-semibold text-muted transition hover:text-ink disabled:opacity-50"
+                >
+                  {label}
+                </button>
+              ))}
+          </div>
         )}
       </div>
     </section>

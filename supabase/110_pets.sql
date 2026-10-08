@@ -27,6 +27,8 @@
 --      A pet whose hunger has hit 0 earns nothing until fed.
 --    - Pets never die and never lose a stage. Left alone, it naps.
 --    - Friends can cheer a pet once a day (+10 mood).
+--    - A new egg (a different pet; the old one is gone for good): Pro
+--      members any time, everyone else once every 30 days.
 --
 --  Meters aren't ticked by a clock; they're worked out from the time
 --  since the last check whenever anyone looks (pet_settle), so an
@@ -86,7 +88,8 @@ returns jsonb language sql immutable as $$
     'xp_arcade', 5,
     'stage2_xp', 500,
     'stage3_xp', 2000,
-    'cheer_mood', 10)
+    'cheer_mood', 10,
+    'new_egg_days', 30)   -- free members: one new egg per this many days
 $$;
 
 
@@ -135,6 +138,9 @@ create table if not exists public.pets (
   egg_at         timestamptz not null default now(),
   -- sessions_joined when the egg arrived; one more than this hatches it.
   sessions_at_egg int not null default 0,
+  -- When they last traded a pet in for a new egg (carried onto the new
+  -- row), so free members get one per month.
+  new_egg_at     timestamptz,
   warmed_days    int not null default 0,
   warmed_on      date,
   pet_name       text check (pet_name is null or char_length(btrim(pet_name)) between 1 and 20),
@@ -154,6 +160,7 @@ create table if not exists public.pets (
 );
 
 alter table public.pets add column if not exists sessions_at_egg int not null default 0;
+alter table public.pets add column if not exists new_egg_at timestamptz;
 
 create table if not exists public.pet_cheers (
   pet_user_id uuid not null references public.profiles(id) on delete cascade,
@@ -313,6 +320,9 @@ as $$
     'can_play_at', coalesce(p.played_at, 'epoch'::timestamptz) + make_interval(hours => (public.pet_rules()->>'play_cooldown_hours')::int),
     'can_rest_at', coalesce(p.rested_at, 'epoch'::timestamptz) + make_interval(hours => (public.pet_rules()->>'rest_cooldown_hours')::int),
     'cared_today', coalesce(p.care_on = current_date, false),
+    'pro', public.has_plus(p.user_id),
+    'can_new_egg_at', case when public.has_plus(p.user_id) or p.new_egg_at is null then now()
+                           else p.new_egg_at + make_interval(days => (public.pet_rules()->>'new_egg_days')::int) end,
     'napping', p.hatched_at is not null and (round(p.hunger) <= 0 or round(p.mood) <= 0),
     'cheered_today', exists (select 1 from pet_cheers c
                               where c.pet_user_id = p.user_id and c.by_user_id = viewer and c.on_day = current_date),
@@ -393,6 +403,24 @@ begin
       return jsonb_build_object('error', 'Already warm today. Come back tomorrow.');
     end if;
     update pets set warmed_days = warmed_days + 1, warmed_on = current_date where user_id = me returning * into p;
+    return public.pet_json(p, me);
+  end if;
+
+  -- A new egg: the old pet is gone for good. Pro: whenever. Free: once
+  -- a month. Works on an unhatched egg too (re-rolling the surprise).
+  if p_action = 'new_egg' then
+    if not public.has_plus(me) and p.new_egg_at is not null
+       and now() < p.new_egg_at + make_interval(days => (rules->>'new_egg_days')::int) then
+      return jsonb_build_object('error', 'Free members can get a new egg once every '
+        || (rules->>'new_egg_days') || ' days. Next one '
+        || to_char(p.new_egg_at + make_interval(days => (rules->>'new_egg_days')::int), 'Mon DD')
+        || ', or any time with Pentra Pro.');
+    end if;
+    delete from pets where user_id = me;
+    delete from pet_cheers where pet_user_id = me;
+    insert into pets (user_id, sessions_at_egg, new_egg_at)
+    values (me, coalesce((select s.sessions_joined from profile_stats s where s.user_id = me), 0), now())
+    returning * into p;
     return public.pet_json(p, me);
   end if;
 

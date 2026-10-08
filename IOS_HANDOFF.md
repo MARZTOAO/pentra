@@ -127,7 +127,9 @@ database, one account everywhere.
   supabase/111_pets_launch.sql for the What's New line. Art is being
   commissioned; see public/pets/README.md for file names and the brief,
   then flip ART_READY in PetSprite.tsx. All the numbers (hatch time,
-  decay, XP, snacks) live in `pet_rules()` in 110 — change them there.
+  decay, XP, snacks, new-egg cooldown) live in `pet_rules()` in 110 —
+  change them there. A new egg destroys the old pet: Pro any time, free
+  once every 30 days. Developer row on the card: hatch/evolve/fill/reset.
 
 ## Not started / on hold
 

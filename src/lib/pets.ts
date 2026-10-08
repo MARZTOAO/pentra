@@ -32,6 +32,7 @@ export type PetRules = {
   stage2_xp: number;
   stage3_xp: number;
   cheer_mood: number;
+  new_egg_days: number;
 };
 
 export type Pet = {
@@ -63,13 +64,17 @@ export type Pet = {
   can_play_at: string;
   can_rest_at: string;
   cared_today: boolean;
+  /** Pentra Pro: a new egg any time. */
+  pro: boolean;
+  /** When the owner may next trade this pet for a new egg (now = ready). */
+  can_new_egg_at: string;
   napping: boolean;
   cheered_today: boolean;
   cheers_today: number;
   rules: PetRules;
 };
 
-export type PetAction = "warm" | "feed" | "play" | "rest" | "rename";
+export type PetAction = "warm" | "feed" | "play" | "rest" | "rename" | "new_egg";
 
 type PetResult = { pet: Pet | null; error: string | null };
 
@@ -170,4 +175,12 @@ export function agoText(iso: string | null): string {
   const h = Math.floor(mins / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+export type DevPetAction = "give" | "hatch" | "evolve" | "fill" | "starve" | "reset";
+
+/** Developer only (dev_pet checks am_i_developer()). Skips the waiting. */
+export async function devPet(userId: string, action: DevPetAction): Promise<PetResult> {
+  const { data, error } = await supabase.rpc("dev_pet", { p_user: userId, p_action: action });
+  return unwrap(data, error);
 }
