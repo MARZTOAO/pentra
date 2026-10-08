@@ -22,6 +22,8 @@ export type PetRules = {
   play_mood: number;
   play_energy: number;
   play_cooldown_hours: number;
+  /** Catches in the Play mini game for the full mood boost. */
+  play_target: number;
   rest_cooldown_hours: number;
   snack_free_hours: number;
   snack_cap: number;
@@ -93,8 +95,12 @@ export async function getPet(userId?: string): Promise<Pet | null> {
   return data as Pet;
 }
 
-export async function petAct(action: PetAction, name?: string): Promise<PetResult> {
-  const { data, error } = await supabase.rpc("pet_act", { p_action: action, p_name: name ?? null });
+export async function petAct(action: PetAction, name?: string, score?: number): Promise<PetResult> {
+  const { data, error } = await supabase.rpc("pet_act", {
+    p_action: action,
+    p_name: name ?? null,
+    p_score: score ?? null,
+  });
   return unwrap(data, error);
 }
 
@@ -138,6 +144,11 @@ export function usePet(userId: string | undefined, enabled: boolean) {
   }, [userId, enabled, reload]);
 
   return { pet, setPet, reload };
+}
+
+/** The mood a mini-game score earns: full at play_target, never under 30%. */
+export function playBoost(score: number, rules: PetRules): number {
+  return Math.round(rules.play_mood * Math.min(1, Math.max(0.3, score / rules.play_target)));
 }
 
 /** "in 2h 10m", or "" once the moment has passed. */

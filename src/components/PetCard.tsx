@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { PetSprite } from "./PetSprite";
+import { PetPlayGame } from "./PetPlayGame";
 import { useDevMode } from "../lib/devMode";
 import {
   agoText,
   devPet,
   petAct,
+  playBoost,
   petCheer,
   petMoodText,
   untilText,
@@ -31,6 +33,7 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
   const [note, setNote] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [name, setName] = useState("");
   // Re-render each minute so countdowns move without a refetch.
   const [, setTick] = useState(0);
@@ -82,10 +85,10 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
     );
   }
 
-  async function act(action: PetAction, value?: string) {
+  async function act(action: PetAction, value?: string, score?: number) {
     if (busy) return;
     setBusy(action);
-    const res = await petAct(action, value);
+    const res = await petAct(action, value, score);
     setBusy(null);
     if (res.error) {
       setNote(res.error);
@@ -93,7 +96,7 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
     }
     if (res.pet) setPet(res.pet);
     if (action === "feed") setNote("Yum.");
-    if (action === "play") setNote("+mood. It loved that.");
+    if (action === "play") setNote(score !== undefined && res.pet ? `+${playBoost(score, res.pet.rules)} mood.` : "+mood.");
     if (action === "rest") setNote("Zzz. Energy back to full.");
     if (action === "warm") setNote("Warm. Hatches with full mood.");
     if (action === "rename") {
@@ -236,7 +239,7 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
               label="Play"
               sub={playIn ? playIn : pet.energy < r.play_energy ? "too tired" : "ready"}
               disabled={busy !== null || !!playIn || pet.energy < r.play_energy}
-              onClick={() => void act("play")}
+              onClick={() => setPlaying(true)}
             />
             <ActionButton
               label="Rest"
@@ -325,6 +328,14 @@ export function PetCard({ userId, isSelf }: { userId: string; isSelf: boolean })
               </span>
             )}
           </div>
+        )}
+
+        {playing && (
+          <PetPlayGame
+            pet={pet}
+            onDone={(score) => act("play", undefined, score)}
+            onClose={() => setPlaying(false)}
+          />
         )}
 
         {note && (

@@ -16,14 +16,16 @@
 --    - Species: one of ten, at random. One pet per person.
 --    - Three meters, 0–100: hunger empties over 3 days, mood over 4,
 --      energy refills over a day. Feed +35 hunger (costs a snack),
---      Play +25 mood −20 energy (every 4 hours), Rest fills energy
---      (every 6 hours).
+--      Play is a 20-second mini game (catch the snacks): the mood
+--      boost is up to +25 depending on the score (play_target hits for
+--      the full boost, never less than 30% of it), costs 20 energy,
+--      every 4 hours. Rest fills energy (every 6 hours).
 --    - Snacks: one free every 8 hours, held up to 3. Earned: +2 for a
 --      session you turn up to, +1 a day for the Arcade, +5 when an
 --      invite of yours starts playing.
 --    - XP: +20 a day for care (the first feed or play of the day),
 --      +50 per session attended, +10 per commendation received,
---      +5 a day for the Arcade. Stage 2 at 500, stage 3 at 2000.
+--      +5 a day for the Arcade. Stage 2 at 250, stage 3 at 1000.
 --      A pet whose hunger has hit 0 earns nothing until fed.
 --    - Pets never die and never lose a stage. Left alone, it naps.
 --    - Friends can cheer a pet once a day (+10 mood).
@@ -79,6 +81,7 @@ returns jsonb language sql immutable as $$
     'play_mood', 25,
     'play_energy', 20,
     'play_cooldown_hours', 4,
+    'play_target', 15,      -- catches in the mini game for the full mood boost
     'rest_cooldown_hours', 6,
     'snack_free_hours', 8,
     'snack_cap', 3,
@@ -86,8 +89,8 @@ returns jsonb language sql immutable as $$
     'xp_session', 50,
     'xp_commend', 10,
     'xp_arcade', 5,
-    'stage2_xp', 500,
-    'stage3_xp', 2000,
+    'stage2_xp', 250,
+    'stage3_xp', 1000,
     'cheer_mood', 10,
     'new_egg_days', 30)   -- free members: one new egg per this many days
 $$;
@@ -375,7 +378,10 @@ grant execute on function public.get_pet(uuid) to authenticated;
 -- ------------------------------------------------------------
 --  5. Looking after it. Each returns the pet, or {"error": "..."}.
 -- ------------------------------------------------------------
-create or replace function public.pet_act(p_action text, p_name text default null)
+-- The old two-argument shape, so calls with two arguments aren't ambiguous.
+drop function if exists public.pet_act(text, text);
+
+create or replace function public.pet_act(p_action text, p_name text default null, p_score int default null)
 returns jsonb
 language plpgsql
 security definer
@@ -386,6 +392,7 @@ declare
   rules jsonb := public.pet_rules();
   p     public.pets;
   cared boolean;
+  boost numeric;
 begin
   if me is null or not public.pets_open(me) then
     return jsonb_build_object('error', 'Pets aren''t switched on for you yet.');
@@ -452,8 +459,13 @@ begin
     if round(p.energy) < (rules->>'play_energy')::int then
       return jsonb_build_object('error', 'Too tired to play. Let it rest first.');
     end if;
+    -- The mini game's score sets the boost: full at play_target
+    -- catches, never under 30% of it. No score (old app) = full.
+    boost := (rules->>'play_mood')::int
+             * case when p_score is null then 1
+                    else least(1, greatest(0.3, p_score::numeric / (rules->>'play_target')::int)) end;
     update pets
-       set mood = least(100, mood + (rules->>'play_mood')::int),
+       set mood = least(100, mood + round(boost)),
            energy = greatest(0, energy - (rules->>'play_energy')::int),
            played_at = now(),
            xp = xp + case when cared and round(hunger) > 0 then (rules->>'xp_care')::int else 0 end,
@@ -480,8 +492,8 @@ begin
 end;
 $$;
 
-revoke all on function public.pet_act(text, text) from public, anon;
-grant execute on function public.pet_act(text, text) to authenticated;
+revoke all on function public.pet_act(text, text, int) from public, anon;
+grant execute on function public.pet_act(text, text, int) to authenticated;
 
 
 -- A visitor's cheer: +mood once a day per visitor (anyone not blocked).
