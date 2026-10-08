@@ -1,18 +1,23 @@
 import { ratingHint, ratingLabel, ratingTier } from "../lib/ratings";
+import { LevelBadge } from "./LevelBadge";
 import { OgBadge } from "./OgBadge";
 import { ProBadge } from "./ProBadge";
 
 /**
- * Standing and commendations, side by side on a profile.
+ * The badge rail on a profile. Two deliberate rows, every chip the
+ * same height (h-6) so the rail reads as one designed thing rather
+ * than a pile of stickers (MARZ, 2026-10-08):
  *
- * The badge is shown at every value including 100, so it reads as a
+ *   row 1 — the numbers: level, standing, commendations. Outlined
+ *           chips, same type size.
+ *   row 2 — the stamps: Pentra OG and Pro. Filled, uppercase, the
+ *           brand marks. Only drawn when there's at least one.
+ *
+ * Standing is shown at every value including 100, so it reads as a
  * property everybody has rather than a mark that only appears when
- * something is wrong. A badge that only showed up after a penalty
- * would be a scarlet letter.
- *
- * Colour is not the only signal — the label says the same thing in
- * words, because roughly one man in twelve cannot separate the green
- * from the amber.
+ * something is wrong. Colour is not the only signal — the label says
+ * the same thing in words, because roughly one man in twelve cannot
+ * separate the green from the amber.
  */
 export function RatingBadge({
   rating,
@@ -20,6 +25,7 @@ export function RatingBadge({
   isSelf = false,
   ogNumber = null,
   pro = false,
+  userId,
   className = "",
 }: {
   rating: number;
@@ -29,6 +35,8 @@ export function RatingBadge({
   ogNumber?: number | null;
   /** Pentra Pro member — see hasPlus() in lib/profile.ts. */
   pro?: boolean;
+  /** Pass to include the player level (113) at the front of the rail. */
+  userId?: string;
   className?: string;
 }) {
   const tier = ratingTier(rating);
@@ -41,43 +49,46 @@ export function RatingBadge({
         : "border-danger/50 bg-danger/10 text-danger";
 
   return (
-    <div className={"flex flex-wrap items-center gap-2 " + className}>
-      <span
-        title={ratingHint(rating, isSelf)}
-        className={"notch-sm border px-2 py-0.5 text-xs font-semibold " + styles}
-      >
-        {ratingLabel(rating)}
-        <span className="numeric ml-1.5 opacity-80">{rating}</span>
-      </span>
+    <div className={"flex flex-col gap-1.5 " + className}>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {userId && <LevelBadge userId={userId} isSelf={isSelf} />}
 
-      <span
-        title={
-          commendations === 1
-            ? "Vouched for once by another player"
-            : `Vouched for ${commendations} times by other players`
-        }
-        className="notch-sm border border-line bg-surface-2 px-2 py-0.5 text-xs text-muted"
-      >
-        <svg
-          className="mr-1 inline h-3 w-3 align-[-1px]"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
+        <span title={ratingHint(rating, isSelf)} className={"chip border " + styles}>
+          {ratingLabel(rating)}
+          <span className="numeric opacity-80">{rating}</span>
+        </span>
+
+        <span
+          title={
+            commendations === 1
+              ? "Vouched for once by another player"
+              : `Vouched for ${commendations} times by other players`
+          }
+          className="chip border border-line bg-surface-2 text-muted"
         >
-          <path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM7 11l4-8a2 2 0 0 1 2 2v4h5a2 2 0 0 1 2 2.4l-1.4 6A2 2 0 0 1 16.6 20H7" />
-        </svg>
-        <span className="numeric font-semibold text-ink">{commendations}</span>
-        <span className="ml-1">
+          <svg
+            className="h-3 w-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1zM7 11l4-8a2 2 0 0 1 2 2v4h5a2 2 0 0 1 2 2.4l-1.4 6A2 2 0 0 1 16.6 20H7" />
+          </svg>
+          <span className="numeric font-semibold text-ink">{commendations}</span>
           commendation{commendations === 1 ? "" : "s"}
         </span>
-      </span>
+      </div>
 
-      {ogNumber != null && <OgBadge number={ogNumber} />}
-      {pro && <ProBadge />}
+      {(ogNumber != null || pro) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {pro && <ProBadge />}
+          {ogNumber != null && <OgBadge number={ogNumber} />}
+        </div>
+      )}
     </div>
   );
 }

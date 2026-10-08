@@ -210,6 +210,21 @@ html[data-keyboard] [data-tabbar-gap] {
   );
 }
 
+/* A badge chip on the profile rail: one height, one padding, one type
+   size, so standing, commendations, level, OG and Pro line up as a set.
+   Colour and border come from the caller. */
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 1.5rem;
+  padding-inline: 0.5rem;
+  font-size: var(--text-xs);
+  line-height: 1;
+  white-space: nowrap;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
 @utility notch-sm {
   clip-path: polygon(
     0 0,

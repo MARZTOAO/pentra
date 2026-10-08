@@ -15,7 +15,7 @@ export function ProBadge() {
     <span
       title="Pentra Pro member."
       aria-label="Pentra Pro member"
-      className="notch-sm relative inline-flex items-center gap-1.5 py-0.5 pl-2 pr-2.5 font-display text-2xs uppercase tracking-[0.14em] text-onaccent"
+      className="chip relative pr-3 font-display uppercase tracking-[0.14em] text-onaccent"
       style={{
         background:
           "linear-gradient(115deg, #ffe29a 0%, #f7b733 28%, #ff9a3c 55%, #ffd36b 100%)",

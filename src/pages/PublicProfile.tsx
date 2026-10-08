@@ -7,7 +7,6 @@ import { getFriendCount } from "../lib/matching";
 import { GameLibrary } from "../components/GameLibrary";
 import { ProfileStats } from "../components/ProfileStats";
 import { RatingBadge } from "../components/RatingBadge";
-import { LevelBadge } from "../components/LevelBadge";
 import { Achievements } from "../components/Achievements";
 import { ProfileMatch } from "../components/ProfileMatch";
 import { formatLocation } from "../lib/constants";
@@ -204,11 +203,9 @@ export default function PublicProfile({ username: fixed }: { username?: string }
               ogNumber={profile.og_number}
               pro={hasPlus(profile)}
               isSelf={isSelf}
+              userId={profile.id}
               className="mb-3"
             />
-
-            {/* Player level (113): XP from being active on Pentra. */}
-            <LevelBadge userId={profile.id} isSelf={isSelf} className="mb-3" />
 
             {profile.bio && (
               <p className="on-art mb-2 whitespace-pre-line break-words text-sm leading-relaxed">

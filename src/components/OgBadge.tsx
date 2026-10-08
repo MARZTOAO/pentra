@@ -14,7 +14,7 @@ export function OgBadge({ number }: { number: number }) {
     <span
       title="One of the first 1,000 players on Pentra."
       aria-label={label}
-      className="notch-sm inline-flex items-center gap-1.5 bg-accent py-0.5 pl-1.5 pr-2 font-display text-2xs uppercase tracking-[0.06em] text-onaccent"
+      className="chip bg-accent font-display uppercase tracking-[0.06em] text-onaccent"
     >
       <PentraMark />
       Pentra OG
