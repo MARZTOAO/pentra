@@ -25,6 +25,7 @@ import Search from "./pages/Search";
 import MySessions from "./pages/MySessions";
 import Landing from "./pages/Landing";
 import { Privacy, Terms } from "./pages/Legal";
+import Support from "./pages/Support";
 import Confirm from "./pages/Confirm";
 import Forgot from "./pages/Forgot";
 import DevMetrics from "./pages/DevMetrics";
@@ -83,6 +84,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/support" element={<Support />} />
 
           {/* Giveaways (supabase/105). Open signed out too, for the
               link in a TikTok bio; inside the app frame once signed in. */}

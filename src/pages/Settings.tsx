@@ -209,6 +209,13 @@ export default function Settings() {
       {/* Last on the page, on purpose. */}
       <DeleteAccount username={profile?.username ?? null} />
 
+      {/* Inside the app there's no site footer, so the way to help. */}
+      <p className="mt-8 text-center text-xs text-muted">
+        <Link to="/support" className="font-semibold text-accent hover:underline">
+          Help &amp; support →
+        </Link>
+      </p>
+
       {/* Developers only. The Developer page is in the sidebar on a
           computer; a phone has no sidebar, so it's reachable here. */}
       {isDev && (

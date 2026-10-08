@@ -153,6 +153,7 @@ export function SiteFooter() {
         <div>
           <p className="label-wide mb-3 text-ink">Support</p>
           <ul className="space-y-2 text-sm text-muted">
+            <li><Link to="/support" className={link}>Help &amp; support</Link></li>
             <li>
               <a href={`mailto:${SUPPORT_EMAIL}`} className={link}>
                 {SUPPORT_EMAIL}
