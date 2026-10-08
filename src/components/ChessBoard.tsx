@@ -88,7 +88,7 @@ export function ChessBoard({
   return (
     <div className={"relative mx-auto w-full max-w-[520px] select-none " + className}>
       <div
-        className="grid aspect-square w-full grid-cols-8 overflow-hidden notch border border-line"
+        className="grid aspect-square w-full grid-cols-8 grid-rows-8 overflow-hidden notch border border-line"
         role="grid"
         aria-label="Chess board"
       >
@@ -108,7 +108,7 @@ export function ChessBoard({
               onClick={() => tap(sq)}
               aria-label={squareName(sq) + (piece ? ` ${piece}` : "")}
               className={
-                "relative flex items-center justify-center text-[clamp(1.4rem,6.5vw,2.6rem)] leading-none transition " +
+                "relative flex aspect-square min-h-0 min-w-0 items-center justify-center overflow-hidden p-0 text-[clamp(1.4rem,6.5vw,2.6rem)] leading-none transition " +
                 (light ? "bg-[#c9c3b4]" : "bg-[#6b5d4a]") +
                 (isSel ? " ring-inset ring-4 ring-accent" : "") +
                 (isLast && !isSel ? " shadow-[inset_0_0_0_9999px_rgba(255,122,47,0.22)]" : "") +
