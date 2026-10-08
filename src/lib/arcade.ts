@@ -17,7 +17,7 @@ export type ArcadeGameInfo = {
   /** "score": one run, one number, leaderboards (ArcadeGame.tsx).
    *  "levels": progress through levels with a time each, no boards
    *  (its own page). */
-  kind: "score" | "levels";
+  kind: "score" | "levels" | "chess";
   /** What you're trying to do, in one line — on the start screen. */
   objective: string;
   /** How to play, in one line. */
@@ -85,6 +85,18 @@ export const GAMES: ArcadeGameInfo[] = [
     overlayHud: false,
   },
 ];
+
+GAMES.push({
+  slug: "chess",
+  name: "Chess",
+  kind: "chess",
+  tagline: "The old one. Play the computer, or challenge a friend and take your turns whenever.",
+  objective: "Checkmate the other king.",
+  controls: "Click a piece, then where it goes.",
+  touchControls: "Tap a piece, then where it goes.",
+  touchPad: null,
+  overlayHud: false,
+});
 
 export function gameInfo(slug: string | undefined): ArcadeGameInfo | null {
   return GAMES.find((g) => g.slug === slug) ?? null;

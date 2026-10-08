@@ -746,7 +746,18 @@ checks(migration, feature, present) as (
     ('107_changelog_support_page',
      'What''s New line for the Support page',
      case when to_regclass('public.changelog_entries') is null then false
-          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''New Support page''', false, true, '')))[1]::text::int > 0 end)
+          else (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.changelog_entries where title = ''New Support page''', false, true, '')))[1]::text::int > 0 end),
+
+    ('108_group_chats',
+     'Group chats people make themselves',
+     exists (select 1 from fn where fn.name = 'create_group_conversation')
+     and exists (select 1 from cols where cols.t = 'conversations' and cols.c = 'created_by')),
+
+    ('109_chess',
+     'Chess in the Arcade, with turn notifications',
+     to_regclass('public.chess_games') is not null
+     and exists (select 1 from fn where fn.name = 'chess_move')
+     and exists (select 1 from cols where cols.t = 'notifications' and cols.c = 'ref_id'))
 )
 select
   migration,

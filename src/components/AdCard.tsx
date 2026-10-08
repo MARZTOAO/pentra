@@ -6,8 +6,9 @@ import { openExternal } from "../lib/platform";
 /**
  * An ad in the feed — supabase/85_feed_ads.sql, lib/ads.ts.
  *
- * Shaped like a post so it sits naturally in the feed, but always
- * labelled "Sponsored" so nobody mistakes it for a player's post.
+ * Not shaped like a post: the picture fills the feed's width with no
+ * card around it (MARZ, 2026-10-08), labelled "Sponsored" on the
+ * picture and named underneath, so nobody mistakes it for a post.
  *
  * Clicking the picture or video opens it large (MARZ, 2026-10-03:
  * "clicking on them to open up the image larger on screen or open up
@@ -87,37 +88,18 @@ export function AdCard({ ad }: { ad: Ad }) {
   const alt = ad.body ?? `Ad for ${ad.sponsor}`;
 
   return (
-    <article ref={ref} className="notch border border-line bg-surface p-4" aria-label={`Sponsored: ${ad.sponsor}`}>
-      <div className="flex gap-3">
-        <div className="notch-sm flex h-10 w-10 shrink-0 items-center justify-center bg-accent-dim text-sm font-bold text-accent">
-          {initial}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold">{ad.sponsor}</span>
-            <span className="label-wide shrink-0 border border-line px-1.5 py-px text-4xs text-muted">
-              Sponsored
-            </span>
-          </div>
-
-          {ad.body && (
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm">{ad.body}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Full card width — a picture squeezed beside the avatar was
-          unreadable on a phone (MARZ, 2026-10-05). Sized from the stored
-          width and height, so the space is reserved before the file
-          arrives and the feed doesn't jump. */}
-      {url && (
+    // No card around it (MARZ, 2026-10-08): the picture runs the full
+    // width of the feed with nothing boxing it in. The sponsor and the
+    // Sponsored label sit in a thin row underneath, so it's still
+    // obviously an ad and never mistaken for a player's post.
+    <article ref={ref} className="overflow-hidden notch" aria-label={`Sponsored: ${ad.sponsor}`}>
+      {url ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
           title={ad.media_kind === "video" ? "Open the video" : "Open the picture"}
-          className="group relative mt-3 block w-full cursor-zoom-in overflow-hidden notch-md bg-surface-2 text-left"
-          style={{ aspectRatio: `${ad.width ?? 16} / ${ad.height ?? 9}`, maxHeight: 520 }}
+          className="group relative block w-full cursor-zoom-in overflow-hidden bg-surface-2 text-left"
+          style={{ aspectRatio: `${ad.width ?? 16} / ${ad.height ?? 9}`, maxHeight: 560 }}
         >
           {ad.media_kind === "video" ? (
             <video
@@ -137,18 +119,36 @@ export function AdCard({ ad }: { ad: Ad }) {
               className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.01]"
             />
           )}
+          <span className="pointer-events-none absolute left-2 top-2 label-wide notch-sm bg-black/55 px-1.5 py-0.5 text-4xs text-white/85">
+            Sponsored
+          </span>
           <span className="pointer-events-none absolute bottom-2 right-2 notch-sm bg-black/60 px-2 py-1 text-3xs font-semibold text-white/90 opacity-0 transition group-hover:opacity-100">
             {ad.media_kind === "video" ? "Play large" : "View large"}
           </span>
         </button>
-      )}
-
-      {link && (
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="truncate text-xs text-muted">{domain}</span>
-          <VisitButton domain={domain} onClick={visit} />
+      ) : (
+        // No picture: the words alone, edge to edge on a quiet band.
+        <div className="bg-surface-2 px-4 py-4">
+          <span className="label-wide border border-line px-1.5 py-px text-4xs text-muted">Sponsored</span>
+          {ad.body && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{ad.body}</p>}
         </div>
       )}
+
+      <div className="flex items-center gap-3 px-1 pt-2">
+        <div className="notch-sm flex h-7 w-7 shrink-0 items-center justify-center bg-accent-dim text-xs font-bold text-accent">
+          {initial}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">
+            {ad.sponsor}
+            {domain && <span className="ml-2 text-xs font-normal text-muted">{domain}</span>}
+          </p>
+          {url && ad.body && (
+            <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-muted">{ad.body}</p>
+          )}
+        </div>
+        {link && <VisitButton domain={domain} onClick={visit} />}
+      </div>
 
       {open && url && (
         <AdLightbox

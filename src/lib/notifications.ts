@@ -32,7 +32,11 @@ export type NotificationKind =
   | "post_comment"
   | "session_joined"
   | "session_left"
-  | "session_invite";
+  | "session_invite"
+  | "chess_challenge"
+  | "chess_accepted"
+  | "chess_turn"
+  | "chess_result";
 
 export type AppNotification = {
   id: number;
@@ -49,6 +53,8 @@ export type AppNotification = {
   post_id: number | null;
   game_name: string | null;
   starts_at: string | null;
+  /** What it points at when it isn't a post: a chess game's id (109). */
+  ref_id?: number | null;
 };
 
 export type NotificationSettings = {
@@ -60,6 +66,8 @@ export type NotificationSettings = {
   post_comments: boolean;
   session_players: boolean;
   session_invites: boolean;
+  /** Arcade: chess challenges, your move, results (109). */
+  arcade_games: boolean;
 };
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
@@ -71,6 +79,7 @@ export const DEFAULT_SETTINGS: NotificationSettings = {
   post_comments: true,
   session_players: true,
   session_invites: true,
+  arcade_games: true,
 };
 
 /** What each toggle says on the settings screen. */
@@ -119,6 +128,11 @@ export const SETTING_LABELS: {
     label: "Session invites",
     hint: "When a friend invites you into a session they're in.",
   },
+  {
+    key: "arcade_games",
+    label: "Arcade games",
+    hint: "Chess: when someone challenges you, and when it's your move.",
+  },
 ];
 
 /** Where clicking a notification should take you. */
@@ -140,6 +154,11 @@ export function notificationLink(n: AppNotification): string {
     case "session_left":
     case "session_invite":
       return n.post_id ? `/p/${n.post_id}` : "/home";
+    case "chess_challenge":
+    case "chess_accepted":
+    case "chess_turn":
+    case "chess_result":
+      return n.ref_id ? `/arcade/chess/${n.ref_id}` : "/arcade/chess";
   }
 }
 
@@ -181,6 +200,14 @@ export function notificationText(n: AppNotification): string {
       return n.game_name
         ? `${who} invited you to a ${n.game_name} session.`
         : `${who} invited you to a session.`;
+    case "chess_challenge":
+      return `${who} challenged you to chess.`;
+    case "chess_accepted":
+      return `${who} accepted your chess challenge.`;
+    case "chess_turn":
+      return `${who} moved. It's your turn in chess.`;
+    case "chess_result":
+      return `Your chess game with ${who} is over.`;
   }
 }
 
@@ -213,6 +240,14 @@ export function notificationTitle(n: AppNotification): string {
       return "Your session";
     case "session_invite":
       return "Session invite";
+    case "chess_challenge":
+      return "Chess challenge";
+    case "chess_accepted":
+      return "Challenge accepted";
+    case "chess_turn":
+      return "Your move";
+    case "chess_result":
+      return "Chess";
   }
 }
 
@@ -278,7 +313,7 @@ export async function getNotificationSettings(): Promise<NotificationSettings> {
     // with `+` and the inferred type collapses to GenericStringError,
     // which fails the build at the cast below.
     .select(
-      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions, post_comments, session_players, session_invites",
+      "friend_requests, friend_accepted, session_reminders, friend_lfg, post_mentions, post_comments, session_players, session_invites, arcade_games",
     )
     .maybeSingle();
 

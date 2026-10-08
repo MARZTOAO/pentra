@@ -17,8 +17,8 @@ export type Conversation = {
   last_message_at: string | null;
   last_from_me: boolean | null;
   unread: number;
-  /** 'direct' for a DM, 'session' for a session's group chat. */
-  kind: "direct" | "session";
+  /** 'direct' for a DM, 'session' for a session's chat, 'group' for one people made (108). */
+  kind: "direct" | "session" | "group";
   /** The session this chat belongs to, for linking back to it. */
   post_id: number | null;
   /** Session chats only: the game's name. Computed, so it follows the post. */
@@ -30,6 +30,8 @@ export type Conversation = {
    * database refuses new messages into them (supabase/80).
    */
   archived: boolean;
+  /** Group chats: who made it. Only they can remove people. */
+  created_by?: string | null;
 };
 
 /** How long after a session starts its chat is archived. Mirrors 80. */
@@ -59,6 +61,7 @@ export type ConversationMember = {
 /** What to call a conversation, in a list row or a thread header. */
 export function conversationName(c: Conversation): string {
   if (c.kind === "session") return c.title ?? "Session";
+  if (c.kind === "group") return c.title ?? "Group";
   return c.display_name || c.username || "Unknown";
 }
 
@@ -81,6 +84,51 @@ export async function getConversations(): Promise<Conversation[]> {
   const { data, error } = await supabase.rpc("get_conversations");
   if (error || !data) return [];
   return data as Conversation[];
+}
+
+/* ------------------------------------------------------------------ */
+/*  Group chats (supabase/108)                                         */
+/* ------------------------------------------------------------------ */
+
+/** @returns the new group's id, or the problem as a string. */
+export async function createGroup(title: string, members: string[]): Promise<number | string> {
+  const { data, error } = await supabase.rpc("create_group_conversation", {
+    p_title: title,
+    p_members: members,
+  });
+  if (error) return error.message;
+  const r = data as { id?: number; error?: string } | null;
+  return r?.id ?? r?.error ?? "Couldn't make the group.";
+}
+
+/** Anyone in the group can add. @returns how many were added, or the problem. */
+export async function addGroupMembers(conversationId: number, members: string[]): Promise<number | string> {
+  const { data, error } = await supabase.rpc("add_group_members", {
+    p_conversation: conversationId,
+    p_members: members,
+  });
+  if (error) return error.message;
+  const r = data as { added?: number; error?: string } | null;
+  return r?.error ?? r?.added ?? 0;
+}
+
+/** The maker only. @returns null when removed, or the problem. */
+export async function removeGroupMember(conversationId: number, userId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("remove_group_member", {
+    p_conversation: conversationId,
+    p_user: userId,
+  });
+  if (error) return error.message;
+  return data === "removed" ? null : (data as string) || "Couldn't remove them.";
+}
+
+export async function renameGroup(conversationId: number, title: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("rename_group_conversation", {
+    p_conversation: conversationId,
+    p_title: title,
+  });
+  if (error) return error.message;
+  return data === "saved" ? null : (data as string) || "Couldn't rename it.";
 }
 
 /** Who's in a group chat. Used for the thread header. */

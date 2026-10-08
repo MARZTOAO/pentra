@@ -12,6 +12,7 @@ import {
   messageTime,
   deleteMessage,
   leaveConversation,
+  removeGroupMember,
   SESSION_CHAT_ARCHIVE_HOURS,
   type Conversation,
   type ConversationMember,
@@ -28,6 +29,7 @@ import { Confirm, ReportDialog } from "../components/SafetyMenu";
 import { Avatar } from "../components/Avatar";
 import { useNotifications } from "../components/Notifications";
 import { FullScreenLoader } from "../components/ui";
+import { GroupChatDialog } from "../components/GroupChatDialog";
 
 /** Folds the batched presence lookup into a conversation row. */
 function stateOf(
@@ -56,6 +58,8 @@ export default function Messages() {
   // Two tabs: live chats, and session chats that have been archived
   // (24 hours after the session, read-only — supabase/80).
   const [tab, setTab] = useState<"chats" | "archived">("chats");
+  // Making a group chat (supabase/108).
+  const [newGroup, setNewGroup] = useState(false);
 
   // Opening an archived chat from anywhere (a link, a notification)
   // shows the tab it lives in, so the list and the thread agree.
@@ -98,8 +102,15 @@ export default function Messages() {
           (activeId ? "hidden w-full" : "block w-full")
         }
       >
-        <div className="px-4 pb-2 pt-4">
+        <div className="flex items-center justify-between px-4 pb-2 pt-4">
           <h1 className="display text-lg">Messages</h1>
+          <button
+            type="button"
+            onClick={() => setNewGroup(true)}
+            className="notch-sm border border-line px-2.5 py-1 text-2xs font-semibold text-muted transition hover:border-accent hover:text-accent"
+          >
+            + New group
+          </button>
         </div>
 
         {/* Chats | Archived. The archived tab carries its own count so
@@ -176,7 +187,7 @@ export default function Messages() {
                   notched square with the player count instead of a round
                   avatar. The shape difference is the point: you can tell
                   the two kinds apart without reading anything. */}
-              {c.kind === "session" ? (
+              {c.kind !== "direct" ? (
                 <div
                   className={
                     "notch-sm flex h-10 w-10 shrink-0 items-center justify-center " +
@@ -209,7 +220,9 @@ export default function Messages() {
                     ? (c.last_from_me ? "You: " : "") + c.last_message
                     : c.kind === "session"
                       ? "Session chat — say hello"
-                      : "No messages yet"}
+                      : c.kind === "group"
+                        ? `${c.member_count} in the group — say hello`
+                        : "No messages yet"}
                 </p>
               </div>
 
@@ -222,6 +235,17 @@ export default function Messages() {
           ))
         )}
       </aside>
+
+      {newGroup && (
+        <GroupChatDialog
+          mode="create"
+          onDone={(id) => {
+            load();
+            navigate(`/messages/${id}`);
+          }}
+          onClose={() => setNewGroup(false)}
+        />
+      )}
 
       {/* Thread */}
       {active && user ? (
@@ -296,12 +320,17 @@ function Thread({
   // conversation. Refetched per conversation so leaving a session is
   // reflected the next time anyone opens it.
   useEffect(() => {
-    if (conversation.kind !== "session") {
+    if (conversation.kind === "direct") {
       setMembers([]);
       return;
     }
     getConversationMembers(conversation.conversation_id).then(setMembers);
-  }, [conversation.conversation_id, conversation.kind]);
+  }, [conversation.conversation_id, conversation.kind, conversation.member_count]);
+
+  // Group chats (108): adding people, and the maker's member list.
+  const [adding, setAdding] = useState(false);
+  const [managing, setManaging] = useState(false);
+  const isMaker = conversation.kind === "group" && conversation.created_by === myId;
 
   // Load history, mark it read, then listen for anything new.
   useEffect(() => {
@@ -381,7 +410,7 @@ function Thread({
       {/* Header and composer are panels; the messages between them
           float on the background, each bubble on its own surface. */}
       <header className="flex shrink-0 items-center gap-3 border-b border-line bg-surface/90 px-5 py-3 backdrop-blur-sm">
-        {conversation.kind === "session" ? (
+        {conversation.kind !== "direct" ? (
           <>
             <div className="notch-sm flex h-9 w-9 shrink-0 items-center justify-center bg-accent-dim text-accent">
               <span className="numeric text-sm font-bold">
@@ -399,9 +428,34 @@ function Thread({
                   ? members
                       .map((m) => m.display_name || m.username)
                       .join(", ")
-                  : "Session chat"}
+                  : conversation.kind === "group" ? "Group chat" : "Session chat"}
               </p>
             </div>
+            {conversation.kind === "group" && (
+              <div className="ml-auto flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setAdding(true)}
+                  className="label-wide px-2 py-1.5 text-muted transition hover:text-accent"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setManaging((v) => !v)}
+                  className="label-wide px-2 py-1.5 text-muted transition hover:text-ink"
+                >
+                  {managing ? "Done" : "People"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmLeave(true)}
+                  className="label-wide px-2 py-1.5 text-muted transition hover:text-danger"
+                >
+                  Leave
+                </button>
+              </div>
+            )}
             {conversation.archived && (
               <span className="label-wide ml-auto shrink-0 notch-sm border border-line px-2 py-1 text-muted">
                 Archived
@@ -439,6 +493,57 @@ function Thread({
           </>
         )}
       </header>
+
+      {managing && conversation.kind === "group" && (
+        <div className="shrink-0 border-b border-line bg-surface/90 px-5 py-3 backdrop-blur-sm">
+          <p className="label-wide mb-2 text-muted">
+            {members.length} in the group
+            {isMaker ? " · you made it, so you can remove people" : ""}
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {members.map((m) => (
+              <li key={m.id} className="flex items-center gap-2 notch-md border border-line bg-surface-2 py-1 pl-1 pr-2 text-xs">
+                <Avatar of={m} size={22} />
+                <Link to={`/u/${m.username}`} className="hover:text-accent">
+                  {m.display_name || m.username}
+                </Link>
+                {m.id === conversation.created_by && <span className="text-3xs text-muted">maker</span>}
+                {isMaker && m.id !== myId && (
+                  <button
+                    type="button"
+                    title="Remove from the group"
+                    onClick={async () => {
+                      const err = await removeGroupMember(conversation.conversation_id, m.id);
+                      if (err) {
+                        setSendError(err);
+                        return;
+                      }
+                      setMembers((cur) => cur.filter((x) => x.id !== m.id));
+                      onSent();
+                    }}
+                    className="ml-1 text-muted transition hover:text-danger"
+                  >
+                    ×
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {adding && (
+        <GroupChatDialog
+          mode="add"
+          conversationId={conversation.conversation_id}
+          members={members.map((m) => m.id)}
+          onDone={() => {
+            getConversationMembers(conversation.conversation_id).then(setMembers);
+            onSent();
+          }}
+          onClose={() => setAdding(false)}
+        />
+      )}
 
       <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4">
         {messages.length === 0 && (
@@ -498,6 +603,17 @@ function Thread({
                       : "border border-line bg-surface")
                 }
               >
+                {/* In a group, say who's talking. A DM has one other
+                    person and a session chat shows the roster above,
+                    but a group of eight needs a name on each bubble. */}
+                {!mine && conversation.kind === "group" && !gone && (
+                  <p className="mb-0.5 text-2xs font-semibold text-accent">
+                    {(() => {
+                      const m = members.find((x) => x.id === message.sender_id);
+                      return m ? m.display_name || m.username : "Someone";
+                    })()}
+                  </p>
+                )}
                 <p
                   className={
                     "whitespace-pre-wrap break-words " + (gone ? "italic" : "")
@@ -551,9 +667,13 @@ function Thread({
 
       {confirmLeave && (
         <Confirm
-          title="Delete this chat?"
-          body="It disappears from your Messages. They keep their copy, and if they write again you'll only see what they send from now on."
-          confirmLabel="Delete"
+          title={conversation.kind === "group" ? "Leave this group?" : "Delete this chat?"}
+          body={
+            conversation.kind === "group"
+              ? "You'll stop seeing its messages. Someone in the group can add you back later."
+              : "It disappears from your Messages. They keep their copy, and if they write again you'll only see what they send from now on."
+          }
+          confirmLabel={conversation.kind === "group" ? "Leave" : "Delete"}
           onCancel={() => setConfirmLeave(false)}
           onConfirm={async () => {
             setConfirmLeave(false);
@@ -623,6 +743,8 @@ function Thread({
           placeholder={
             conversation.kind === "session"
               ? `Message the ${conversationName(conversation)} session`
+              : conversation.kind === "group"
+                ? `Message ${conversationName(conversation)}`
               : `Message ${conversationName(conversation)}`
           }
           className="min-w-0 flex-1 notch-md border border-line bg-surface-2 px-3 py-2.5 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30"

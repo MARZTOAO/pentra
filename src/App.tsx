@@ -36,6 +36,7 @@ import GiveawayRoute, { GiveawayRulesRoute } from "./pages/Giveaway";
 import Arcade from "./pages/Arcade";
 import ArcadeGame from "./pages/ArcadeGame";
 import StackTrace from "./pages/StackTrace";
+import Chess from "./pages/Chess";
 
 /** Every signed-in screen gets the sidebar frame. */
 function Shell({ children }: { children: React.ReactNode }) {
@@ -259,6 +260,23 @@ export default function App() {
             element={
               <Shell>
                 <StackTrace />
+              </Shell>
+            }
+          />
+          {/* Chess: the computer, or a friend by turns (109). */}
+          <Route
+            path="/arcade/chess"
+            element={
+              <Shell>
+                <Chess />
+              </Shell>
+            }
+          />
+          <Route
+            path="/arcade/chess/:id"
+            element={
+              <Shell>
+                <Chess />
               </Shell>
             }
           />

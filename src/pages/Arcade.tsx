@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { GAMES, formatScore, useBests, useLevels } from "../lib/arcade";
 import { LEVEL_COUNT } from "../arcade/stackTrace";
+import { useEffect, useState } from "react";
+import { getChessRecord, type ChessRecord } from "../lib/chess";
 
 /**
  * The Arcade tab — /arcade. Small games inside Pentra (supabase/93).
@@ -11,6 +13,10 @@ export default function Arcade() {
   const { user } = useAuth();
   const bests = useBests(user?.id);
   const levels = useLevels(user?.id);
+  const [chess, setChess] = useState<ChessRecord | null>(null);
+  useEffect(() => {
+    getChessRecord().then(setChess);
+  }, []);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-8 sm:py-10">
@@ -38,7 +44,18 @@ export default function Arcade() {
               <p className="mt-1 text-sm text-muted">{g.tagline}</p>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-xs text-muted">
-                  {g.kind === "levels" ? (
+                  {g.kind === "chess" ? (
+                    chess && chess.wins + chess.losses + chess.draws > 0 ? (
+                      <>
+                        Against players{" "}
+                        <span className="numeric font-bold text-ink">
+                          {chess.wins}–{chess.losses}–{chess.draws}
+                        </span>
+                      </>
+                    ) : (
+                      "Computer or a friend"
+                    )
+                  ) : g.kind === "levels" ? (
                     done > 0 ? (
                       <>
                         <span className="numeric font-bold text-ink">{done}</span> of {LEVEL_COUNT} levels cleared
@@ -137,6 +154,30 @@ function Preview({ slug }: { slug: string }) {
         )}
         <line x1="120" y1="84" x2="150" y2="62" stroke="rgba(233,235,238,0.5)" strokeDasharray="2 4" />
         <circle cx="120" cy="84" r="11" fill="#ff7a2f" stroke="rgba(14,15,17,0.6)" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  if (slug === "chess") {
+    const pieces = ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"];
+    return (
+      <svg viewBox="0 0 240 90" className="h-full w-full" aria-hidden="true">
+        {[...Array(32).keys()].map((i) => {
+          const r = Math.floor(i / 8), c = i % 8;
+          return (
+            <rect key={i} x={48 + c * 18} y={9 + r * 18} width="18" height="18"
+              fill={(r + c) % 2 === 0 ? "#c9c3b4" : "#6b5d4a"} />
+          );
+        })}
+        {pieces.map((p, c) => (
+          <text key={c} x={57 + c * 18} y={23} textAnchor="middle" fontSize="15" fill="#15161a">{p}</text>
+        ))}
+        {pieces.map((_, c) => (
+          <text key={`p${c}`} x={57 + c * 18} y={41} textAnchor="middle" fontSize="15" fill="#15161a">♟</text>
+        ))}
+        {[2, 5].map((c) => (
+          <text key={`w${c}`} x={57 + c * 18} y={77} textAnchor="middle" fontSize="15" fill="#f6f1e6">♙</text>
+        ))}
+        <text x={57 + 4 * 18} y={59} textAnchor="middle" fontSize="15" fill="#f6f1e6">♙</text>
       </svg>
     );
   }

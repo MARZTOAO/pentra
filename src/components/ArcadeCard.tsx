@@ -14,7 +14,8 @@ export function ArcadeCard({ userId, isSelf }: { userId: string; isSelf: boolean
   const levels = useLevels(userId);
   if (bests === null || levels === null) return null;
 
-  const rows = GAMES.map((g) => {
+  // Chess has no score or levels; its record lives on the Arcade page.
+  const rows = GAMES.filter((g) => g.kind !== "chess").map((g) => {
     const cleared = levels.filter((l) => l.game === g.slug);
     const totalMs = cleared.reduce((n, l) => n + l.best_ms, 0);
     return {

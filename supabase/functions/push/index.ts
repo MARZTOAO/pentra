@@ -61,6 +61,7 @@ async function rpc(name: string, args: Record<string, unknown>): Promise<any> {
 type Claim = {
   kind: string;
   post_id?: number | null;
+  ref_id?: number | null;
   conversation_id?: number | null;
   session?: boolean;
   actor?: string | null;
@@ -80,11 +81,12 @@ export function describe(c: Claim): Message | null {
   const who = c.actor || "Someone";
   const post = c.post_id ? `/p/${c.post_id}` : "/home";
   const yourSession = c.game ? `your ${c.game} session` : "your session";
+  const chess = c.ref_id ? `/arcade/chess/${c.ref_id}` : "/arcade/chess";
 
   switch (c.kind) {
     case "message":
       return {
-        title: c.session ? `${who} · ${c.game ? `${c.game} session` : "Session chat"}` : who,
+        title: c.session ? `${who} · ${c.game ? `${c.game} session` : "Group chat"}` : who,
         body: c.body || "Sent a message",
         url: "/messages",
         thread: `chat-${c.conversation_id}`,
@@ -119,6 +121,14 @@ export function describe(c: Claim): Message | null {
         url: post,
         thread: "sessions",
       };
+    case "chess_challenge":
+      return { title: "Chess challenge", body: `${who} challenged you to chess.`, url: chess, thread: "chess" };
+    case "chess_accepted":
+      return { title: "Challenge accepted", body: `${who} accepted your chess challenge.`, url: chess, thread: "chess" };
+    case "chess_turn":
+      return { title: "Your move", body: `${who} moved. It's your turn.`, url: chess, thread: `chess-${c.ref_id ?? ""}` };
+    case "chess_result":
+      return { title: "Chess", body: `Your game with ${who} is over.`, url: chess, thread: "chess" };
     default:
       return null;
   }
