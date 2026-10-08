@@ -16,15 +16,25 @@ blob-1.png      blob-2.png      blob-3.png
 star-1.png      star-2.png      star-3.png
 drop-1.png      drop-2.png      drop-3.png
 pill-1.png      pill-2.png      pill-3.png
+moon-1.png      moon-2.png      moon-3.png
+bolt-1.png      bolt-2.png      bolt-3.png
+heart-1.png     heart-2.png     heart-3.png
+leaf-1.png      leaf-2.png      leaf-3.png
+ghost-1.png     ghost-2.png     ghost-3.png
+mushroom-1.png  mushroom-2.png  mushroom-3.png
+skull-1.png     skull-2.png     skull-3.png
+cactus-1.png    cactus-2.png    cactus-3.png
+flake-1.png     flake-2.png     flake-3.png
+octo-1.png      octo-2.png      octo-3.png
 ```
 
 Then open `src/components/PetSprite.tsx` and change `const ART_READY = false;` to `true`.
 
 Brief for the artist:
 
-- 31 images: one egg, and 10 species × 3 stages.
+- 61 images: one egg, and 20 species × 3 stages.
 - Square, transparent background, 512×512 px PNG. The pet sits on the bottom edge (a little drop shadow is fine), centred.
-- Stage 1 is small and cute, stage 2 is the full character, stage 3 is the show-off form (bigger, a crest or glow, more detail). Same creature each time, clearly growing up.
-- Each species has a shape and a colour the app already uses: Pentagon (orange `#ff7a2f`), Blip (round, teal `#2ad4c8`), Cube (purple `#a66cff`), Spike (triangle, red `#ff6b6b`), Gem (diamond, blue `#5aa9ff`), Hex (lime `#8bff3a`), Blob (pink `#ff4fa3`), Star (yellow `#ffd23f`), Drop (sky `#38bdf8`), Pill (white `#e9ebee`). The art doesn't have to be literal shapes, but should keep each one's colour so they read at a glance.
+- Stage 1 is the small cute shape with dot eyes. Stage 2 is a creature: the shape becomes a head-and-body with legs, arms and a feature (ears, antenna, horns, wings). Stage 3 is the full form: bigger, fiercer eyes, a signature piece (crown, wings, tail, aura). Think Digimon/Pokémon energy, but ours. Same creature each time, clearly growing up. The in-app placeholder drawings (ask MARZ for the sheet) show the intended pose and features for every one.
+- Each species has a shape and a colour the app already uses: Pentagon (orange `#ff7a2f`), Blip (round, teal `#2ad4c8`), Cube (purple `#a66cff`), Spike (triangle, red `#ff6b6b`), Gem (diamond, blue `#5aa9ff`), Hex (lime `#8bff3a`), Blob (pink `#ff4fa3`), Star (yellow `#ffd23f`), Drop (sky `#38bdf8`), Pill (white `#e9ebee`), Moon (crescent, indigo `#6366f1`), Bolt (lightning, amber `#f5b301`), Heart (crimson `#e11d48`), Leaf (green `#22c55e`), Ghost (mint `#a7f3d0`), Mushroom (tan `#c08457`), Skull (slate `#94a3b8`), Cactus (olive `#65a30d`), Snowflake (ice `#bae6fd`), Octo (deep blue `#1d4ed8`). The art doesn't have to be literal shapes, but should keep each one's colour so they read at a glance.
 - It's shown at roughly 100 px on the profile, so bold outlines and big eyes; avoid thin detail.
 - Dark app background (`#0e0f11`), so no dark outlines around the whole figure.
