@@ -91,10 +91,48 @@ const flakePath = (r: number, cx: number, cy: number) => {
 const octoPath = (r: number, cx: number, cy: number) =>
   `M${f(cx - r)} ${f(cy)} A${f(r)} ${f(r)} 0 0 1 ${f(cx + r)} ${f(cy)} V${f(cy + r * 0.45)} q${f(-r / 4)} ${f(r * 0.6)} ${f(-r / 2)} 0 q${f(-r / 4)} ${f(r * 0.6)} ${f(-r / 2)} 0 q${f(-r / 4)} ${f(r * 0.6)} ${f(-r / 2)} 0 q${f(-r / 4)} ${f(r * 0.6)} ${f(-r / 2)} 0 Z`;
 
+const flamePath = (r: number, cx: number, cy: number) =>
+  `M${f(cx)} ${f(cy - r * 1.35)} C${f(cx + r * 0.35)} ${f(cy - r * 0.9)} ${f(cx + r * 1.05)} ${f(cy - r * 0.55)} ${f(cx + r)} ${f(cy + r * 0.25)} C${f(cx + r * 0.95)} ${f(cy + r * 0.85)} ${f(cx + r * 0.55)} ${f(cy + r * 1.1)} ${f(cx)} ${f(cy + r * 1.1)} C${f(cx - r * 0.55)} ${f(cy + r * 1.1)} ${f(cx - r * 0.95)} ${f(cy + r * 0.85)} ${f(cx - r)} ${f(cy + r * 0.25)} C${f(cx - r * 1.05)} ${f(cy - r * 0.3)} ${f(cx - r * 0.5)} ${f(cy - r * 0.55)} ${f(cx - r * 0.35)} ${f(cy - r * 1.0)} C${f(cx - r * 0.2)} ${f(cy - r * 0.75)} ${f(cx - r * 0.05)} ${f(cy - r * 0.9)} ${f(cx)} ${f(cy - r * 1.35)} Z`;
+const padPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx - r * 1.3)} ${f(cy - r * 0.35)} a${f(r * 0.45)} ${f(r * 0.45)} 0 0 1 ${f(r * 0.45)} ${f(-r * 0.45)} h${f(r * 1.7)} a${f(r * 0.45)} ${f(r * 0.45)} 0 0 1 ${f(r * 0.45)} ${f(r * 0.45)} v${f(r * 0.35)} a${f(r * 0.65)} ${f(r * 0.65)} 0 0 1 ${f(-r * 0.7)} ${f(r * 0.85)} l${f(-r * 0.35)} ${f(-r * 0.4)} h${f(-r * 1.0)} l${f(-r * 0.35)} ${f(r * 0.4)} a${f(r * 0.65)} ${f(r * 0.65)} 0 0 1 ${f(-r * 0.7)} ${f(-r * 0.85)} Z`;
+const rocketPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx)} ${f(cy - r * 1.35)} Q${f(cx + r * 0.75)} ${f(cy - r * 0.6)} ${f(cx + r * 0.6)} ${f(cy + r * 0.5)} L${f(cx + r * 0.6)} ${f(cy + r * 0.95)} H${f(cx - r * 0.6)} L${f(cx - r * 0.6)} ${f(cy + r * 0.5)} Q${f(cx - r * 0.75)} ${f(cy - r * 0.6)} ${f(cx)} ${f(cy - r * 1.35)} Z`;
+const penguinPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx)} ${f(cy - r * 1.15)} C${f(cx + r * 0.95)} ${f(cy - r * 1.15)} ${f(cx + r * 1.05)} ${f(cy + r * 0.2)} ${f(cx + r * 0.95)} ${f(cy + r * 0.7)} C${f(cx + r * 0.8)} ${f(cy + r * 1.15)} ${f(cx - r * 0.8)} ${f(cy + r * 1.15)} ${f(cx - r * 0.95)} ${f(cy + r * 0.7)} C${f(cx - r * 1.05)} ${f(cy + r * 0.2)} ${f(cx - r * 0.95)} ${f(cy - r * 1.15)} ${f(cx)} ${f(cy - r * 1.15)} Z`;
+const dinoPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx - r)} ${f(cy)} A${f(r)} ${f(r)} 0 1 1 ${f(cx + r)} ${f(cy)} A${f(r)} ${f(r)} 0 0 1 ${f(cx - r)} ${f(cy)} Z ` +
+  `M${f(cx - r * 0.75)} ${f(cy - r * 0.62)} l${f(-r * 0.25)} ${f(-r * 0.6)} l${f(r * 0.55)} ${f(r * 0.3)} Z ` +
+  `M${f(cx - r * 0.25)} ${f(cy - r * 0.95)} l${f(r * 0.08)} ${f(-r * 0.65)} l${f(r * 0.45)} ${f(r * 0.45)} Z ` +
+  `M${f(cx + r * 0.35)} ${f(cy - r * 0.92)} l${f(r * 0.35)} ${f(-r * 0.5)} l${f(r * 0.25)} ${f(r * 0.55)} Z`;
+const fishPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx - r * 1.05)} ${f(cy)} a${f(r * 0.85)} ${f(r * 0.68)} 0 1 1 ${f(r * 1.7)} 0 a${f(r * 0.85)} ${f(r * 0.68)} 0 1 1 ${f(-r * 1.7)} 0 Z M${f(cx + r * 0.6)} ${f(cy)} L${f(cx + r * 1.35)} ${f(cy - r * 0.7)} L${f(cx + r * 1.2)} ${f(cy)} L${f(cx + r * 1.35)} ${f(cy + r * 0.7)} Z`;
+const batPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx - r)} ${f(cy - r * 0.15)} L${f(cx - r * 0.95)} ${f(cy - r * 1.25)} L${f(cx - r * 0.4)} ${f(cy - r * 0.75)} Q${f(cx)} ${f(cy - r * 0.95)} ${f(cx + r * 0.4)} ${f(cy - r * 0.75)} L${f(cx + r * 0.95)} ${f(cy - r * 1.25)} L${f(cx + r)} ${f(cy - r * 0.15)} A${f(r)} ${f(r)} 0 0 1 ${f(cx - r)} ${f(cy - r * 0.15)} Z`;
+const botPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx - r)} ${f(cy - r * 0.75)} a${f(r * 0.25)} ${f(r * 0.25)} 0 0 1 ${f(r * 0.25)} ${f(-r * 0.25)} h${f(r * 1.5)} a${f(r * 0.25)} ${f(r * 0.25)} 0 0 1 ${f(r * 0.25)} ${f(r * 0.25)} v${f(r * 1.6)} a${f(r * 0.25)} ${f(r * 0.25)} 0 0 1 ${f(-r * 0.25)} ${f(r * 0.25)} h${f(-r * 1.5)} a${f(r * 0.25)} ${f(r * 0.25)} 0 0 1 ${f(-r * 0.25)} ${f(-r * 0.25)} Z`;
+const crownPath = (r: number, cx: number, cy: number) =>
+  pathOf([
+    [cx - r * 1.1, cy + r * 0.85],
+    [cx - r * 1.1, cy - r * 0.45],
+    [cx - r * 0.55, cy + r * 0.05],
+    [cx, cy - r * 0.95],
+    [cx + r * 0.55, cy + r * 0.05],
+    [cx + r * 1.1, cy - r * 0.45],
+    [cx + r * 1.1, cy + r * 0.85],
+  ]);
+const shieldPath = (r: number, cx: number, cy: number) =>
+  `M${f(cx - r)} ${f(cy - r * 0.95)} H${f(cx + r)} V${f(cy + r * 0.1)} Q${f(cx + r)} ${f(cy + r * 0.8)} ${f(cx)} ${f(cy + r * 1.15)} Q${f(cx - r)} ${f(cy + r * 0.8)} ${f(cx - r)} ${f(cy + r * 0.1)} Z`;
+
+/** Shapes with room for a lighter belly patch under the face. */
+const BELLY = new Set(["pent", "circle", "square", "gem", "hex", "blob", "drop", "pill", "heart", "ghost", "skull", "cactus", "octo", "flame", "bat", "bot", "shield", "leaf", "dino"]);
+
 /** Where the face sits relative to the body centre, per shape. */
-const EYE_DY: Record<string, number> = { mushroom: 12, skull: -4, octo: -4, ghost: -3, cactus: -4, crescent: 0, heart: -2 };
+const EYE_DY: Record<string, number> = {
+  mushroom: 12, skull: -4, octo: -4, ghost: -3, cactus: -4, crescent: 0, heart: -2,
+  flame: 5, rocket: -2, crown: 4, shield: -2, bat: -1, penguin: -5, dino: -2,
+};
 /** A horizontal nudge for the face, per shape (the crescent's thick side). */
-const EYE_DX: Record<string, number> = { crescent: 1 };
+const EYE_DX: Record<string, number> = { crescent: 1, fish: -5 };
 
 const SHAPES: Record<string, (r: number, cx: number, cy: number) => string> = {
   crescent: crescentPath,
@@ -107,6 +145,16 @@ const SHAPES: Record<string, (r: number, cx: number, cy: number) => string> = {
   cactus: cactusPath,
   flake: flakePath,
   octo: octoPath,
+  flame: flamePath,
+  pad: padPath,
+  rocket: rocketPath,
+  penguin: penguinPath,
+  dino: dinoPath,
+  fish: fishPath,
+  bat: batPath,
+  bot: botPath,
+  crown: crownPath,
+  shield: shieldPath,
   pent: (r, cx, cy) => polyPath(5, r, -Math.PI / 2, cx, cy),
   circle: circlePath,
   square: (r, cx, cy) => polyPath(4, r, Math.PI / 4, cx, cy),
@@ -244,6 +292,35 @@ function detail(shape: string, stage: 1 | 2 | 3, p: Pal, r: number, cy: number):
       return stage === 1 ? "" : `<path d="M${f(C + r * 0.3)} ${f(cy - r * 1.0)} L${f(C + r * 0.05)} ${f(cy - r * 0.3)}" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>`;
     case "heart":
       return `<path d="M${f(C - r * 0.75)} ${f(cy - r * 0.5)} q${f(r * 0.1)} ${f(-r * 0.35)} ${f(r * 0.4)} ${f(-r * 0.35)}" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.55"/>`;
+    case "flame":
+      return `<path d="${flamePath(r * 0.55, C, cy + r * 0.45)}" fill="#fff59d" opacity="0.55"/>`;
+    case "pad":
+      return (
+        `<path d="M${f(C - r * 0.75)} ${f(cy - r * 0.25)} v${f(r * 0.5)} M${f(C - r)} ${f(cy)} h${f(r * 0.5)}" stroke="${INK}" stroke-width="${f(r * 0.16)}" stroke-linecap="round" opacity="0.55"/>` +
+        [[0.65, -0.22], [0.85, 0], [0.65, 0.22], [1.05, 0]].map(([kx, ky]) => `<circle cx="${f(C + r * kx)}" cy="${f(cy + r * ky)}" r="${f(r * 0.08)}" fill="${INK}" opacity="0.55"/>`).join("")
+      );
+    case "rocket":
+      return (
+        `<path d="M${f(C - r * 0.6)} ${f(cy + r * 0.25)} L${f(C - r * 1.15)} ${f(cy + r * 1.05)} L${f(C - r * 0.6)} ${f(cy + r * 0.95)} Z M${f(C + r * 0.6)} ${f(cy + r * 0.25)} L${f(C + r * 1.15)} ${f(cy + r * 1.05)} L${f(C + r * 0.6)} ${f(cy + r * 0.95)} Z" fill="#ef4444" stroke="#fca5a5" stroke-width="1.5" stroke-linejoin="round"/>` +
+        `<path d="M${f(C - r * 0.35)} ${f(cy + r * 0.95)} q${f(r * 0.35)} ${f(r * 0.9)} ${f(r * 0.7)} 0 Z" fill="#fb923c"/><path d="M${f(C - r * 0.18)} ${f(cy + r * 0.95)} q${f(r * 0.18)} ${f(r * 0.5)} ${f(r * 0.36)} 0 Z" fill="#fde68a"/>` +
+        `<circle cx="${f(C)}" cy="${f(cy - r * 0.15)}" r="${f(r * 0.5)}" fill="none" stroke="${p.edge}" stroke-width="1.5" opacity="0.7"/>`
+      );
+    case "penguin":
+      return (
+        `<ellipse cx="${f(C)}" cy="${f(cy + r * 0.3)}" rx="${f(r * 0.62)}" ry="${f(r * 0.72)}" fill="#f8fafc"/>` +
+        `<path d="M${f(C - r * 0.18)} ${f(cy + r * 0.12)} h${f(r * 0.36)} l${f(-r * 0.18)} ${f(r * 0.22)} Z" fill="#fb923c"/>` +
+        `<ellipse cx="${f(C - r * 0.4)}" cy="${f(cy + r * 1.12)}" rx="${f(r * 0.28)}" ry="${f(r * 0.1)}" fill="#fb923c"/><ellipse cx="${f(C + r * 0.4)}" cy="${f(cy + r * 1.12)}" rx="${f(r * 0.28)}" ry="${f(r * 0.1)}" fill="#fb923c"/>`
+      );
+    case "dino":
+      return [[-0.5, 0.2, 0.14], [0.45, 0.35, 0.12], [0.1, 0.65, 0.1], [-0.35, 0.6, 0.08]].map(([kx, ky, ks]) => `<circle cx="${f(C + r * kx)}" cy="${f(cy + r * ky)}" r="${f(r * ks)}" fill="${INK}" opacity="0.18"/>`).join("");
+    case "fish":
+      return `<path d="M${f(C + r * 0.1)} ${f(cy - r * 0.45)} q${f(r * 0.3)} ${f(r * 0.45)} 0 ${f(r * 0.9)} M${f(C + r * 0.4)} ${f(cy - r * 0.35)} q${f(r * 0.25)} ${f(r * 0.35)} 0 ${f(r * 0.7)}" stroke="${p.edge}" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>`;
+    case "bot":
+      return `<path d="M${f(C)} ${f(cy - r)} v${f(-r * 0.4)}" stroke="${p.edge}" stroke-width="2" stroke-linecap="round"/><circle cx="${f(C)}" cy="${f(cy - r * 1.5)}" r="${f(r * 0.14)}" fill="${p.edge}"/><path d="M${f(C - r * 0.5)} ${f(cy + r * 0.55)} h${f(r)}" stroke="${INK}" stroke-width="${f(r * 0.1)}" stroke-linecap="round" opacity="0.5" stroke-dasharray="${f(r * 0.12)} ${f(r * 0.1)}"/>`;
+    case "crown":
+      return [[-0.85, 0.35], [0, 0.4], [0.85, 0.35]].map(([kx, ky], i) => `<circle cx="${f(C + r * kx)}" cy="${f(cy + r * ky)}" r="${f(r * (i === 1 ? 0.16 : 0.12))}" fill="${["#ef4444", "#3b82f6", "#22c55e"][i]}" stroke="#fff" stroke-width="1" opacity="0.95"/>`).join("") + `<path d="M${f(C - r * 1.1)} ${f(cy + r * 0.6)} h${f(r * 2.2)}" stroke="${INK}" stroke-width="1.5" opacity="0.3"/>`;
+    case "shield":
+      return `<path d="M${f(C)} ${f(cy - r * 0.95)} V${f(cy + r * 1.15)} M${f(C - r)} ${f(cy + r * 0.05)} H${f(C + r)}" stroke="${p.edge}" stroke-width="1.5" opacity="0.5"/>` + [[-0.75, -0.7], [0.75, -0.7], [-0.75, 0.3], [0.75, 0.3]].map(([kx, ky]) => `<circle cx="${f(C + r * kx)}" cy="${f(cy + r * ky)}" r="1.3" fill="${p.edge}" opacity="0.9"/>`).join("");
     default:
       return "";
   }
@@ -614,6 +691,118 @@ function creature(shape: string, stage: 2 | 3, p: Pal): Layers {
       };
     }
 
+    // Flame — hot-headed, warm-hearted. Flame arms and flicker tips;
+    // stage 3 burns with a crown of tongues, fire wings and embers.
+    case "flame": {
+      const ember = (x: number, y: number, sz: number) => `<circle cx="${f(x)}" cy="${f(y)}" r="${f(sz)}" fill="#fde68a" opacity="0.85"/>`;
+      const tongues = solid(`M${f(C - 14)} ${f(top + 14)} q-6 -14 2 -22 q2 10 8 12 q0 -14 6 -22 q4 12 8 16 q2 -10 8 -14 q-2 14 -6 22 Z`, p);
+      if (stage === 2) return { back: ember(C - r - 6, cy - 10, 2) + ember(C + r + 6, cy - 18, 1.5) + legs(bottom - 6, p, 8, 8), front: arms(cy, r, p, true, 6) };
+      return {
+        back: wings(cy + 2, r - 8, p, 20, 0.55) + tongues + ember(C - r - 10, cy - 14, 2.5) + ember(C + r + 10, cy - 24, 2) + ember(C + r + 16, cy - 4, 1.5) + ember(C - r - 16, cy + 4, 1.5) + legs(bottom - 8, p, 9, 10, 7) + claws(bottom + 3, 9),
+        front: arms(cy, r, p, true, 7),
+      };
+    }
+
+    // Pad — born to game. Thumbstick antennae; stage 3 has bumper
+    // shoulders, trigger horns and a cable tail.
+    case "pad": {
+      const sticks = `<path d="M${f(C - 8)} ${f(top + 2)} v-9 M${f(C + 8)} ${f(top + 2)} v-9" stroke="${p.edge}" stroke-width="2.5" stroke-linecap="round"/><circle cx="${f(C - 8)}" cy="${f(top - 10)}" r="3.5" fill="${INK}" stroke="${p.edge}" stroke-width="1.5"/><circle cx="${f(C + 8)}" cy="${f(top - 10)}" r="3.5" fill="${INK}" stroke="${p.edge}" stroke-width="1.5"/>`;
+      if (stage === 2) return { back: sticks + legs(bottom - 10, p, 10, 8), front: arms(cy - 2, r * 1.1, p, false, 6) };
+      return {
+        back: sticks + solid(`M${f(C - r * 1.1)} ${f(top + 6)} h-6 l2 -10 h8 Z M${f(C + r * 1.1)} ${f(top + 6)} h6 l-2 -10 h-8 Z`, p) + tail(cy, r, p, `M${f(C + r * 1.1)} ${f(cy + 4)} q18 4 18 -14 q0 -8 -6 -10`, 3) + `<circle cx="${f(C + r * 1.1 + 12)}" cy="${f(cy - 20)}" r="3" fill="${p.edge}"/>` + legs(bottom - 12, p, 12, 10, 7) + claws(bottom - 1, 12),
+        front: arms(cy - 2, r * 1.1, p, true, 7) + sparkle(C - r * 0.2, top + 4, 3, "#fff"),
+      };
+    }
+
+    // Rocket — impatient, always leaving. Hovers on its exhaust, no
+    // legs; stage 3 has a nose light, three fins and an orbit of stars.
+    case "rocket": {
+      const puff = (x: number, y: number, sz: number) => `<circle cx="${f(x)}" cy="${f(y)}" r="${f(sz)}" fill="${p.edge}" opacity="0.5"/>`;
+      if (stage === 2) return { back: puff(C - 12, bottom + 10, 4) + puff(C + 10, bottom + 12, 3) + puff(C - 2, bottom + 16, 2.5), front: arms(cy, r * 0.7, p, false, 5) };
+      return {
+        back: `<ellipse cx="${C}" cy="${f(cy + 6)}" rx="44" ry="14" fill="none" stroke="${p.edge}" stroke-width="1.2" stroke-dasharray="3 6" opacity="0.6"/>` + sparkle(C - 40, cy + 2, 3, "#fff") + sparkle(C + 42, cy + 10, 2.5, "#fff") + puff(C - 14, bottom + 12, 5) + puff(C + 12, bottom + 14, 4) + puff(C - 2, bottom + 20, 3) + puff(C + 4, bottom + 8, 3) + solid(`M${f(C - 3)} ${f(cy + r * 0.3)} L${f(C)} ${f(bottom + 12)} L${f(C + 3)} ${f(cy + r * 0.3)} Z`, p) + `<circle cx="${C}" cy="${f(top - 2)}" r="3" fill="#fde68a" stroke="#fff" stroke-width="1"/>`,
+        front: arms(cy, r * 0.7, p, true, 6),
+      };
+    }
+
+    // Penguin — formal. Flippers and a waddle; stage 3 is the Emperor:
+    // a gold crest, a scarf, and ice sparkles.
+    case "penguin": {
+      const flipper = (dir: 1 | -1, up: boolean) => solid(`M${f(C + dir * (r * 0.85))} ${f(cy - r * 0.3)} Q${f(C + dir * (r * 1.5))} ${f(cy + (up ? -r * 0.6 : r * 0.2))} ${f(C + dir * (r * 1.2))} ${f(cy + (up ? -r * 0.1 : r * 0.7))} Q${f(C + dir * (r * 0.95))} ${f(cy + r * 0.6)} ${f(C + dir * (r * 0.85))} ${f(cy + r * 0.2)} Z`, p);
+      const ice = (x: number, y: number, sz: number) => sparkle(x, y, sz, "#e0f2fe");
+      if (stage === 2) return { back: ice(C - r - 10, cy - 12, 3) + ice(C + r + 8, cy - 20, 2.5), front: flipper(-1, false) + flipper(1, false) };
+      return {
+        back: ice(C - r - 12, cy - 16, 4) + ice(C + r + 10, cy - 24, 3) + ice(C + r + 16, cy, 2) + solid(`M${f(C - 10)} ${f(top + 4)} q2 -14 10 -16 q8 2 10 16 q-6 -6 -10 -2 q-4 -4 -10 2 Z`, { fill: "#fbbf24", edge: "#fde68a" }),
+        front: flipper(-1, true) + flipper(1, true) + `<path d="M${f(C - r * 0.8)} ${f(cy + r * 0.62)} q${f(r * 0.8)} 7 ${f(r * 1.6)} 0" stroke="#ef4444" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M${f(C + r * 0.55)} ${f(cy + r * 0.66)} q7 8 3 18" stroke="#ef4444" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+      };
+    }
+
+    // Dino — stomps about. Back plates, a thick tail and stubby legs;
+    // stage 3 has horns, bigger plates and a spiked tail club.
+    case "dino": {
+      const dtail = (len: number, w: number) => tail(cy, r, p, `M${f(C + r - 8)} ${f(cy + r * 0.5)} q${f(len)} 2 ${f(len + 4)} -12`, w);
+      if (stage === 2) return { back: dtail(12, 8) + legs(bottom - 8, p, 10, 9, 8), front: arms(cy, r, p, false, 6) };
+      return {
+        back: horns(cy, r, p, 10, 14) + dtail(18, 10) + solid(`M${f(C + r + 14)} ${f(cy + r * 0.5 - 14)} l-2 -8 l6 4 l2 -8 l3 7 l7 -2 l-3 7 Z`, p) + legs(bottom - 10, p, 12, 11, 9) + claws(bottom + 2, 12),
+        front: arms(cy, r, p, false, 7),
+      };
+    }
+
+    // Fish — quiet, big thoughts. Fins and bubbles; stage 3 is a
+    // whiskered river king with a dorsal crest and a wave.
+    case "fish": {
+      const bubble = (x: number, y: number, sz: number) => `<circle cx="${f(x)}" cy="${f(y)}" r="${f(sz)}" fill="none" stroke="${p.edge}" stroke-width="1.5" opacity="0.8"/>`;
+      const fin = solid(`M${f(C - 4)} ${f(cy + r * 0.3)} q-10 10 -4 18 q6 -6 12 -14 Z`, p);
+      if (stage === 2) return { back: bubble(C - r - 12, cy - 12, 3) + bubble(C - r - 6, cy - 22, 2) + solid(`M${f(C - 6)} ${f(top + 4)} q4 -14 14 -10 q-6 4 -6 12 Z`, p) + legs(bottom - 6, p, 9, 7, 6), front: fin };
+      return {
+        back: bubble(C - r - 14, cy - 14, 3.5) + bubble(C - r - 6, cy - 26, 2.5) + bubble(C + r + 10, cy - 20, 2) + solid(`M${f(C - 12)} ${f(top + 6)} q2 -16 10 -14 q4 -8 12 -6 q0 8 6 14 Z`, p) + `<path d="M${f(C - r - 2)} ${f(cy + 2)} q-10 -2 -16 6 M${f(C - r - 2)} ${f(cy + 6)} q-10 2 -14 10" stroke="${p.edge}" stroke-width="1.5" fill="none" stroke-linecap="round"/>` + `<path d="M${f(C - 44)} ${f(bottom + 8)} q8 -8 16 0 t16 0 t16 0 t16 0 t16 0" stroke="${p.edge}" stroke-width="2" fill="none" opacity="0.6"/>` + legs(bottom - 8, p, 10, 8, 7),
+        front: fin + solid(`M${f(C + 2)} ${f(cy + r * 0.3)} q-8 10 -2 18 q6 -6 10 -14 Z`, p),
+      };
+    }
+
+    // Bat — hangs around, upside down. Small wings; stage 3 has a huge
+    // wingspan, fangs, and a moon behind.
+    case "bat": {
+      if (stage === 2) return { back: wings(cy, r - 6, p, 16) + legs(bottom - 6, p, 8, 7, 6), front: "" };
+      return {
+        back: `<circle cx="${f(C + 30)}" cy="${f(cy - 26)}" r="9" fill="${p.edge}" opacity="0.5"/>` + wings(cy, r - 4, p, 30) + tail(cy, r, p, `M${f(C + 4)} ${f(bottom - 4)} q10 8 8 18`, 3) + solid(`M${f(C + 12)} ${f(bottom + 14)} l-4 -4 h8 Z`, p) + legs(bottom - 8, p, 9, 9, 7) + claws(bottom + 2, 9),
+        front: `<path d="M${f(C - 5)} ${f(cy + 10)} l1.5 4 l1.5 -4 M${f(C + 2)} ${f(cy + 10)} l1.5 4 l1.5 -4" fill="#fff" stroke="#fff" stroke-width="0.8" stroke-linejoin="round"/>`,
+      };
+    }
+
+    // Bot — logical, mostly. Block limbs and an antenna; stage 3 has
+    // shoulder cannons, a chest screen and jet feet.
+    case "bot": {
+      const block = (x: number, y: number, w: number, h: number) => `<rect x="${f(x - w / 2)}" y="${f(y - h / 2)}" width="${f(w)}" height="${f(h)}" rx="1.5" fill="${p.fill}" stroke="${p.edge}" stroke-width="2"/>`;
+      if (stage === 2) return { back: block(C - 11, bottom + 4, 8, 10) + block(C + 11, bottom + 4, 8, 10), front: block(C - r - 4, cy + 4, 7, 14) + block(C + r + 4, cy + 4, 7, 14) };
+      return {
+        back: block(C - r - 4, cy - r + 6, 12, 10) + block(C + r + 4, cy - r + 6, 12, 10) + `<rect x="${f(C - r - 7)}" y="${f(cy - r - 10)}" width="6" height="10" rx="1" fill="${INK}" stroke="${p.edge}" stroke-width="1.5"/><rect x="${f(C + r + 1)}" y="${f(cy - r - 10)}" width="6" height="10" rx="1" fill="${INK}" stroke="${p.edge}" stroke-width="1.5"/>` + block(C - 12, bottom + 5, 10, 12) + block(C + 12, bottom + 5, 10, 12) + `<path d="M${f(C - 15)} ${f(bottom + 12)} q3 8 6 0 M${f(C + 9)} ${f(bottom + 12)} q3 8 6 0" fill="#fb923c"/>`,
+        front: block(C - r - 6, cy + 6, 9, 18) + block(C + r + 6, cy + 6, 9, 18) + `<rect x="${f(C - 8)}" y="${f(cy + r * 0.35)}" width="16" height="9" rx="1" fill="${INK}" opacity="0.6"/><path d="M${f(C - 5)} ${f(cy + r * 0.35 + 6)} l3 -3 l2 2 l3 -4 l2 3" stroke="${p.edge}" stroke-width="1.2" fill="none"/>`,
+      };
+    }
+
+    // Crown — royal, says so. Legs and a little cape; stage 3 has a
+    // flowing cape, a sceptre and sparkle.
+    case "crown": {
+      const cape = (w: number, h: number) => `<path d="M${f(C - r * 0.9)} ${f(cy - r * 0.2)} q${f(-w * 0.3)} ${f(h * 0.6)} ${f(-w * 0.1)} ${f(h)} h${f(r * 1.8 + w * 0.2)} q${f(w * 0.2)} ${f(-h * 0.4)} ${f(-w * 0.1)} ${f(-h)} Z" fill="#b91c1c" stroke="#fca5a5" stroke-width="1.5" stroke-linejoin="round"/>`;
+      if (stage === 2) return { back: cape(10, 26) + legs(bottom - 4, p, 10, 7, 6), front: arms(cy + 2, r * 1.0, p, false, 6) };
+      return {
+        back: cape(22, 40) + `<path d="M${f(C + r + 12)} ${f(cy + 16)} v-34" stroke="${p.edge}" stroke-width="3" stroke-linecap="round"/><path d="${polyPath(4, 5, 0, C + r + 12, cy - 22)}" fill="#3b82f6" stroke="#fff" stroke-width="1.2"/>` + sparkle(C - r - 10, cy - 20, 4, "#fff") + sparkle(C + 8, top - 12, 3, "#fff") + legs(bottom - 4, p, 11, 9, 7),
+        front: arms(cy + 2, r * 1.0, p, false, 7),
+      };
+    }
+
+    // Shield — steady, has your back. A sword and legs; stage 3 has a
+    // plumed helmet, a banner and a bigger blade.
+    case "shield": {
+      const sword = (x: number, y: number, len: number, rot: number) => `<g transform="rotate(${rot} ${f(x)} ${f(y)})"><path d="M${f(x)} ${f(y)} v${f(-len)} l-3 4 M${f(x)} ${f(y - len)} l3 4" stroke="#e5e7eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M${f(x - 6)} ${f(y)} h12" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/><path d="M${f(x)} ${f(y)} v6" stroke="#92400e" stroke-width="3" stroke-linecap="round"/></g>`;
+      if (stage === 2) return { back: sword(C + r + 8, cy + 6, 22, 15) + legs(bottom - 6, p, 9, 8, 6), front: arms(cy, r, p, false, 6) };
+      return {
+        back: `<path d="M${f(C - r - 18)} ${f(cy - 34)} h16 v40 l-8 -8 l-8 8 Z" fill="#b91c1c" stroke="#fca5a5" stroke-width="1.5" stroke-linejoin="round"/><path d="M${f(C - r - 20)} ${f(cy - 34)} h20" stroke="#fcd34d" stroke-width="3" stroke-linecap="round"/>` + sword(C + r + 10, cy + 8, 32, 20) + solid(`M${f(C - 10)} ${f(top + 2)} q10 -14 20 0 Z`, p) + `<path d="M${f(C)} ${f(top - 6)} q-14 -8 -22 2 q10 -2 16 6" fill="#ef4444" stroke="#fca5a5" stroke-width="1.5" stroke-linejoin="round"/>` + legs(bottom - 6, p, 10, 10, 7),
+        front: arms(cy, r, p, false, 7),
+      };
+    }
+
     default:
       return { back: "", front: "" };
   }
@@ -646,9 +835,10 @@ export function petSvg({ shape, color, edge, stage, napping }: PetArtInput): str
   const layers = creature(sh, stage, p);
   const glow =
     stage === 3
-      ? `<circle cx="${C}" cy="${cy + 4}" r="46" fill="none" stroke="${p.fill}" stroke-width="1.5" stroke-dasharray="3 7" opacity="0.45"/><circle cx="${C}" cy="${cy}" r="${r + 6}" fill="${p.fill}" opacity="0.12"/>`
+      ? `<circle cx="${C}" cy="${cy + 4}" r="46" fill="none" stroke="${p.fill}" stroke-width="1.5" stroke-dasharray="3 7" opacity="0.45"/>`
       : "";
-  const face0 = napping ? eyesNapping(eyeY, eyeOff) : stage === 2 ? eyesStage2(eyeY, eyeOff, p.edge) : eyesStage3(eyeY, eyeOff, p.edge, p.fill);
+  const blush = `<circle cx="${f(C - eyeOff - 7)}" cy="${f(eyeY + 6)}" r="2.4" fill="#ff8fa3" opacity="0.6"/><circle cx="${f(C + eyeOff + 7)}" cy="${f(eyeY + 6)}" r="2.4" fill="#ff8fa3" opacity="0.6"/>`;
+  const face0 = blush + (napping ? eyesNapping(eyeY, eyeOff) : stage === 2 ? eyesStage2(eyeY, eyeOff, p.edge) : eyesStage3(eyeY, eyeOff, p.edge, p.fill));
   const face = dx || dy ? `<g transform="translate(${dx} ${dy})">${face0}</g>` : face0;
   const bodyD = SHAPES[sh](r, C, cy);
 
@@ -658,7 +848,8 @@ export function petSvg({ shape, color, edge, stage, napping }: PetArtInput): str
     layers.back +
     dark(bodyD, 0.22, 'transform="translate(2 3)"') +
     solid(bodyD, p) +
-    light(SHAPES[sh](r * 0.8, C, cy), p, 0.3, 'transform="translate(-2 -3)"') +
+    `<path d="${SHAPES[sh](r * 0.8, C, cy)}" fill="#fff" opacity="0.14" transform="translate(-2 -3)"/>` +
+    (BELLY.has(sh) ? `<ellipse cx="${C}" cy="${f(cy + r * 0.45)}" rx="${f(r * 0.42)}" ry="${f(r * 0.3)}" fill="#fff" opacity="0.22"/>` : "") +
     detail(sh, stage, p, r, cy) +
     layers.front +
     face
