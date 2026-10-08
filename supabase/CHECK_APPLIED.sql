@@ -757,7 +757,16 @@ checks(migration, feature, present) as (
      'Chess in the Arcade, with turn notifications',
      to_regclass('public.chess_games') is not null
      and exists (select 1 from fn where fn.name = 'chess_move')
-     and exists (select 1 from cols where cols.t = 'notifications' and cols.c = 'ref_id'))
+     and exists (select 1 from cols where cols.t = 'notifications' and cols.c = 'ref_id')),
+
+    ('110_pets',
+     'Pentra Pets (behind the pets flag)',
+     to_regclass('public.pets') is not null
+     and exists (select 1 from fn where fn.name = 'pet_act')),
+
+    ('111_pets_launch',
+     'Pets What''s New line (only once the flag is on for everyone)',
+     exists (select 1 from public.changelog_entries where title = 'Pentra Pets'))
 )
 select
   migration,

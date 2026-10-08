@@ -118,6 +118,17 @@ database, one account everywhere.
   winners after checking TikTok. Rules template built in. Keep prizes under
   $5,000 or register in NY and FL.
 
+## Built but switched off
+
+- **Pentra Pets** (supabase/110, src/lib/pets.ts, PetCard/PetSprite,
+  shown on PublicProfile). Behind the `pets` feature flag: invisible
+  until MARZ turns it on in Developer → Flags (testers first, then
+  everyone). On launch day: flag on for all, then run
+  supabase/111_pets_launch.sql for the What's New line. Art is being
+  commissioned; see public/pets/README.md for file names and the brief,
+  then flip ART_READY in PetSprite.tsx. All the numbers (hatch time,
+  decay, XP, snacks) live in `pet_rules()` in 110 — change them there.
+
 ## Not started / on hold
 
 - Android: on hold. A new personal Google Play account needs 12 testers for

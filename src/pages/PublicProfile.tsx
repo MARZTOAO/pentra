@@ -25,6 +25,8 @@ import { DevProfileTools } from "../components/DevProfileTools";
 import { SeededTag } from "../components/SeededTag";
 import { ProfileFeed } from "../components/ProfileFeed";
 import { ArcadeCard } from "../components/ArcadeCard";
+import { PetCard } from "../components/PetCard";
+import { useFlag } from "../lib/flags";
 
 /**
  * A player's profile as everyone sees it.
@@ -41,6 +43,7 @@ export default function PublicProfile({ username: fixed }: { username?: string }
   const params = useParams<{ username: string }>();
   const username = fixed ?? params.username;
   const { user } = useAuth();
+  const petsOn = useFlag("pets");
   // Which tab: profile (default), stats or achievements. In the URL
   // (?tab=stats) so a tab can be linked to and survives a refresh.
   const [search, setSearch] = useSearchParams();
@@ -436,7 +439,9 @@ export default function PublicProfile({ username: fixed }: { username?: string }
         )}
       </section>
 
-      {/* Arcade bests (93), then everything they're part of. */}
+      {/* Pet (110, behind the `pets` flag), Arcade bests (93), then
+          everything they're part of. */}
+      {petsOn && <PetCard userId={profile.id} isSelf={isSelf} />}
       <ArcadeCard userId={profile.id} isSelf={isSelf} />
       <ProfileFeed userId={profile.id} isSelf={isSelf} />
       </>
